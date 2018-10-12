@@ -1,6 +1,6 @@
 # cassini 跨链中继
 
-cassini 是跨链交易的中继服务，遵循[QOSGroup/qbase](https://github.com/QOSGroup/qbase)定义的[QCP跨链协议](https://github.com/QOSGroup/qbase/blob/master/docs/transction_design.md)，以实现对跨链交易的获取，验证和共识等中继支持。
+cassini 是跨链交易的中继服务，遵循[QOSGroup/qbase](https://github.com/QOSGroup/qbase)定义的[QCP跨链协议](https://github.com/QOSGroup/cassini/blob/master/doc/cassini.md)，以实现对跨链交易的获取，验证和共识等中继支持。
 
 当前为非正式版本，我们会持续完善。
 
@@ -25,7 +25,7 @@ cassini 是跨链交易的中继服务，遵循[QOSGroup/qbase](https://github.c
 
 ### Commands
 
-\# 帮助信息
+\# 帮助信息 
 
 > $> ./cassini help
 
