@@ -45,9 +45,9 @@ EventDataTx{
     Result.Tags    {
         {"qcp.from":     string  }, //qsc name 或 qos
         {"qcp.to":       string  }, //qsc name 或 qos
-        {"qcp.sequence": int64 },
+        {"qcp.sequence": int64   },
         {"qcp.hash":     []byte  },  //TxQcp 做 sha256
-        {"qcp.height":     int64  },  //区块高度
+        {"qcp.height":   int64   },  //区块高度
     }
 }
 
@@ -55,12 +55,12 @@ EventDataTx{
 
 ## Rest Service API需求：
 
-- 	        get	        取 outbox 最大sequence
-- 	        get	        取 inbox 最大sequence
-- 	        get	        取 outbox 中给定sequence编号的交易（TxQcp）
-- 	        post	    接收交易（TxQcp）
-- 	        get	        批量取 outbox 中给定sequence编号之后的交易（TxQcp）
-- 	        post	    批量接收交易（TxQcp）		
+- get       取 outbox 最大sequence
+- get       取 inbox 最大sequence
+- get	    取 outbox 中给定sequence编号的交易（TxQcp）
+- post	    接收交易（TxQcp）
+- get	    批量取 outbox 中给定sequence编号之后的交易（TxQcp）
+- post	    批量接收交易（TxQcp）
 
 ### Rest Service 数据结构
 
@@ -71,7 +71,7 @@ type TxQcp struct {
 	To       	string 	//目标链ID
 	Sequence 	int64
 	IsResult 	bool   	//是否为result
-    Height     	int64   //块高度  
+	Height     	int64   //块高度  
 	Sign     	[]byte 	//对本交易的签名，公链不需要签名     
 }
 
