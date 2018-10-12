@@ -13,9 +13,9 @@ import (
 	"context"
 	"os"
 
-	"github.com/huangdao/cassini/common"
-	"github.com/huangdao/cassini/config"
-	"github.com/huangdao/cassini/log"
+	"github.com/QOSGroup/cassini/common"
+	"github.com/QOSGroup/cassini/config"
+	"github.com/QOSGroup/cassini/log"
 	"github.com/spf13/cobra"
 )
 

@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/huangdao/cassini/log"
+	"github.com/QOSGroup/cassini/log"
 	"github.com/pkg/errors"
 	"golang.org/x/net/netutil"
 

@@ -4,8 +4,8 @@
 package main
 
 import (
-	"github.com/huangdao/cassini/commands"
-	"github.com/huangdao/cassini/log"
+	"github.com/QOSGroup/cassini/commands"
+	"github.com/QOSGroup/cassini/log"
 )
 
 // 链中继服务主程序，包括正常服务启动和mock 测试运行两种模式

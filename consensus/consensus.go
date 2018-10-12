@@ -3,12 +3,12 @@ package consensus
 import (
 	"github.com/nats-io/go-nats"
 	"github.com/tendermint/go-amino"
-	"github.com/huangdao/cassini/types"
+	"github.com/QOSGroup/cassini/types"
 	"errors"
 	"sync"
 	"strings"
-	"github.com/huangdao/cassini/log"
-	"github.com/huangdao/cassini/restclient"
+	"github.com/QOSGroup/cassini/log"
+	"github.com/QOSGroup/cassini/restclient"
 )
 
 type MsgMapper struct {

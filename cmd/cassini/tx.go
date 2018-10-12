@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 
-	"github.com/huangdao/cassini/config"
-	"github.com/huangdao/cassini/log"
+	"github.com/QOSGroup/cassini/config"
+	"github.com/QOSGroup/cassini/log"
 )
 
 // 命令行 tx 命令执行方法

@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/huangdao/cassini/config"
-	"github.com/huangdao/cassini/event"
-	"github.com/huangdao/cassini/log"
+	"github.com/QOSGroup/cassini/config"
+	"github.com/QOSGroup/cassini/event"
+	"github.com/QOSGroup/cassini/log"
 
 	tmtypes "github.com/tendermint/tendermint/types"
 )

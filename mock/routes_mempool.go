@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/huangdao/cassini/log"
+	"github.com/QOSGroup/cassini/log"
 	"github.com/pkg/errors"
 
 	abci "github.com/tendermint/tendermint/abci/types"

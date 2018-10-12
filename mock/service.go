@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	"github.com/huangdao/cassini/log"
+	"github.com/QOSGroup/cassini/log"
 )
 
 var (

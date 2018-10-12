@@ -15,8 +15,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/huangdao/cassini/config"
-	"github.com/huangdao/cassini/log"
+	"github.com/QOSGroup/cassini/config"
+	"github.com/QOSGroup/cassini/log"
 	"github.com/tendermint/go-amino"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"

@@ -3,7 +3,7 @@ package commands
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/huangdao/cassini/config"
+	"github.com/QOSGroup/cassini/config"
 )
 
 func addEventsFlags(cmd *cobra.Command) {

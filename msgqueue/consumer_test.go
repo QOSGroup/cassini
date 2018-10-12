@@ -3,9 +3,9 @@ package msgqueue
 import (
 	"testing"
 	"github.com/nats-io/go-nats"
-	"github.com/huangdao/cassini/log"
+	"github.com/QOSGroup/cassini/log"
 	"github.com/tendermint/go-amino"
-	"github.com/huangdao/cassini/types"
+	"github.com/QOSGroup/cassini/types"
 )
 
 func TestQcpConsume(t *testing.T) {

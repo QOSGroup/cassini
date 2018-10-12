@@ -3,12 +3,12 @@ package msgqueue
 
 import (
 	"github.com/nats-io/go-nats"
-	"github.com/huangdao/cassini/log"
+	"github.com/QOSGroup/cassini/log"
 	"errors"
-	"github.com/huangdao/cassini/types"
+	"github.com/QOSGroup/cassini/types"
 	"github.com/tendermint/go-amino"
-	"github.com/huangdao/cassini/consensus"
-	"github.com/huangdao/cassini/config"
+	"github.com/QOSGroup/cassini/consensus"
+	"github.com/QOSGroup/cassini/config"
 	)
 
 //type Consumer interface{

@@ -1,4 +1,4 @@
-module github.com/huangdao/cassini
+module github.com/QOSGroup/cassini
 
 require (
 	github.com/VividCortex/gohistogram v1.0.0 // indirect
