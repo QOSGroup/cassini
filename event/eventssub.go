@@ -6,16 +6,16 @@ import (
 	"context"
 	"time"
 
-	"github.com/huangdao/cassini/log"
-	"github.com/huangdao/cassini/route"
-	ctypes "github.com/huangdao/cassini/types"
+	"github.com/QOSGroup/cassini/log"
+	"github.com/QOSGroup/cassini/route"
+	ctypes "github.com/QOSGroup/cassini/types"
 	"github.com/tendermint/go-amino"
 	pubsub "github.com/tendermint/tendermint/libs/pubsub/query"
 	"github.com/tendermint/tendermint/rpc/client"
 	ttypes "github.com/tendermint/tendermint/types"
 	"bytes"
 	"encoding/binary"
-	"github.com/huangdao/cassini/config"
+	"github.com/QOSGroup/cassini/config"
 	"strings"
 )
 

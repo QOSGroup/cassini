@@ -2,7 +2,7 @@ package msgqueue
 
 import (
 	"github.com/nats-io/go-nats"
-	"github.com/huangdao/cassini/log"
+	"github.com/QOSGroup/cassini/log"
 	"time"
 	"errors"
 )

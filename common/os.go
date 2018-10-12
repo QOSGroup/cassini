@@ -4,7 +4,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"github.com/huangdao/cassini/log"
+	"github.com/QOSGroup/cassini/log"
 )
 
 // KeepRunning 保持程序运行，监听系统信号，触发回调函数

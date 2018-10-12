@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/huangdao/cassini/config"
-	"github.com/huangdao/cassini/mock"
+	"github.com/QOSGroup/cassini/config"
+	"github.com/QOSGroup/cassini/mock"
 	"github.com/stretchr/testify/assert"
 	tmtypes "github.com/tendermint/tendermint/types"
 	)

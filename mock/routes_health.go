@@ -3,7 +3,7 @@ package mock
 // copy from tendermint/rpc/core/health.go
 
 import (
-	"github.com/huangdao/cassini/log"
+	"github.com/QOSGroup/cassini/log"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 

@@ -2,7 +2,7 @@ package route
 
 import (
 	"testing"
-	"github.com/huangdao/cassini/types"
+	"github.com/QOSGroup/cassini/types"
 	)
 
 func TestEvent2queue(t *testing.T) {

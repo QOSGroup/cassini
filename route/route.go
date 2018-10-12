@@ -1,11 +1,11 @@
 package route
 
 import (
-	"github.com/huangdao/cassini/types"
-		mq "github.com/huangdao/cassini/msgqueue"
+	"github.com/QOSGroup/cassini/types"
+		mq "github.com/QOSGroup/cassini/msgqueue"
 	"github.com/tendermint/go-amino"
 	"errors"
-		"github.com/huangdao/cassini/config"
+		"github.com/QOSGroup/cassini/config"
 )
 
 //type route struct{}

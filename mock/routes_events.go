@@ -5,7 +5,7 @@ package mock
 import (
 	"context"
 
-	"github.com/huangdao/cassini/log"
+	"github.com/QOSGroup/cassini/log"
 	"github.com/pkg/errors"
 
 	tmquery "github.com/tendermint/tendermint/libs/pubsub/query"

@@ -2,7 +2,7 @@ package restclient
 
 import (
 	"github.com/tendermint/tendermint/rpc/client"
-	"github.com/huangdao/cassini/types"
+	"github.com/QOSGroup/cassini/types"
 )
 
 type RestClient struct {

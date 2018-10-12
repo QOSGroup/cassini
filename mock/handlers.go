@@ -17,7 +17,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/huangdao/cassini/log"
+	"github.com/QOSGroup/cassini/log"
 	"github.com/pkg/errors"
 
 	amino "github.com/tendermint/go-amino"

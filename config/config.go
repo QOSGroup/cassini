@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 
-	"github.com/huangdao/cassini/log"
+	"github.com/QOSGroup/cassini/log"
 )
 
 // Config 封装配置数据

@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 
-	"github.com/huangdao/cassini/config"
-	"github.com/huangdao/cassini/log"
-	"github.com/huangdao/cassini/mock"
+	"github.com/QOSGroup/cassini/config"
+	"github.com/QOSGroup/cassini/log"
+	"github.com/QOSGroup/cassini/mock"
 )
 
 // 命令行 mock 命令执行方法
