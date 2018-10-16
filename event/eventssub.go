@@ -24,7 +24,7 @@ func StartSubscibe(conf *config.Config) (cancel context.CancelFunc, err error) {
 	var cancels []context.CancelFunc
 	var cancelFunc context.CancelFunc
 
-	for _,qsconfig := range config.TestQscConfig(){
+	for _,qsconfig := range config.DefaultQscConfig(){
 		for _ , nodeAddr := range strings.Split(qsconfig.NodeAddress,","){
 			cancelFunc ,err =Subscribe("tcp://" + nodeAddr +":26657") //TODO 端口配置化
 			cancels = append(cancels, cancelFunc)

@@ -2,36 +2,41 @@
 package msgqueue
 
 import (
-	"github.com/nats-io/go-nats"
-	"github.com/QOSGroup/cassini/log"
 	"errors"
-	"github.com/QOSGroup/cassini/types"
-	"github.com/tendermint/go-amino"
-	"github.com/QOSGroup/cassini/consensus"
 	"github.com/QOSGroup/cassini/config"
-	)
+	"github.com/QOSGroup/cassini/consensus"
+	"github.com/QOSGroup/cassini/log"
+	"github.com/QOSGroup/cassini/types"
+	"github.com/nats-io/go-nats"
+	"github.com/tendermint/go-amino"
+)
 
 //type Consumer interface{
 //	Consume(nc *nats.Conn) (err error)
 //}
 
-type QcpConsumer struct{
-
+type QcpConsumer struct {
 	NATSConsumer
-
 }
 
-func StartQcpConsume(conf *config.Config) ( err error) {
+var msgMap = new(consensus.MsgMapper)
 
-	qsconfigs := config.TestQscConfig()
+func init() {
+	//m.mtx.Unlock()
+	msgMap.MsgMap = make(map[int64]map[string]string)
+}
+
+func StartQcpConsume(conf *config.Config) (err error) {
+
+	qsconfigs := config.DefaultQscConfig()
 	if len(qsconfigs) < 2 {
 		return errors.New("config error , at leat two qsc names ")
 	}
 
-	for i,qsconfig := range qsconfigs {
-		for j := i + 1; j < len(qsconfigs) ; j++ {
-			err =QcpConsume(qsconfig.Name,qsconfigs[j].Name,config.DefaultConfig().Nats)
-			err =QcpConsume(qsconfigs[j].Name,qsconfig.Name,config.DefaultConfig().Nats)
+	for i, _ := range qsconfigs {
+		for j := i + 1; j < len(qsconfigs); j++ {
+			//err = QcpConsume(qsconfig.Name, qsconfigs[j].Name, config.DefaultConfig().Nats)
+			err = QcpConsume("QSC1", "QOS", config.DefaultConfig().Nats)
 		}
 	}
 
@@ -40,18 +45,18 @@ func StartQcpConsume(conf *config.Config) ( err error) {
 
 //QcpConsumer concume the message from nats server
 // from ,to is chain name for example "QOS"
-func  QcpConsume(from,to,natsServerUrls string)  error{
+func QcpConsume(from, to, natsServerUrls string) error {
 
 	cb := qcpCallBack
 
-	consummer := NATSConsumer{serverUrls: natsServerUrls, subject: from + "2" +to, CallBack: cb}
+	consummer := NATSConsumer{serverUrls: natsServerUrls, subject: from + "2" + to, CallBack: cb}
 
 	nc, err := consummer.Connect()
 	if err != nil {
 		return errors.New("couldn't connect to NATS server")
 	}
 
-	if err = consummer.Consume(nc) ; err != nil {
+	if err = consummer.Consume(nc); err != nil {
 		return err
 	}
 
@@ -61,12 +66,11 @@ func  QcpConsume(from,to,natsServerUrls string)  error{
 func qcpCallBack(m *nats.Msg) {
 	i := 0
 	tx2 := types.Event{}
-	amino.UnmarshalBinary(m.Data,&tx2)
-	log.Infof("[#%d] Received on [%s]: '%s' Relpy:'%s'\n", i, m.Subject,string(m.Data), m.Reply)
-	log.Info(tx2.From ,tx2.To,tx2.Sequence,string(tx2.HashBytes))
+	amino.UnmarshalBinary(m.Data, &tx2)
+	log.Infof("[#%d] Received on [%s]: '%s' Relpy:'%s'\n", i, m.Subject, string(m.Data), m.Reply)
+	log.Info(tx2.From, tx2.To, tx2.Sequence, string(tx2.HashBytes))
 
-	msgMapper := consensus.MsgMapper{}
-	msgMapper.AddMsgToMap(m)
+	msgMap.AddMsgToMap(m)
 
 }
 
@@ -94,7 +98,9 @@ func (n *NATSConsumer) Consume(nc *nats.Conn) (err error) {
 	i := nc.Status()
 
 	if i != nats.CONNECTED {
-		if i != nats.CLOSED {nc.Close()}
+		if i != nats.CLOSED {
+			nc.Close()
+		}
 		nc, err = n.Connect()
 		if err != nil {
 			return errors.New("the nats.Conn is not available")
