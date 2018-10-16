@@ -6,6 +6,9 @@ import (
 	"context"
 	"time"
 
+	"bytes"
+	"encoding/binary"
+	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/route"
 	ctypes "github.com/QOSGroup/cassini/types"
@@ -13,9 +16,6 @@ import (
 	pubsub "github.com/tendermint/tendermint/libs/pubsub/query"
 	"github.com/tendermint/tendermint/rpc/client"
 	ttypes "github.com/tendermint/tendermint/types"
-	"bytes"
-	"encoding/binary"
-	"github.com/QOSGroup/cassini/config"
 	"strings"
 )
 
@@ -24,9 +24,10 @@ func StartSubscibe(conf *config.Config) (cancel context.CancelFunc, err error) {
 	var cancels []context.CancelFunc
 	var cancelFunc context.CancelFunc
 
-	for _,qsconfig := range config.DefaultQscConfig(){
-		for _ , nodeAddr := range strings.Split(qsconfig.NodeAddress,","){
-			cancelFunc ,err =Subscribe("tcp://" + nodeAddr +":26657") //TODO 端口配置化
+	for _, qsconfig := range config.DefaultQscConfig() {
+		for _, nodeAddr := range strings.Split(qsconfig.NodeAddress, ",") {
+			//cancelFunc ,err =Subscribe("tcp://" + nodeAddr +":26657") //TODO 端口配置化
+			go Subscribe("tcp://" + nodeAddr + ":26657")
 			cancels = append(cancels, cancelFunc)
 		}
 	}
@@ -82,13 +83,12 @@ func Subscribe(remote string) (context.CancelFunc, error) {
 		}
 	}()
 
-	return cancel,nil
+	return cancel, nil
 }
 
 // SubscribeRemote 订阅接口，暴露检测点以便于测试
 func SubscribeRemote(remote string, subscriber string, query string, txs chan<- interface{}) (context.CancelFunc, error) {
 	wsClient := client.NewHTTP(remote, "/websocket")
-
 
 	cdc := amino.NewCodec()
 	ctypes.RegisterCassiniTypesAmino(cdc)
