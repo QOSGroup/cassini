@@ -6,8 +6,6 @@ import (
 	"context"
 	"time"
 
-	"bytes"
-	"encoding/binary"
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/route"
@@ -21,22 +19,9 @@ import (
 
 func StartSubscibe(conf *config.Config) (cancel context.CancelFunc, err error) {
 
-	var cancels []context.CancelFunc
-	var cancelFunc context.CancelFunc
-
 	for _, qsconfig := range config.DefaultQscConfig() {
 		for _, nodeAddr := range strings.Split(qsconfig.NodeAddress, ",") {
-			//cancelFunc ,err =Subscribe("tcp://" + nodeAddr +":26657") //TODO 端口配置化
-			go Subscribe("tcp://" + nodeAddr + ":26657")
-			cancels = append(cancels, cancelFunc)
-		}
-	}
-
-	cancel = func() {
-		for _, cancelJob := range cancels {
-			if cancelJob != nil {
-				cancelJob()
-			}
+			go Subscribe("tcp://" + nodeAddr)
 		}
 	}
 
@@ -51,7 +36,7 @@ func Subscribe(remote string) (context.CancelFunc, error) {
 	if err != nil {
 		log.Errorf("Remote [%s] : '%s'\n", remote, err)
 	}
-	//defer cancel()
+	defer cancel()
 
 	go func() {
 		for ed := range txs {
@@ -59,21 +44,7 @@ func Subscribe(remote string) (context.CancelFunc, error) {
 			log.Infof("received event '%s'\n", eventData)
 			cassiniEventDataTx := ctypes.CassiniEventDataTx{}
 
-			for _, tag := range eventData.Result.Tags {
-				if string(tag.Key) == "qcp.from" {
-					cassiniEventDataTx.From = string(tag.Value)
-				}
-				if string(tag.Key) == "qcp.to" {
-					cassiniEventDataTx.To = string(tag.Value)
-				}
-				if string(tag.Key) == "qcp.hash" {
-					cassiniEventDataTx.HashBytes = tag.Value
-				}
-				if string(tag.Key) == "qcp.sequence" {
-					bin_buf := bytes.NewBuffer(tag.Value)
-					binary.Read(bin_buf, binary.BigEndian, &cassiniEventDataTx.Sequence)
-				}
-			}
+			cassiniEventDataTx.ConstructFromTags(eventData.Result.Tags)
 
 			event := ctypes.Event{NodeAddress: remote, CassiniEventDataTx: cassiniEventDataTx}
 			err := route.Event2queue(&event)

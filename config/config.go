@@ -88,7 +88,7 @@ func DefaultQscConfig() []QscConfig {
 			//链给relay颁发的证书文件
 			Certificate: "",
 			//区块链节点地址，多个之间用“，”分割
-			NodeAddress: "127.0.0.1",
+			NodeAddress: "127.0.0.1:26657",
 		},
 		QscConfig{
 			Name: "QSC1",
@@ -97,7 +97,7 @@ func DefaultQscConfig() []QscConfig {
 			//链给relay颁发的证书文件
 			Certificate: "",
 			//区块链节点地址，多个之间用“，”分割
-			NodeAddress: "127.0.0.1",
+			NodeAddress: "127.0.0.1:26658",
 		},
 	}
 }

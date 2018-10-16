@@ -1,19 +1,19 @@
 package route
 
 import (
-	"github.com/QOSGroup/cassini/types"
-		mq "github.com/QOSGroup/cassini/msgqueue"
-	"github.com/tendermint/go-amino"
 	"errors"
-		"github.com/QOSGroup/cassini/config"
+	"github.com/QOSGroup/cassini/config"
+	"github.com/QOSGroup/cassini/log"
+	mq "github.com/QOSGroup/cassini/msgqueue"
+	"github.com/QOSGroup/cassini/types"
+	"github.com/tendermint/go-amino"
 )
 
 //type route struct{}
 
+func Event2queue(event *types.Event) error {
 
-func  Event2queue(event *types.Event) error {
-
-	if event == nil || event.HashBytes == nil || event.From == "" || event.To == ""  || event.NodeAddress == ""{
+	if event == nil || event.HashBytes == nil || event.From == "" || event.To == "" || event.NodeAddress == "" {
 		return errors.New("event is nil")
 	}
 
@@ -31,9 +31,12 @@ func  Event2queue(event *types.Event) error {
 	if err != nil {
 		return errors.New("couldn't connect to msg server")
 	}
+
 	if err := producer.Produce(np, eventbytes); err != nil {
 		return err //TODO 错误提示不直接 比如 连接超时
 	}
+
+	log.Infof("Published [%s] : '#%d'", subject, event.Sequence)
 
 	return nil
 }

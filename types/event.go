@@ -1,6 +1,10 @@
 package types
 
-import "github.com/tendermint/go-amino"
+import (
+	"errors"
+	"github.com/tendermint/go-amino"
+	"github.com/tendermint/tendermint/libs/common"
+)
 
 type CassiniEventDataTx struct {
 	From      string `json:"from"` //qsc name 或 qos
@@ -10,7 +14,7 @@ type CassiniEventDataTx struct {
 }
 
 type Event struct {
-	NodeAddress        string `json:"node"` //event 源地址
+	NodeAddress        string               `json:"node"` //event 源地址
 	CassiniEventDataTx `json:"eventDataTx"` //event 事件
 }
 
@@ -19,4 +23,28 @@ func RegisterCassiniTypesAmino(cdc *amino.Codec) {
 	cdc.RegisterConcrete(CassiniEventDataTx{}, "cassini/event/CassiniEventDataTx", nil)
 	cdc.RegisterConcrete(Event{}, "cassini/event/Event", nil)
 	cdc.RegisterConcrete(TxQcp{}, "cassini/txqcp/TxQcp", nil)
+}
+
+func (c *CassiniEventDataTx) ConstructFromTags(tags []common.KVPair) error {
+
+	if tags == nil || len(tags) == 0 {
+		return errors.New("empty tags")
+	}
+	for _, tag := range tags {
+		if string(tag.Key) == "qcp.from" {
+			c.From = string(tag.Value)
+		}
+		if string(tag.Key) == "qcp.to" {
+			c.To = string(tag.Value)
+		}
+		if string(tag.Key) == "qcp.hash" {
+			c.HashBytes = tag.Value
+		}
+		if string(tag.Key) == "qcp.sequence" {
+			//bin_buf := bytes.NewBuffer(tag.Value)
+			//binary.Read(bin_buf, binary.BigEndian, &c.Sequence)
+		}
+	}
+
+	return nil
 }
