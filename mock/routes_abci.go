@@ -4,12 +4,12 @@ package mock
 
 import (
 	"errors"
+	"fmt"
 
-	// "github.com/QOSGroup/cassini/log"
-	// abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/QOSGroup/cassini/log"
+	"github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
-	// "github.com/tendermint/tendermint/version"
 )
 
 // ABCIQuery Query the application for some information.
@@ -53,9 +53,9 @@ import (
 // | height    | int64 | 0       | false    | Height (0 means latest)                        |
 // | trusted   | bool   | false   | false    | Does not include a proof of the data inclusion |
 func ABCIQuery(path string, data cmn.HexBytes, height int64, trusted bool) (*ctypes.ResultABCIQuery, error) {
-	// if height < 0 {
-	// 	return nil, fmt.Errorf("height must be non-negative")
-	// }
+	if height < 0 {
+		return nil, fmt.Errorf("height must be non-negative")
+	}
 
 	// resQuery, err := proxyAppQuery.QuerySync(abci.RequestQuery{
 	// 	Path:   path,
@@ -66,9 +66,17 @@ func ABCIQuery(path string, data cmn.HexBytes, height int64, trusted bool) (*cty
 	// if err != nil {
 	// 	return nil, err
 	// }
-	// log.Info("ABCIQuery", "path", path, "data", data, "result", resQuery)
-	// return &ctypes.ResultABCIQuery{*resQuery}, nil
-	return nil, errors.New("not implemented yet")
+	resQuery := &types.ResponseQuery{
+		Log:    "exists",
+		Index:  -1,
+		Height: 0,
+		Key:    []byte("key"),
+		Value:  []byte("value")}
+
+	log.Info("ABCIQuery", "path", path, "data", data, "result", resQuery)
+	return &ctypes.ResultABCIQuery{Response: *resQuery}, nil
+
+	// return nil, errors.New("not implemented yet")
 }
 
 // ABCIInfo Get some info about the application.

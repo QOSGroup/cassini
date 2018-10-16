@@ -39,7 +39,9 @@ func (m MempoolMocker) CheckTx(tx types.Tx, cb func(*abci.Response)) error {
 	out.Data = []byte("foo")
 	out.Tags = []cmn.KVPair{{Key: []byte("baz"), Value: []byte("1")}}
 
-	cb(&abci.Response{Value: &abci.Response_CheckTx{CheckTx: out}})
+	if cb != nil {
+		cb(&abci.Response{Value: &abci.Response_CheckTx{CheckTx: out}})
+	}
 	return nil
 }
 

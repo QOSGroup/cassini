@@ -203,7 +203,7 @@ func BroadcastTxCommit(tx types.Tx) (*ctypes.ResultBroadcastTxCommit, error) {
 	tx = types.Tx("foo")
 	result := abci.ResponseDeliverTx{Data: []byte("bar"), Tags: []cmn.KVPair{{Key: []byte("baz"), Value: []byte("1")}}}
 
-	e := types.EventDataTx{types.TxResult{
+	e := types.EventDataTx{TxResult: types.TxResult{
 		Height: 1,
 		Index:  0,
 		Tx:     tx,
