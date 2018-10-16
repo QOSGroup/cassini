@@ -72,7 +72,7 @@ func GetConfig() *Config {
 // DefaultConfig returns a default configuration for a Tendermint node
 func DefaultConfig() *Config {
 	return &Config{
-		Nats:     "nats://127.0.0.1:4222",
+		Nats:     "nats://192.168.168.195:4222",
 		Kafka:    "",
 		QscNames: DefaultQscConfig(),
 	}
