@@ -4,8 +4,9 @@ import (
 	"context"
 
 	"github.com/QOSGroup/cassini/config"
-	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/event"
+	"github.com/QOSGroup/cassini/log"
+	"github.com/QOSGroup/cassini/msgqueue"
 )
 
 // 命令行 start 命令执行方法
@@ -22,12 +23,12 @@ var starter = func(conf *config.Config) (cancel context.CancelFunc, err error) {
 		return nil, err
 	}
 
-	////启动nats 消费
-	//err = msgqueue.StartQcpConsume(conf)
-	//if err != nil {
-	//	return cancelFunc , err
-	//}
-	//cancels = append(cancels, cancelFunc)
+	//启动nats 消费
+	err = msgqueue.StartQcpConsume(conf)
+	if err != nil {
+		return cancelFunc, err
+	}
+	cancels = append(cancels, cancelFunc)
 
 	cancel = func() {
 		for _, cancelJob := range cancels {

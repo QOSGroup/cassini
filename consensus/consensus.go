@@ -1,19 +1,19 @@
 package consensus
 
 import (
-	"github.com/nats-io/go-nats"
-	"github.com/tendermint/go-amino"
-	"github.com/QOSGroup/cassini/types"
 	"errors"
-	"sync"
-	"strings"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/restclient"
+	"github.com/QOSGroup/cassini/types"
+	"github.com/nats-io/go-nats"
+	"github.com/tendermint/go-amino"
+	"strings"
+	"sync"
 )
 
 type MsgMapper struct {
 	mtx    sync.RWMutex
-	msgMap map[int64]map[string]string
+	MsgMap map[int64]map[string]string
 }
 
 //type HashHostsMap struct{
@@ -22,20 +22,20 @@ type MsgMapper struct {
 
 func (m *MsgMapper) AddMsgToMap(msg *nats.Msg) error {
 
-	N := 2  //TODO 共识参数  按validator power
+	N := 2 //TODO 共识参数  按validator power
 	event := types.Event{}
 	if amino.UnmarshalBinary(msg.Data, &event) != nil {
 		return errors.New("the event Unmarshal error")
 	}
 
 	m.mtx.Lock()
-	hashNode, ok := m.msgMap[event.Sequence]
+	hashNode, ok := m.MsgMap[event.Sequence]
 
 	//还没有sequence对应记录
 	if !ok || hashNode == nil {
 		hashNode = make(map[string]string)
 		hashNode[string(event.HashBytes)] = event.NodeAddress
-		m.msgMap[event.Sequence] = hashNode
+		m.MsgMap[event.Sequence] = hashNode
 
 		m.mtx.Unlock()
 		return nil
@@ -45,21 +45,21 @@ func (m *MsgMapper) AddMsgToMap(msg *nats.Msg) error {
 	if nodes, _ := hashNode[string(event.HashBytes)]; nodes != "" {
 		hashNode[string(event.HashBytes)] += "," + event.NodeAddress
 		nodes := hashNode[string(event.HashBytes)]
-		if strings.Count(nodes,",") >= N - 1  { //达成共识
-			log.Info("consensus from [%s] to [%s] sequence [#%d] hash %s" , event.From,event.To,event.Sequence,string(event.HashBytes))
-			go m.ferry(event.From,event.To,string(event.HashBytes),nodes,event.Sequence)
+		if strings.Count(nodes, ",") >= N-1 { //达成共识
+			log.Infof("consensus from [%s] to [%s] sequence [#%d] hash %s", event.From, event.To, event.Sequence, string(event.HashBytes))
+			//go m.ferry(event.From, event.To, string(event.HashBytes), nodes, event.Sequence)
 		}
 	} else {
-		hashNode[string(event.HashBytes)] +=  event.NodeAddress
+		hashNode[string(event.HashBytes)] += event.NodeAddress
 	}
 
 	m.mtx.Unlock()
 	return nil
 }
 
-func (m *MsgMapper) ferry(from,to,hash,nodes string,sequence int64)  error {
+func (m *MsgMapper) ferry(from, to, hash, nodes string, sequence int64) error {
 
-	for _,node := range strings.Split(nodes,",") {
+	for _, node := range strings.Split(nodes, ",") {
 		r := restclient.NewRestClient("tcp://"+node, "/websocket") //"tcp://192.168.168.195:26657"
 		qcp, err := r.GetTxQcp(to, sequence)
 		if err != nil {
@@ -70,12 +70,12 @@ func (m *MsgMapper) ferry(from,to,hash,nodes string,sequence int64)  error {
 
 		//TODO qxtcp联盟链公钥验签
 
-		err = r.PostTxQcp(to,qcp)  //TODO 连接每个目标链node
+		err = r.PostTxQcp(to, qcp) //TODO 连接每个目标链node
 		if err != nil {
 			continue
 		}
 
-		log.Info("ferried from [%s] to [%s] sequence [#%d] hash %s" , qcp.From,to,sequence,hash)
+		log.Info("ferried from [%s] to [%s] sequence [#%d] hash %s", qcp.From, to, sequence, hash)
 
 		return nil
 	}

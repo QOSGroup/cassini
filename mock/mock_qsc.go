@@ -88,8 +88,8 @@ func StartQscMock(mock *config.MockConfig) (context.CancelFunc, error) {
 			result := abci.ResponseDeliverTx{
 				Data: []byte("mock"),
 				Tags: []cmn.KVPair{
-					{Key: []byte("qcp.to"), Value: []byte("qos")},
-					{Key: []byte("qcp.from"), Value: []byte("qsc")},
+					{Key: []byte("qcp.to"), Value: []byte("QOS")},
+					{Key: []byte("qcp.from"), Value: []byte("QSC1")},
 					{Key: []byte("qcp.sequence"), Value: []byte(fmt.Sprintf("%v", h))},
 					{Key: []byte("qcp.hash"), Value: []byte("abc-just-for-test")},
 				}}
