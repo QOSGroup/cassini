@@ -94,7 +94,7 @@ func StartQscMock(mock *config.MockConfig) (context.CancelFunc, error) {
 					{Key: []byte("qcp.hash"), Value: []byte("abc-just-for-test")},
 				}}
 
-			err = eventBus.PublishEventTx(tmtypes.EventDataTx{tmtypes.TxResult{
+			err = eventBus.PublishEventTx(tmtypes.EventDataTx{TxResult: tmtypes.TxResult{
 				Height: h,
 				Index:  i,
 				Tx:     tx,
