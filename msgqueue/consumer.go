@@ -64,11 +64,11 @@ func QcpConsume(from, to, natsServerUrls string) error {
 }
 
 func qcpCallBack(m *nats.Msg) {
-	i := 0
+
 	tx2 := types.Event{}
 	amino.UnmarshalBinary(m.Data, &tx2)
-	log.Infof("[#%d] Received on [%s]: '%s' Relpy:'%s'\n", i, m.Subject, string(m.Data), m.Reply)
-	log.Info(tx2.From, tx2.To, tx2.Sequence, string(tx2.HashBytes))
+
+	log.Infof("[#%d] Received on [%s]: '%s' Relpy:'%s'\n", tx2.Sequence, m.Subject, tx2.NodeAddress, m.Reply)
 
 	msgMap.AddMsgToMap(m)
 
