@@ -69,11 +69,11 @@ func ABCIQuery(path string, data cmn.HexBytes, height int64, trusted bool) (*cty
 	resQuery := &types.ResponseQuery{
 		Log:    "exists",
 		Index:  -1,
-		Height: 0,
+		Height: height,
 		Key:    []byte("key"),
 		Value:  []byte("value")}
 
-	log.Info("ABCIQuery", "path", path, "data", data, "result", resQuery)
+	log.Info("ABCIQuery", "path", path, "data", data, "height", height, "result", resQuery)
 	return &ctypes.ResultABCIQuery{Response: *resQuery}, nil
 
 	// return nil, errors.New("not implemented yet")
