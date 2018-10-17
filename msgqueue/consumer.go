@@ -47,7 +47,18 @@ func StartQcpConsume(conf *config.Config) (err error) {
 // from ,to is chain name for example "QOS"
 func QcpConsume(from, to, natsServerUrls string) error {
 
-	cb := qcpCallBack
+	var i int64 = 0
+	cb := func(m *nats.Msg) {
+
+		i++
+
+		tx := types.Event{}
+		amino.UnmarshalBinary(m.Data, &tx)
+
+		log.Infof("[#%d] Received on [%s]: sequence [#%d] '%s' Relpy:'%s'\n", i, m.Subject, tx.Sequence, tx.NodeAddress, m.Reply)
+
+		msgMap.AddMsgToMap(m)
+	}
 
 	consummer := NATSConsumer{serverUrls: natsServerUrls, subject: from + "2" + to, CallBack: cb}
 
@@ -65,10 +76,10 @@ func QcpConsume(from, to, natsServerUrls string) error {
 
 func qcpCallBack(m *nats.Msg) {
 
-	tx2 := types.Event{}
-	amino.UnmarshalBinary(m.Data, &tx2)
+	tx := types.Event{}
+	amino.UnmarshalBinary(m.Data, &tx)
 
-	log.Infof("[#%d] Received on [%s]: '%s' Relpy:'%s'\n", tx2.Sequence, m.Subject, tx2.NodeAddress, m.Reply)
+	log.Infof("[#%d] Received on [%s]: '%s' Relpy:'%s'\n", tx.Sequence, m.Subject, tx.NodeAddress, m.Reply)
 
 	msgMap.AddMsgToMap(m)
 
