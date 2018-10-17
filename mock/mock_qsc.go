@@ -17,6 +17,7 @@ import (
 
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/log"
+	"github.com/QOSGroup/qbase/txs"
 	"github.com/tendermint/go-amino"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
@@ -58,13 +59,16 @@ func StartQscMock(mock *config.MockConfig) (context.CancelFunc, error) {
 
 	mempool = MempoolMocker{}
 
-	coreCodec := amino.NewCodec()
-	ctypes.RegisterAmino(coreCodec)
+	cdc := amino.NewCodec()
+	ctypes.RegisterAmino(cdc)
+	cdc.RegisterInterface((*txs.ITx)(nil), nil)
+	// cdc.RegisterConcrete(txs.TxStd{}, "qbase/txs/TxStd", nil)
+	cdc.RegisterConcrete(txs.QcpTxResult{}, "qbase/txs/QcpTxResult", nil)
 
 	mux := http.NewServeMux()
-	wm := NewWebsocketManager(Routes, coreCodec, EventSubscriber(eventBus))
+	wm := NewWebsocketManager(Routes, cdc, EventSubscriber(eventBus))
 	mux.HandleFunc("/websocket", wm.WebsocketHandler)
-	RegisterRPCFuncs(mux, Routes, coreCodec)
+	RegisterRPCFuncs(mux, Routes, cdc)
 	// listener
 	_, err := StartHTTPServer(
 		mock.RPC.ListenAddress,
