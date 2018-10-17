@@ -8,6 +8,7 @@ import (
 
 	"github.com/QOSGroup/qbase/txs"
 	"github.com/QOSGroup/qbase/types"
+	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
@@ -67,9 +68,9 @@ func ABCIQuery(path string, data cmn.HexBytes, height int64, trusted bool) (*txs
 	// log.Info("ABCIQuery", "path", path, "data", data, "height", height, "result", resQuery)
 	// return &ctypes.ResultABCIQuery{Response: *resQuery}, nil
 
-	// tr := txs.NewQcpTxResult(int64(abci.CodeTypeOK), &[]cmn.KVPair{}, 0, types.NewInt(1111111111), "ok")
+	tr := txs.NewQcpTxResult(int64(abci.CodeTypeOK), &[]cmn.KVPair{}, 0, types.NewInt(1111111111), "ok")
 
-	tstd := txs.NewTxStd(nil, "QOS", types.NewInt(999999999))
+	tstd := txs.NewTxStd(tr, "QOS", types.NewInt(999999999))
 
 	tx := &txs.TxQcp{
 		From:        "QOS",
@@ -78,7 +79,7 @@ func ABCIQuery(path string, data cmn.HexBytes, height int64, trusted bool) (*txs
 		TxIndx:      -1,
 		Sequence:    0,
 		Payload:     *tstd}
-	// 仅作为调试接口使用，实际通信数据结构还不确定。并且设置 QcpTxResult 后解析报错，多层嵌套存在bug？
+	// 仅作为调试接口使用，实际通信数据结构还不确定。
 
 	return tx, nil
 }
