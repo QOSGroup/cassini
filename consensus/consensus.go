@@ -94,13 +94,15 @@ EndGet:
 			success = true
 			break EndGet
 		}
+
+		//TODO qxtcp联盟链公钥验签 baseapp.validateTxQcpSignature 签名过程basecli\main.go genQcpSendTx
+
 	}
 
 	if !success {
 		return errors.New("get qcp transaction failed")
 	}
 
-	//TODO qxtcp联盟链公钥验签
 	qscConfig := config.DefaultQscConfig()
 	toNodes := qscConfig[0].NodeAddress //TODO 取目标链nodes 地址
 
