@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/QOSGroup/cassini/log"
-	"github.com/tendermint/tendermint/abci/types"
+	"github.com/QOSGroup/qbase/txs"
+	"github.com/QOSGroup/qbase/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
@@ -52,31 +52,35 @@ import (
 // | data      | []byte | false   | true     | Data                                           |
 // | height    | int64 | 0       | false    | Height (0 means latest)                        |
 // | trusted   | bool   | false   | false    | Does not include a proof of the data inclusion |
-func ABCIQuery(path string, data cmn.HexBytes, height int64, trusted bool) (*ctypes.ResultABCIQuery, error) {
+func ABCIQuery(path string, data cmn.HexBytes, height int64, trusted bool) (*txs.TxQcp, error) {
 	if height < 0 {
 		return nil, fmt.Errorf("height must be non-negative")
 	}
 
-	// resQuery, err := proxyAppQuery.QuerySync(abci.RequestQuery{
-	// 	Path:   path,
-	// 	Data:   data,
+	// resQuery := &types.ResponseQuery{
+	// 	Log:    "exists",
+	// 	Index:  -1,
 	// 	Height: height,
-	// 	Prove:  !trusted,
-	// })
-	// if err != nil {
-	// 	return nil, err
-	// }
-	resQuery := &types.ResponseQuery{
-		Log:    "exists",
-		Index:  -1,
-		Height: height,
-		Key:    []byte("key"),
-		Value:  []byte("value")}
+	// 	Key:    []byte("key"),
+	// 	Value:  []byte("value")}
 
-	log.Info("ABCIQuery", "path", path, "data", data, "height", height, "result", resQuery)
-	return &ctypes.ResultABCIQuery{Response: *resQuery}, nil
+	// log.Info("ABCIQuery", "path", path, "data", data, "height", height, "result", resQuery)
+	// return &ctypes.ResultABCIQuery{Response: *resQuery}, nil
 
-	// return nil, errors.New("not implemented yet")
+	// tr := txs.NewQcpTxResult(int64(abci.CodeTypeOK), &[]cmn.KVPair{}, 0, types.NewInt(1111111111), "ok")
+
+	tstd := txs.NewTxStd(nil, "QOS", types.NewInt(999999999))
+
+	tx := &txs.TxQcp{
+		From:        "QOS",
+		To:          "QSC",
+		BlockHeight: height,
+		TxIndx:      -1,
+		Sequence:    0,
+		Payload:     *tstd}
+	// 仅作为调试接口使用，实际通信数据结构还不确定。并且设置 QcpTxResult 后解析报错，多层嵌套存在bug？
+
+	return tx, nil
 }
 
 // ABCIInfo Get some info about the application.

@@ -38,15 +38,15 @@ var Routes = map[string]*RPCFunc{
 	"abci_info":  NewRPCFunc(ABCIInfo, ""),
 }
 
-// AddUnsafeRoutes 添加非安全接口映射
-func AddUnsafeRoutes() {
-	// control API
-	Routes["dial_seeds"] = NewRPCFunc(UnsafeDialSeeds, "seeds")
-	Routes["dial_peers"] = NewRPCFunc(UnsafeDialPeers, "peers,persistent")
-	Routes["unsafe_flush_mempool"] = NewRPCFunc(UnsafeFlushMempool, "")
+// // AddUnsafeRoutes 添加非安全接口映射
+// func AddUnsafeRoutes() {
+// 	// control API
+// 	Routes["dial_seeds"] = NewRPCFunc(UnsafeDialSeeds, "seeds")
+// 	Routes["dial_peers"] = NewRPCFunc(UnsafeDialPeers, "peers,persistent")
+// 	Routes["unsafe_flush_mempool"] = NewRPCFunc(UnsafeFlushMempool, "")
 
-	// profiler API
-	Routes["unsafe_start_cpu_profiler"] = NewRPCFunc(UnsafeStartCPUProfiler, "filename")
-	Routes["unsafe_stop_cpu_profiler"] = NewRPCFunc(UnsafeStopCPUProfiler, "")
-	Routes["unsafe_write_heap_profile"] = NewRPCFunc(UnsafeWriteHeapProfile, "filename")
-}
+// 	// profiler API
+// 	Routes["unsafe_start_cpu_profiler"] = NewRPCFunc(UnsafeStartCPUProfiler, "filename")
+// 	Routes["unsafe_stop_cpu_profiler"] = NewRPCFunc(UnsafeStopCPUProfiler, "")
+// 	Routes["unsafe_write_heap_profile"] = NewRPCFunc(UnsafeWriteHeapProfile, "filename")
+// }

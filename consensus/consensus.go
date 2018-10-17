@@ -2,13 +2,14 @@ package consensus
 
 import (
 	"errors"
+	"strings"
+	"sync"
+
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/restclient"
 	"github.com/QOSGroup/cassini/types"
 	"github.com/nats-io/go-nats"
 	"github.com/tendermint/go-amino"
-	"strings"
-	"sync"
 )
 
 type MsgMapper struct {
@@ -60,7 +61,7 @@ func (m *MsgMapper) AddMsgToMap(msg *nats.Msg) error {
 func (m *MsgMapper) ferry(from, to, hash, nodes string, sequence int64) error {
 
 	for _, node := range strings.Split(nodes, ",") {
-		r := restclient.NewRestClient("tcp://"+node, "/websocket") //"tcp://192.168.168.195:26657"
+		r := restclient.NewRestClient("tcp://" + node) //"tcp://192.168.168.195:26657"
 		qcp, err := r.GetTxQcp(to, sequence)
 		if err != nil {
 			continue
