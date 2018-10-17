@@ -55,4 +55,5 @@ func Infof(format string, params ...interface{}) {
 // Errorf formats logs
 func Errorf(format string, params ...interface{}) {
 	seelog.Errorf(format, params...)
+
 }
