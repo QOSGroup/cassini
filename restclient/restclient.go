@@ -23,10 +23,8 @@ func newHTTP(remote string) *HTTP {
 	cdc := rc.Codec()
 	ctypes.RegisterAmino(cdc)
 	cdc.RegisterInterface((*txs.ITx)(nil), nil)
-	// cdc.RegisterConcrete(txs.TxStd{}, "qbase/txs/TxStd", nil)
-	cdc.RegisterConcrete(txs.QcpTxResult{}, "qbase/txs/QcpTxResult", nil)
-
-	// rc.SetCodec(cdc)
+	cdc.RegisterConcrete(&txs.QcpTxResult{}, "qbase/txs/QcpTxResult", nil)
+	rc.SetCodec(cdc)
 
 	return &HTTP{
 		rpc:    rc,

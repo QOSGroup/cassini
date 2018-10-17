@@ -62,8 +62,7 @@ func StartQscMock(mock *config.MockConfig) (context.CancelFunc, error) {
 	cdc := amino.NewCodec()
 	ctypes.RegisterAmino(cdc)
 	cdc.RegisterInterface((*txs.ITx)(nil), nil)
-	// cdc.RegisterConcrete(txs.TxStd{}, "qbase/txs/TxStd", nil)
-	cdc.RegisterConcrete(txs.QcpTxResult{}, "qbase/txs/QcpTxResult", nil)
+	cdc.RegisterConcrete(&txs.QcpTxResult{}, "qbase/txs/QcpTxResult", nil)
 
 	mux := http.NewServeMux()
 	wm := NewWebsocketManager(Routes, cdc, EventSubscriber(eventBus))
