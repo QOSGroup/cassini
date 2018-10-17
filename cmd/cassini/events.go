@@ -26,7 +26,7 @@ var events = func(conf *config.Config) (context.CancelFunc, error) {
 
 //EventSubscribe 从websocket服务端订阅event
 //remote 服务端地址 example  "tcp://127.0.0.1:27657"
-git
+
 func Subscribe(remote string, query string) (context.CancelFunc, error) {
 	fmt.Printf("Subscribe remote: %v, query: %v\n", remote, query)
 	txs := make(chan interface{})
