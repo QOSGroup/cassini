@@ -5,9 +5,11 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/restclient"
 	"github.com/QOSGroup/cassini/types"
+	"github.com/QOSGroup/qbasebak/txs"
 	"github.com/nats-io/go-nats"
 	"github.com/tendermint/go-amino"
 )
@@ -69,28 +71,58 @@ func (m *MsgMapper) AddMsgToMap(msg *nats.Msg) error {
 	return nil
 }
 
-func (m *MsgMapper) ferry(from, to, hash, nodes string, sequence int64) error {
+//ferry get qcp transaction from source chain and post it to destnation chain
+//from is chain name of the source chain
+//to is the chain name of destnation chain
+//nodes is consensus nodes of the source chain
+func (m *MsgMapper) ferry(from, to, hash, nodes string, sequence int64) (err error) {
+
+	qcp := new(txs.TxQcp)
+	success := false
+
+EndGet:
 
 	for _, node := range strings.Split(nodes, ",") {
 		r := restclient.NewRestClient(node) //"tcp://192.168.168.195:26657"
-		qcp, err := r.GetTxQcp(to, sequence)
+		qcp, err = r.GetTxQcp(to, sequence)
 		if err != nil {
 			continue
 		}
 
 		//TODO qcp hash 与 hash值比对
+		if e := qcp.ValidateBasicData(true, "QOS"); &e == nil {
+			success = true
+			break EndGet
+		}
+	}
 
-		//TODO qxtcp联盟链公钥验签
+	if !success {
+		return errors.New("get qcp transaction failed")
+	}
 
-		err = r.PostTxQcp(to, qcp) //TODO 连接每个目标链node
+	//TODO qxtcp联盟链公钥验签
+	qscConfig := config.DefaultQscConfig()
+	toNodes := qscConfig[0].NodeAddress //TODO 取目标链nodes 地址
+
+EndPost:
+	for _, node := range strings.Split(toNodes, ",") {
+
+		r := restclient.NewRestClient(node)
+		err := r.PostTxQcp(to, qcp) //TODO 连接每个目标链node
 		if err != nil {
 			continue
 		}
 
 		log.Info("ferried from [%s] to [%s] sequence [#%d] hash %s", qcp.From, to, sequence, hash)
 
+		success = true
+		break EndPost
+	}
+
+	if success {
 		return nil
 	}
-	return errors.New("ferry qcptx failed")
+
+	return errors.New("ferry qcp transaction failed")
 
 }
