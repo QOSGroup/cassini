@@ -25,14 +25,16 @@ var events = func(conf *config.Config) (context.CancelFunc, error) {
 }
 
 //Subscribe 从websocket服务端订阅event
-//remote 服务端地址 example  "tcp://127.0.0.1:27657"
+//remote 服务端地址 example  "tcp://127.0.0.1:26657"
 func Subscribe(remote string, query string) (context.CancelFunc, error) {
+	fmt.Printf("Subscribe remote: %v, query: %v\n", remote, query)
 	txs := make(chan interface{})
 	cancel, err := event.SubscribeRemote(remote, "cassini-events", query, txs)
 	if err != nil {
-		log.Errorf("Remote [%s] : '%s'\n", remote, err)
+		log.Errorf("Remote [%s] : '%s'", remote, err)
 		return nil, err
 	}
+	fmt.Printf("Subscribe successful - remote: %v, query: %v\n", remote, query)
 	go func() {
 		for e := range txs {
 			fmt.Println("Got Tx event - ", e.(tmtypes.EventDataTx)) //注：e类型断言为types.CassiniEventDataTx 类型

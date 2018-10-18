@@ -1,4 +1,4 @@
-package mock
+package adapter
 
 // copy from tendermint/rpc/core/abci.go
 

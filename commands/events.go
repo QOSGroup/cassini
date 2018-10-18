@@ -7,7 +7,7 @@ import (
 )
 
 func addEventsFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&config.GetConfig().EventsListen, "listen", "tcp://127.0.0.1:27657", "listen address")
+	cmd.Flags().StringVar(&config.GetConfig().EventsListen, "listen", "tcp://127.0.0.1:26657", "listen address")
 	cmd.Flags().StringVar(&config.GetConfig().EventsQuery, "subscribe", "tm.event='Tx' AND qcp.to='qos'", "event subscribe query")
 }
 

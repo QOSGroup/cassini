@@ -1,4 +1,4 @@
-package mock
+package adapter
 
 // copy from tendermint/rpc/lib/server/handlers.go
 
@@ -16,8 +16,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/websocket"
 	"github.com/QOSGroup/cassini/log"
+	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 
 	amino "github.com/tendermint/go-amino"
@@ -451,7 +451,7 @@ func NewWSConnection(
 	cdc *amino.Codec,
 	options ...func(*wsConnection),
 ) *wsConnection {
-	baseConn.SetReadLimit(maxBodyBytes)
+	baseConn.SetReadLimit(MaxBodyBytes)
 	wsc := &wsConnection{
 		remoteAddr:        baseConn.RemoteAddr().String(),
 		baseConn:          baseConn,

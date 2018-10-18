@@ -1,4 +1,4 @@
-package mock
+package adapter
 
 // copy from tendermint/rpc/lib/server/http_params.go
 

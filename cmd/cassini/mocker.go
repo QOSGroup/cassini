@@ -14,7 +14,7 @@ var mocker = func(conf *config.Config) (cancel context.CancelFunc, err error) {
 	var cancels []context.CancelFunc
 	var cancelFunc context.CancelFunc
 	for _, mockConf := range config.GetConfig().Mocks {
-		cancelFunc, err = mock.StartQscMock(&mockConf)
+		cancelFunc, err = mock.StartMock(mockConf)
 		if err != nil {
 			return
 		}
@@ -24,7 +24,7 @@ var mocker = func(conf *config.Config) (cancel context.CancelFunc, err error) {
 	//if err != nil {
 	//	return
 	//}
-	cancels = append(cancels, cancelFunc)
+	// cancels = append(cancels, cancelFunc)
 	cancel = func() {
 		for _, cancelJob := range cancels {
 			if cancelJob != nil {

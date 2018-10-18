@@ -1,4 +1,4 @@
-package mock
+package adapter
 
 import (
 	abci "github.com/tendermint/tendermint/abci/types"

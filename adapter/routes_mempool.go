@@ -1,4 +1,4 @@
-package mock
+package adapter
 
 // copy from tendermint/rpc/core/mempool.go
 
@@ -52,8 +52,8 @@ import (
 // | Parameter | Type | Default | Required | Description     |
 // |-----------+------+---------+----------+-----------------|
 // | tx        | Tx   | nil     | true     | The transaction |
-func BroadcastTxAsync(tx types.Tx) (*ctypes.ResultBroadcastTx, error) {
-	err := mempool.CheckTx(tx, nil)
+func (s DefaultHandlerService) BroadcastTxAsync(tx types.Tx) (*ctypes.ResultBroadcastTx, error) {
+	err := s.txPool.CheckTx(tx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("Error broadcasting transaction: %v", err)
 	}
@@ -92,9 +92,9 @@ func BroadcastTxAsync(tx types.Tx) (*ctypes.ResultBroadcastTx, error) {
 // | Parameter | Type | Default | Required | Description     |
 // |-----------+------+---------+----------+-----------------|
 // | tx        | Tx   | nil     | true     | The transaction |
-func BroadcastTxSync(tx types.Tx) (*ctypes.ResultBroadcastTx, error) {
+func (s DefaultHandlerService) BroadcastTxSync(tx types.Tx) (*ctypes.ResultBroadcastTx, error) {
 	resCh := make(chan *abci.Response, 1)
-	err := mempool.CheckTx(tx, func(res *abci.Response) {
+	err := s.txPool.CheckTx(tx, func(res *abci.Response) {
 		resCh <- res
 	})
 	if err != nil {
@@ -154,24 +154,24 @@ func BroadcastTxSync(tx types.Tx) (*ctypes.ResultBroadcastTx, error) {
 // | Parameter | Type | Default | Required | Description     |
 // |-----------+------+---------+----------+-----------------|
 // | tx        | Tx   | nil     | true     | The transaction |
-func BroadcastTxCommit(tx types.Tx) (*ctypes.ResultBroadcastTxCommit, error) {
+func (s DefaultHandlerService) BroadcastTxCommit(tx types.Tx) (*ctypes.ResultBroadcastTxCommit, error) {
 	// subscribe to tx being committed in block
 	ctx, cancel := context.WithTimeout(context.Background(), subscribeTimeout)
 	defer cancel()
 	deliverTxResCh := make(chan interface{})
 	// q := types.EventQueryTxFor(tx)
 	q := tmquery.MustParse("tm.event='Tx'")
-	err := eventBus.Subscribe(ctx, "mempool", q, deliverTxResCh)
+	err := s.eventHub.Subscribe(ctx, "mempool", q, deliverTxResCh)
 	if err != nil {
 		err = errors.Wrap(err, "failed to subscribe to tx")
 		log.Error("Error on broadcastTxCommit", "err", err)
 		return nil, fmt.Errorf("Error on broadcastTxCommit: %v", err)
 	}
-	defer eventBus.Unsubscribe(context.Background(), "mempool", q)
+	defer s.eventHub.Unsubscribe(context.Background(), "mempool", q)
 
 	// broadcast the tx and register checktx callback
 	checkTxResCh := make(chan *abci.Response, 1)
-	err = mempool.CheckTx(tx, func(res *abci.Response) {
+	err = s.txPool.CheckTx(tx, func(res *abci.Response) {
 		checkTxResCh <- res
 	})
 	if err != nil {
@@ -210,7 +210,7 @@ func BroadcastTxCommit(tx types.Tx) (*ctypes.ResultBroadcastTxCommit, error) {
 		Result: result,
 	}}
 
-	err = eventBus.PublishEventTx(e)
+	err = s.eventHub.PublishEventTx(e)
 
 	if err != nil {
 		log.Error("Publish event tx error: ", err)
@@ -240,70 +240,4 @@ func BroadcastTxCommit(tx types.Tx) (*ctypes.ResultBroadcastTxCommit, error) {
 			Hash:      tx.Hash(),
 		}, fmt.Errorf("Timed out waiting for transaction to be included in a block")
 	}
-}
-
-// UnconfirmedTxs Get unconfirmed transactions (maximum ?limit entries) including their number.
-//
-// ```shell
-// curl 'localhost:26657/unconfirmed_txs'
-// ```
-//
-// ```go
-// client := client.NewHTTP("tcp://0.0.0.0:26657", "/websocket")
-// result, err := client.UnconfirmedTxs()
-// ```
-//
-// > The above command returns JSON structured like this:
-//
-// ```json
-// {
-//   "error": "",
-//   "result": {
-//     "txs": [],
-//     "n_txs": 0
-//   },
-//   "id": "",
-//   "jsonrpc": "2.0"
-// }
-//
-// ### Query Parameters
-//
-// | Parameter | Type | Default | Required | Description                          |
-// |-----------+------+---------+----------+--------------------------------------|
-// | limit     | int  | 30      | false    | Maximum number of entries (max: 100) |
-// ```
-func UnconfirmedTxs(limit int) (*ctypes.ResultUnconfirmedTxs, error) {
-	// reuse per_page validator
-	limit = validatePerPage(limit)
-
-	txs := mempool.Reap(limit)
-	return &ctypes.ResultUnconfirmedTxs{N: len(txs), Txs: txs}, nil
-}
-
-// NumUnconfirmedTxs Get number of unconfirmed transactions.
-//
-// ```shell
-// curl 'localhost:26657/num_unconfirmed_txs'
-// ```
-//
-// ```go
-// client := client.NewHTTP("tcp://0.0.0.0:26657", "/websocket")
-// result, err := client.UnconfirmedTxs()
-// ```
-//
-// > The above command returns JSON structured like this:
-//
-// ```json
-// {
-//   "error": "",
-//   "result": {
-//     "txs": null,
-//     "n_txs": 0
-//   },
-//   "id": "",
-//   "jsonrpc": "2.0"
-// }
-// ```
-func NumUnconfirmedTxs() (*ctypes.ResultUnconfirmedTxs, error) {
-	return &ctypes.ResultUnconfirmedTxs{N: mempool.Size()}, nil
 }
