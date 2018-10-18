@@ -44,7 +44,7 @@ func EventSubscribe(remote string) (context.CancelFunc, error) {
 		for ed := range txs {
 
 			eventData := ed.(ttypes.EventDataTx)
-			log.Infof("\n received event '%s'", eventData)
+			log.Infof("received event '%s'", eventData)
 			cassiniEventDataTx := ctypes.CassiniEventDataTx{}
 
 			cassiniEventDataTx.ConstructFromTags(eventData.Result.Tags)
@@ -69,7 +69,7 @@ func SubscribeRemote(remote string, subscriber string, query string, txs chan<- 
 
 	cdc := amino.NewCodec()
 	ctypes.RegisterCassiniTypesAmino(cdc)
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 
 	//query := query.MustParse("tm.event = 'Tx' AND tx.height = 3")
 	q := pubsub.MustParse(query)

@@ -12,7 +12,7 @@ import (
 // 命令行 start 命令执行方法
 var starter = func(conf *config.Config) (cancel context.CancelFunc, err error) {
 
-	log.Debug("Starter")
+	log.Info("begin to start cassini")
 
 	var cancels []context.CancelFunc
 	var cancelFunc context.CancelFunc
@@ -38,5 +38,7 @@ var starter = func(conf *config.Config) (cancel context.CancelFunc, err error) {
 			}
 		}
 	}
+
+	log.Info("cassini started \n")
 	return
 }
