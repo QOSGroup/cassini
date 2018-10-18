@@ -24,8 +24,11 @@ type MsgMapper struct {
 func (m *MsgMapper) AddMsgToMap(msg *nats.Msg) error {
 
 	N := 2 //TODO 共识参数  按validator power
+
 	event := types.Event{}
+
 	if amino.UnmarshalBinary(msg.Data, &event) != nil {
+
 		return errors.New("the event Unmarshal error")
 	}
 
@@ -34,21 +37,29 @@ func (m *MsgMapper) AddMsgToMap(msg *nats.Msg) error {
 
 	//还没有sequence对应记录
 	if !ok || hashNode == nil {
+
 		hashNode = make(map[string]string)
+
 		hashNode[string(event.HashBytes)] = event.NodeAddress
+
 		m.MsgMap[event.Sequence] = hashNode
 
 		m.mtx.Unlock()
+
 		return nil
 	}
 
 	//sequence已经存在
 	if nodes, _ := hashNode[string(event.HashBytes)]; nodes != "" {
+
 		hashNode[string(event.HashBytes)] += "," + event.NodeAddress
+
 		nodes := hashNode[string(event.HashBytes)]
+
 		if strings.Count(nodes, ",") >= N-1 { //达成共识
+
 			log.Infof("consensus from [%s] to [%s] sequence [#%d] hash %s", event.From, event.To, event.Sequence, string(event.HashBytes))
-			//go m.ferry(event.From, event.To, string(event.HashBytes), nodes, event.Sequence)
+			go m.ferry(event.From, event.To, string(event.HashBytes), nodes, event.Sequence)
 		}
 	} else {
 		hashNode[string(event.HashBytes)] += event.NodeAddress
@@ -61,7 +72,7 @@ func (m *MsgMapper) AddMsgToMap(msg *nats.Msg) error {
 func (m *MsgMapper) ferry(from, to, hash, nodes string, sequence int64) error {
 
 	for _, node := range strings.Split(nodes, ",") {
-		r := restclient.NewRestClient("tcp://" + node) //"tcp://192.168.168.195:26657"
+		r := restclient.NewRestClient(node) //"tcp://192.168.168.195:26657"
 		qcp, err := r.GetTxQcp(to, sequence)
 		if err != nil {
 			continue
