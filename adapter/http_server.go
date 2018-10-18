@@ -1,4 +1,4 @@
-package mock
+package adapter
 
 // copy from tendermint/rpc/lib/server/http_server.go
 
@@ -25,9 +25,9 @@ type Config struct {
 }
 
 const (
-	// maxBodyBytes controls the maximum number of bytes the
+	// MaxBodyBytes controls the maximum number of bytes the
 	// server will read parsing the request body.
-	maxBodyBytes = int64(1000000) // 1MB
+	MaxBodyBytes = int64(1000000) // 1MB
 )
 
 // StartHTTPServer starts an HTTP server on listenAddr with the given handler.
@@ -59,7 +59,7 @@ func StartHTTPServer(
 	go func() {
 		err := http.Serve(
 			listener,
-			RecoverAndLogHandler(maxBytesHandler{h: handler, n: maxBodyBytes}),
+			RecoverAndLogHandler(maxBytesHandler{h: handler, n: MaxBodyBytes}),
 		)
 		log.Error("HTTP rpc server stopped", "err", err)
 	}()
@@ -104,7 +104,7 @@ func StartHTTPAndTLSServer(
 	go func() {
 		err := http.ServeTLS(
 			listener,
-			RecoverAndLogHandler(maxBytesHandler{h: handler, n: maxBodyBytes}),
+			RecoverAndLogHandler(maxBytesHandler{h: handler, n: MaxBodyBytes}),
 			certFile,
 			keyFile,
 		)
@@ -169,7 +169,7 @@ func RecoverAndLogHandler(handler http.Handler) http.Handler {
 					WriteRPCResponseHTTP(rww, res)
 				} else {
 					// For the rest,
-					log.Error("HTTP handler panic err: %v, stack: %v",
+					log.Errorf("HTTP handler panic err: %v, stack: %v",
 						e, string(debug.Stack()),
 					)
 					rww.WriteHeader(http.StatusInternalServerError)
@@ -186,7 +186,6 @@ func RecoverAndLogHandler(handler http.Handler) http.Handler {
 				r.Method, r.URL, rww.Status, durationMS, r.RemoteAddr,
 			)
 		}()
-
 		handler.ServeHTTP(rww, r)
 	})
 }
@@ -208,6 +207,7 @@ func (w *ResponseWriterWrapper) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return w.ResponseWriter.(http.Hijacker).Hijack()
 }
 
+// MaxBytesHandler 嵌套封装 http.Handler
 type maxBytesHandler struct {
 	h http.Handler
 	n int64

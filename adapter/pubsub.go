@@ -1,4 +1,4 @@
-package mock
+package adapter
 
 // copy from tendermint/libs/pubsub/pubsub.go
 

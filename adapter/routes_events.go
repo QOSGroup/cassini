@@ -1,4 +1,4 @@
-package mock
+package adapter
 
 // copy from tendermint/rpc/core/events.go
 
@@ -87,7 +87,7 @@ import (
 // | query     | string | ""      | true     | Query       |
 //
 // <aside class="notice">WebSocket only</aside>
-func Subscribe(wsCtx rpctypes.WSRPCContext, query string) (*ctypes.ResultSubscribe, error) {
+func (s DefaultHandlerService) Subscribe(wsCtx rpctypes.WSRPCContext, query string) (*ctypes.ResultSubscribe, error) {
 	addr := wsCtx.GetRemoteAddr()
 	log.Info("Subscribe to query", "remote", addr, "query", query)
 
@@ -99,7 +99,7 @@ func Subscribe(wsCtx rpctypes.WSRPCContext, query string) (*ctypes.ResultSubscri
 	ctx, cancel := context.WithTimeout(context.Background(), subscribeTimeout)
 	defer cancel()
 	ch := make(chan interface{})
-	err = eventBusFor(wsCtx).Subscribe(ctx, addr, q, ch)
+	err = s.eventBusFor(wsCtx).Subscribe(ctx, addr, q, ch)
 	if err != nil {
 		return nil, err
 	}
@@ -139,14 +139,14 @@ func Subscribe(wsCtx rpctypes.WSRPCContext, query string) (*ctypes.ResultSubscri
 // | query     | string | ""      | true     | Query       |
 //
 // <aside class="notice">WebSocket only</aside>
-func Unsubscribe(wsCtx rpctypes.WSRPCContext, query string) (*ctypes.ResultUnsubscribe, error) {
+func (s DefaultHandlerService) Unsubscribe(wsCtx rpctypes.WSRPCContext, query string) (*ctypes.ResultUnsubscribe, error) {
 	addr := wsCtx.GetRemoteAddr()
 	log.Info("Unsubscribe from query", "remote", addr, "query", query)
 	q, err := tmquery.New(query)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to parse query")
 	}
-	err = eventBusFor(wsCtx).Unsubscribe(context.Background(), addr, q)
+	err = s.eventBusFor(wsCtx).Unsubscribe(context.Background(), addr, q)
 	if err != nil {
 		return nil, err
 	}
@@ -172,20 +172,20 @@ func Unsubscribe(wsCtx rpctypes.WSRPCContext, query string) (*ctypes.ResultUnsub
 // ```
 //
 // <aside class="notice">WebSocket only</aside>
-func UnsubscribeAll(wsCtx rpctypes.WSRPCContext) (*ctypes.ResultUnsubscribe, error) {
+func (s DefaultHandlerService) UnsubscribeAll(wsCtx rpctypes.WSRPCContext) (*ctypes.ResultUnsubscribe, error) {
 	addr := wsCtx.GetRemoteAddr()
 	log.Info("Unsubscribe from all", "remote", addr)
-	err := eventBusFor(wsCtx).UnsubscribeAll(context.Background(), addr)
+	err := s.eventBusFor(wsCtx).UnsubscribeAll(context.Background(), addr)
 	if err != nil {
 		return nil, err
 	}
 	return &ctypes.ResultUnsubscribe{}, nil
 }
 
-func eventBusFor(wsCtx rpctypes.WSRPCContext) tmtypes.EventBusSubscriber {
+func (s DefaultHandlerService) eventBusFor(wsCtx rpctypes.WSRPCContext) tmtypes.EventBusSubscriber {
 	es := wsCtx.GetEventSubscriber()
 	if es == nil {
-		es = eventBus
+		es = s.eventHub
 	}
 	return es
 }
