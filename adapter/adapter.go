@@ -84,7 +84,7 @@ type DefaultBroadcaster struct {
 func (b *DefaultBroadcaster) BroadcastTx(tx txs.TxQcp) (err error) {
 	var e *tmtypes.EventDataTx
 	e, err = Transform(tx)
-	s := String(&tx)
+	s := StringTx(&tx)
 	if err != nil {
 		log.Errorf("Transform tx %v error: %v", s, err)
 		return
@@ -117,19 +117,19 @@ func Transform(tx txs.TxQcp) (*tmtypes.EventDataTx, error) {
 		Tags: []cmn.KVPair{
 			{Key: []byte("qcp.to"), Value: []byte(tx.To)},
 			{Key: []byte("qcp.from"), Value: []byte(tx.From)},
-			{Key: []byte("qcp.sequence"), Value: []byte(fmt.Sprintf("%v", 1))},
+			{Key: []byte("qcp.sequence"), Value: []byte(fmt.Sprintf("%v", tx.Sequence))},
 			{Key: []byte("qcp.hash"), Value: []byte("abc-just-for-test")},
 		}}
 	return &tmtypes.EventDataTx{TxResult: tmtypes.TxResult{
-		Height: 1,
-		Index:  0,
+		Height: tx.BlockHeight,
+		Index:  uint32(tx.TxIndx),
 		Tx:     t,
 		Result: result,
 	}}, nil
 }
 
-// String 将交易转换为字符串，用于日志记录，非完全序列化
-func String(tx *txs.TxQcp) string {
+// StringTx 将交易转换为字符串，用于日志记录，非完全序列化
+func StringTx(tx *txs.TxQcp) string {
 	if tx == nil {
 		return ""
 	}

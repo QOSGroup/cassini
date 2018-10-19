@@ -49,16 +49,18 @@ func StartMock(mock config.MockConfig) (context.CancelFunc, error) {
 		log.Debug("ticker: ", mock.Name)
 		// 定时发布Tx 事件
 		tick := time.NewTicker(time.Millisecond * 1000)
+		h := int64(1)
 		for range tick.C {
 			err = adapter.BroadcastTx(txs.TxQcp{
 				From:        mock.Name,
 				To:          mock.Name,
-				BlockHeight: 1,
+				BlockHeight: h,
 				TxIndx:      0,
-				Sequence:    0})
+				Sequence:    h})
 			if err != nil {
 				log.Error("EventBus publish tx error: ", err)
 			}
+			h++
 		}
 	}
 
