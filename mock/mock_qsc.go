@@ -53,7 +53,7 @@ func StartMock(mock config.MockConfig) (context.CancelFunc, error) {
 		for range tick.C {
 			err = adapter.BroadcastTx(txs.TxQcp{
 				From:        mock.Name,
-				To:          mock.Name,
+				To:          mock.To,
 				BlockHeight: h,
 				TxIndx:      0,
 				Sequence:    h})
