@@ -11,13 +11,14 @@ import (
 
 // 命令行 start 命令执行方法
 var starter = func(conf *config.Config) (cancel context.CancelFunc, err error) {
-	log.Debug("Starter")
+
+	log.Info("begin to start cassini")
 
 	var cancels []context.CancelFunc
 	var cancelFunc context.CancelFunc
 
 	//启动事件监听 chain node
-	cancelFunc, err = event.StartSubscibe(conf)
+	cancelFunc, err = event.StartEventSubscibe(conf)
 	cancels = append(cancels, cancelFunc)
 	if err != nil {
 		return nil, err
@@ -37,5 +38,7 @@ var starter = func(conf *config.Config) (cancel context.CancelFunc, err error) {
 			}
 		}
 	}
+
+	log.Info("cassini started \n")
 	return
 }

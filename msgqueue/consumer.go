@@ -19,12 +19,13 @@ type QcpConsumer struct {
 	NATSConsumer
 }
 
-var msgMap = new(consensus.MsgMapper)
+//var msgMap = new(consensus.MsgMapper)
+var msgMap = consensus.MsgMapper{MsgMap: make(map[int64]map[string]string)}
 
-func init() {
-	//m.mtx.Unlock()
-	msgMap.MsgMap = make(map[int64]map[string]string)
-}
+//func init() {
+//	//m.mtx.Unlock()
+//	msgMap.MsgMap = make(map[int64]map[string]string)
+//}
 
 func StartQcpConsume(conf *config.Config) (err error) {
 
@@ -36,7 +37,11 @@ func StartQcpConsume(conf *config.Config) (err error) {
 	for i, _ := range qsconfigs {
 		for j := i + 1; j < len(qsconfigs); j++ {
 			//err = QcpConsume(qsconfig.Name, qsconfigs[j].Name, config.DefaultConfig().Nats)
-			err = QcpConsume("QSC1", "QOS", config.DefaultConfig().Nats)
+			err = QcpConsume("QSC1", "QOS", config.DefaultConfig().Nats) //TODO
+			if err == nil {
+
+				log.Infof("Listening on subject [%s]", "QSC12QOS")
+			}
 		}
 	}
 
@@ -47,7 +52,19 @@ func StartQcpConsume(conf *config.Config) (err error) {
 // from ,to is chain name for example "QOS"
 func QcpConsume(from, to, natsServerUrls string) error {
 
-	cb := qcpCallBack
+	var i int64 = 0
+
+	cb := func(m *nats.Msg) {
+
+		i++
+
+		tx := types.Event{}
+		amino.UnmarshalBinary(m.Data, &tx)
+
+		log.Infof("[#%d] Consume subject [%s] sequence [#%d] nodeAddress '%s'", i, m.Subject, tx.Sequence, tx.NodeAddress)
+
+		msgMap.AddMsgToMap(m)
+	}
 
 	consummer := NATSConsumer{serverUrls: natsServerUrls, subject: from + "2" + to, CallBack: cb}
 
@@ -63,27 +80,33 @@ func QcpConsume(from, to, natsServerUrls string) error {
 	return nil
 }
 
-func qcpCallBack(m *nats.Msg) {
-
-	tx2 := types.Event{}
-	amino.UnmarshalBinary(m.Data, &tx2)
-
-	log.Infof("[#%d] Received on [%s]: '%s' Relpy:'%s'\n", tx2.Sequence, m.Subject, tx2.NodeAddress, m.Reply)
-
-	msgMap.AddMsgToMap(m)
-
-}
+//func qcpCallBack(m *nats.Msg) {
+//
+//	tx := types.Event{}
+//	amino.UnmarshalBinary(m.Data, &tx)
+//
+//	log.Infof("[#%d] Received on [%s]: '%s' Relpy:'%s'\n", tx.Sequence, m.Subject, tx.NodeAddress, m.Reply)
+//
+//	msgMap.AddMsgToMap(m)
+//
+//}
 
 type NATSConsumer struct {
-	serverUrls string              //消息队列服务地址，多个用","分割  例如 "nats://192.168.168.195:4222，nats://192.168.168.195:4223"
-	subject    string              //订阅主题
-	CallBack   func(msg *nats.Msg) //处理消息的回调函数
+	serverUrls string //消息队列服务地址，多个用","分割  例如 "nats://192.168.168.195:4222，nats://192.168.168.195:4223"
+
+	subject string //订阅主题
+
+	CallBack func(msg *nats.Msg) //处理消息的回调函数
 }
 
 func (n *NATSConsumer) Connect() (nc *nats.Conn, err error) {
+
 	nc, err = nats.Connect(n.serverUrls)
+
 	if err != nil {
+
 		log.Error("Can't connect: %v\n", err)
+
 		return nil, err
 	}
 	return
@@ -117,12 +140,13 @@ func (n *NATSConsumer) Consume(nc *nats.Conn) (err error) {
 		log.Error(err)
 	}
 
-	log.Infof("Listening on [%s]\n", n.subject)
+	//log.Infof("Listening on [%s]\n", n.subject)
 
 	return nil
 }
 
 func (n *NATSConsumer) Reply(nc *nats.Conn) error {
+
 	i := 0
 	nc.Subscribe(n.subject, func(msg *nats.Msg) {
 		i++

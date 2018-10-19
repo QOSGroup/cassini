@@ -13,13 +13,15 @@ import (
 
 type NATSProducer struct {
 	ServerUrls string //消息队列服务地址，多个用","分割  例如 "nats://192.168.168.195:4222，nats://192.168.168.195:4223"
-	Subject    string //主题
+
+	Subject string //主题
 }
 
 func (n *NATSProducer) Connect() (nc *nats.Conn, err error) {
+
 	nc, err = nats.Connect(n.ServerUrls)
 	if err != nil {
-		log.Error("Can't connect: %v\n", err)
+		log.Error("Can't connect: %v", err)
 		return nil, err
 	}
 	return
@@ -34,21 +36,27 @@ func (n *NATSProducer) Produce(nc *nats.Conn, msg []byte) (err error) {
 	//reconnect to nats server
 	i := nc.Status()
 	if i != nats.CONNECTED {
+
 		if i != nats.CLOSED {
 			nc.Close()
 		} //status==2 closed
+
 		nc, err = n.Connect()
 		if err != nil {
+
 			return errors.New("the nats.Conn is not available")
 		}
 	}
 
 	if e := nc.Publish(n.Subject, msg); e != nil {
-		return errors.New("Published faild")
+
+		return errors.New("send event to nats server faild")
 	}
+
 	nc.Flush()
 
 	if err := nc.LastError(); err != nil {
+
 		log.Error(err)
 	}
 
@@ -61,13 +69,13 @@ func (n *NATSProducer) ProduceWithReply(nc *nats.Conn, reply string, payload []b
 	msg, err := nc.Request(n.Subject, payload, 100*time.Millisecond)
 	if err != nil {
 		if nc.LastError() != nil {
-			log.Errorf("Error in Request: %v\n", nc.LastError())
+			log.Errorf("Error in Request: %v", nc.LastError())
 		}
-		log.Errorf("Error in Request: %v\n", err)
+		log.Errorf("Error in Request: %v", err)
 	}
 
-	log.Infof("Published [%s] : '%s'\n", n.Subject, payload)
-	log.Infof("Received [%v] : '%s'\n", msg.Subject, string(msg.Data))
-	log.Infof("Reply [%v] : '%s'\n", msg.Subject, string(msg.Reply))
+	log.Infof("Published [%s] : '%s'", n.Subject, payload)
+	log.Infof("Received [%v] : '%s'", msg.Subject, string(msg.Data))
+	log.Infof("Reply [%v] : '%s'", msg.Subject, string(msg.Reply))
 	return nil
 }

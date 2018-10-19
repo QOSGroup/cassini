@@ -14,29 +14,30 @@ import (
 func Event2queue(event *types.Event) error {
 
 	if event == nil || event.HashBytes == nil || event.From == "" || event.To == "" || event.NodeAddress == "" {
+
 		return errors.New("event is nil")
 	}
 
 	eventbytes, _ := amino.MarshalBinary(*event)
-	//log.Debug("Event:" , *event)
-	//event2 := types.Event{}
-	//if amino.UnmarshalBinary(eventbytes,&event2) != nil {
-	//	log.Debug("UnmarshalBinary Event:" , event2)
-	//}
 
 	subject := event.From + "2" + event.To
 
 	producer := mq.NATSProducer{ServerUrls: config.TestConfig().Nats, Subject: subject}
-	np, err := producer.Connect()
+
+	np, err := producer.Connect() //TODO don't connect every time
+
 	if err != nil {
+
 		return errors.New("couldn't connect to msg server")
 	}
 
+	defer np.Close()
+
 	if err := producer.Produce(np, eventbytes); err != nil {
-		return err //TODO 错误提示不直接 比如 连接超时
+		return err
 	}
 
-	log.Infof("Published [%s] : '#%d'", subject, event.Sequence)
+	log.Infof("routed event from [%s] sequence [#%d] to subject [%s] ", event.NodeAddress, event.Sequence, subject)
 
 	return nil
 }

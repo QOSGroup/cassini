@@ -11,7 +11,7 @@ import (
 	"github.com/QOSGroup/cassini/mock"
 	"github.com/stretchr/testify/assert"
 	tmtypes "github.com/tendermint/tendermint/types"
-	)
+)
 
 func TestEventssubRemote(t *testing.T) {
 
@@ -33,8 +33,8 @@ func TestEventssubRemote(t *testing.T) {
 		err = fmt.Errorf("Ip and port parse error: %v", addr)
 		assert.NoError(t, err)
 	}
-	//go Subscribe("tcp://192.168.168.27:26657")
-	// Subscribe(fmt.Sprintf("tcp://127.0.0.1:%v", ipPosrt[1]))
+	//go EventSubscribe("tcp://192.168.168.27:26657")
+	// EventSubscribe(fmt.Sprintf("tcp://127.0.0.1:%v", ipPosrt[1]))
 	remote := fmt.Sprintf("tcp://127.0.0.1:%v", ipPort[1])
 	t.Log("remote", remote)
 	txs := make(chan interface{})
@@ -87,4 +87,3 @@ func TestEventssubRemote(t *testing.T) {
 		t.Fatal("did not receive a transaction after 10 sec.")
 	}
 }
-
