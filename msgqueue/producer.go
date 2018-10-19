@@ -21,7 +21,7 @@ func (n *NATSProducer) Connect() (nc *nats.Conn, err error) {
 
 	nc, err = nats.Connect(n.ServerUrls)
 	if err != nil {
-		log.Error("Can't connect: %v", err)
+		log.Errorf("Can't connect: %v", err)
 		return nil, err
 	}
 	return

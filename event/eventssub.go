@@ -46,7 +46,7 @@ func EventSubscribe(remote string) (context.CancelFunc, error) {
 			eventData := ed.(ttypes.EventDataTx)
 			log.Infof("received event '%s'", eventData)
 			cassiniEventDataTx := ctypes.CassiniEventDataTx{}
-
+			cassiniEventDataTx.Height = eventData.Height
 			cassiniEventDataTx.ConstructFromTags(eventData.Result.Tags)
 
 			event := ctypes.Event{NodeAddress: remote, CassiniEventDataTx: cassiniEventDataTx}

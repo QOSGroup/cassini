@@ -15,13 +15,9 @@ type MsgMapper struct {
 	MsgMap map[int64]map[string]string
 }
 
-//type HashHostsMap struct{
-//	hashHostsMap map[string]string
-//}
-
 func (m *MsgMapper) AddMsgToMap(msg *nats.Msg) error {
 
-	N := 2 //TODO 共识参数  按validator power
+	N := 2 //TODO 共识参数  按validator voting power
 
 	event := types.Event{}
 
@@ -31,6 +27,8 @@ func (m *MsgMapper) AddMsgToMap(msg *nats.Msg) error {
 	}
 
 	m.mtx.Lock()
+	defer m.mtx.Unlock()
+
 	hashNode, ok := m.MsgMap[event.Sequence]
 
 	//还没有sequence对应记录
@@ -42,27 +40,31 @@ func (m *MsgMapper) AddMsgToMap(msg *nats.Msg) error {
 
 		m.MsgMap[event.Sequence] = hashNode
 
-		m.mtx.Unlock()
-
 		return nil
 	}
 
 	//sequence已经存在
 	if nodes, _ := hashNode[string(event.HashBytes)]; nodes != "" {
 
+		if strings.Contains(nodes, event.NodeAddress) { //有节点重复广播event
+			return nil
+		}
+
 		hashNode[string(event.HashBytes)] += "," + event.NodeAddress
 
 		nodes := hashNode[string(event.HashBytes)]
 
-		if strings.Count(nodes, ",") >= N-1 { //达成共识
+		if strings.Count(nodes, ",") >= N-1 { //TODO 达成共识
 
 			log.Infof("consensus from [%s] to [%s] sequence [#%d] hash %s", event.From, event.To, event.Sequence, string(event.HashBytes))
-			go m.ferry(event.From, event.To, string(event.HashBytes), nodes, event.Sequence)
+
+			f := Ferry{}
+			go f.ferryQCP(event.From, event.To, string(event.HashBytes), nodes, event.Sequence)
 		}
 	} else {
+
 		hashNode[string(event.HashBytes)] += event.NodeAddress
 	}
 
-	m.mtx.Unlock()
 	return nil
 }

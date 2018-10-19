@@ -22,26 +22,24 @@ type QcpConsumer struct {
 //var msgMap = new(consensus.MsgMapper)
 var msgMap = consensus.MsgMapper{MsgMap: make(map[int64]map[string]string)}
 
-//func init() {
-//	//m.mtx.Unlock()
-//	msgMap.MsgMap = make(map[int64]map[string]string)
-//}
-
 func StartQcpConsume(conf *config.Config) (err error) {
 
 	qsconfigs := config.DefaultQscConfig()
+
 	if len(qsconfigs) < 2 {
-		return errors.New("config error , at leat two qsc names ")
+		return errors.New("config error , at least two qsc names ")
 	}
 
-	for i, _ := range qsconfigs {
+	for i, qsconfig := range qsconfigs {
 		for j := i + 1; j < len(qsconfigs); j++ {
-			//err = QcpConsume(qsconfig.Name, qsconfigs[j].Name, config.DefaultConfig().Nats)
-			err = QcpConsume("QSC1", "QOS", config.DefaultConfig().Nats) //TODO
-			if err == nil {
+			go QcpConsume(qsconfigs[j].Name, qsconfig.Name, config.DefaultConfig().Nats)
+			go QcpConsume(qsconfig.Name, qsconfigs[j].Name, config.DefaultConfig().Nats)
 
-				log.Infof("Listening on subject [%s]", "QSC12QOS")
-			}
+			//err = QcpConsume("QSC1", "QOS", config.DefaultConfig().Nats) //TODO
+
+			//if err == nil {
+			//	log.Infof("Listening on subject [%s]", "QSC12QOS")
+			//}
 		}
 	}
 
@@ -80,17 +78,6 @@ func QcpConsume(from, to, natsServerUrls string) error {
 	return nil
 }
 
-//func qcpCallBack(m *nats.Msg) {
-//
-//	tx := types.Event{}
-//	amino.UnmarshalBinary(m.Data, &tx)
-//
-//	log.Infof("[#%d] Received on [%s]: '%s' Relpy:'%s'\n", tx.Sequence, m.Subject, tx.NodeAddress, m.Reply)
-//
-//	msgMap.AddMsgToMap(m)
-//
-//}
-
 type NATSConsumer struct {
 	serverUrls string //消息队列服务地址，多个用","分割  例如 "nats://192.168.168.195:4222，nats://192.168.168.195:4223"
 
@@ -105,7 +92,7 @@ func (n *NATSConsumer) Connect() (nc *nats.Conn, err error) {
 
 	if err != nil {
 
-		log.Error("Can't connect: %v\n", err)
+		log.Errorf("Can't connect: %v", err)
 
 		return nil, err
 	}

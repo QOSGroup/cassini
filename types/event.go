@@ -9,6 +9,7 @@ import (
 type CassiniEventDataTx struct {
 	From      string `json:"from"` //qsc name 或 qos
 	To        string `json:"to"`   //qsc name 或 qos
+	Height    int64  `json:"height"`
 	Sequence  int64  `json:"sequence"`
 	HashBytes []byte `json:"hashBytes"` //TxQcp 做 sha256
 }
