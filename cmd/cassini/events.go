@@ -3,10 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
 
+	"github.com/QOSGroup/cassini/adapter"
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/event"
 	"github.com/QOSGroup/cassini/log"
+	"github.com/QOSGroup/qbase/txs"
 
 	tmtypes "github.com/tendermint/tendermint/types"
 )
@@ -29,20 +33,41 @@ var events = func(conf *config.Config) (context.CancelFunc, error) {
 
 func Subscribe(remote string, query string) (context.CancelFunc, error) {
 	fmt.Printf("Subscribe remote: %v, query: %v\n", remote, query)
-	txs := make(chan interface{})
-	cancel, err := event.SubscribeRemote(remote, "cassini-events", query, txs)
+	txsChan := make(chan interface{})
+	cancel, err := event.SubscribeRemote(remote, "cassini-events", query, txsChan)
 	if err != nil {
 		log.Errorf("Remote [%s] : '%s'", remote, err)
 		return nil, err
 	}
 	fmt.Printf("Subscribe successful - remote: %v, query: %v\n", remote, query)
 	go func() {
-		for e := range txs {
-			fmt.Println("Got Tx event - ", e.(tmtypes.EventDataTx)) //注：e类型断言为types.CassiniEventDataTx 类型
-			for _, tto := range e.(tmtypes.EventDataTx).Result.Tags {
-				kv := tto //interface{}(tto).(common.KVPair)
-				fmt.Println(string(kv.Key), string(kv.Value))
+		for e := range txsChan {
+			et := e.(tmtypes.EventDataTx) //注：e类型断言为tmtypes.EventDataTx 类型
+			var from, to string
+			var seq int64
+			var err error
+			for _, kv := range et.Result.Tags {
+				if strings.EqualFold("qcp.to", string(kv.Key)) {
+					to = string(kv.Value)
+				}
+				if strings.EqualFold("qcp.from", string(kv.Key)) {
+					from = string(kv.Value)
+				}
+				if strings.EqualFold("qcp.sequence", string(kv.Key)) {
+					seq, err = strconv.ParseInt(string(kv.Value), 10, 64)
+					if err != nil {
+						log.Errorf("Get Tx event error: %v", err)
+					}
+				}
 			}
+			tx := &txs.TxQcp{
+				BlockHeight: et.Height,
+				TxIndx:      int64(et.Index),
+				Sequence:    seq,
+				From:        from,
+				To:          to}
+			fmt.Println("Got Tx event - ", adapter.StringTx(tx))
+
 		}
 	}()
 	return cancel, nil
