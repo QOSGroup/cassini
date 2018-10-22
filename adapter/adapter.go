@@ -110,14 +110,18 @@ func (b *DefaultBroadcaster) BroadcastTx(tx txs.TxQcp) (err error) {
 }
 
 // Transform 将交易转换为交易事件
+var seq int64
+
 func Transform(tx txs.TxQcp) (*tmtypes.EventDataTx, error) {
+	seq++
 	t := tmtypes.Tx("abc-just-for-test")
 	result := abcitypes.ResponseDeliverTx{
 		Data: []byte("mock"),
 		Tags: []cmn.KVPair{
 			{Key: []byte("qcp.to"), Value: []byte(tx.To)},
 			{Key: []byte("qcp.from"), Value: []byte(tx.From)},
-			{Key: []byte("qcp.sequence"), Value: []byte(fmt.Sprintf("%v", tx.Sequence))},
+			//{Key: []byte("qcp.sequence"), Value: []byte(fmt.Sprintf("%v", tx.Sequence))},
+			{Key: []byte("qcp.sequence"), Value: []byte(fmt.Sprintf("%v", seq))},
 			{Key: []byte("qcp.hash"), Value: []byte("abc-just-for-test")},
 		}}
 	return &tmtypes.EventDataTx{TxResult: tmtypes.TxResult{

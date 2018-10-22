@@ -6,6 +6,8 @@ import (
 	"context"
 	"time"
 
+	"errors"
+	"fmt"
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/route"
@@ -15,30 +17,49 @@ import (
 	"github.com/tendermint/tendermint/rpc/client"
 	ttypes "github.com/tendermint/tendermint/types"
 	"strings"
+	"sync"
 )
+
+var wg sync.WaitGroup
 
 func StartEventSubscibe(conf *config.Config) (cancel context.CancelFunc, err error) {
 
+	var subEventFrom string
+	es := make(chan error, 1024) //TODO 1024根据节点数需要修改
+
 	for _, qsconfig := range config.DefaultQscConfig() {
 		for _, nodeAddr := range strings.Split(qsconfig.NodeAddress, ",") {
-			go EventSubscribe("tcp://" + nodeAddr)
+			wg.Add(1)
+
+			go EventSubscribe("tcp://"+nodeAddr, es)
+			subEventFrom += fmt.Sprintf("[%s] ", nodeAddr)
+
 		}
 	}
+
+	wg.Wait()
+
+	if len(es) > 0 {
+		return nil, errors.New("subscibe events failed")
+	}
+
+	log.Infof("subscibed events from %s", subEventFrom)
 
 	return
 }
 
 //EventSubscribe 从websocket服务端订阅event
 //remote 服务端地址 example  "tcp://192.168.168.27:26657"
-func EventSubscribe(remote string) (context.CancelFunc, error) {
+func EventSubscribe(remote string, e chan<- error) context.CancelFunc {
 
 	txs := make(chan interface{})
 
 	cancel, err := SubscribeRemote(remote, "cassini", "tm.event = 'Tx'", txs)
 	if err != nil {
-		log.Errorf("Remote [%s] : '%s'\n", remote, err)
+		e <- err
+		log.Errorf("Remote [%s] : '%s'", remote, err)
 	}
-	defer cancel()
+	//defer cancel() //TODO  panic
 
 	go func() {
 		for ed := range txs {
@@ -59,7 +80,9 @@ func EventSubscribe(remote string) (context.CancelFunc, error) {
 		}
 	}()
 
-	return cancel, nil
+	wg.Add(-1)
+
+	return cancel
 }
 
 // SubscribeRemote 订阅接口，暴露检测点以便于测试

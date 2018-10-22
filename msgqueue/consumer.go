@@ -3,6 +3,7 @@ package msgqueue
 
 import (
 	"errors"
+	"fmt"
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/consensus"
 	"github.com/QOSGroup/cassini/log"
@@ -19,8 +20,7 @@ type QcpConsumer struct {
 	NATSConsumer
 }
 
-//var msgMap = new(consensus.MsgMapper)
-var msgMap = consensus.MsgMapper{MsgMap: make(map[int64]map[string]string)}
+var ce = consensus.NewConsEhgine()
 
 func StartQcpConsume(conf *config.Config) (err error) {
 
@@ -30,11 +30,13 @@ func StartQcpConsume(conf *config.Config) (err error) {
 		return errors.New("config error , at least two qsc names ")
 	}
 
+	var subjects string
 	for i, qsconfig := range qsconfigs {
 		for j := i + 1; j < len(qsconfigs); j++ {
 			go QcpConsume(qsconfigs[j].Name, qsconfig.Name, config.DefaultConfig().Nats)
 			go QcpConsume(qsconfig.Name, qsconfigs[j].Name, config.DefaultConfig().Nats)
 
+			subjects += fmt.Sprintf("[%s] [%s]", qsconfigs[j].Name+"2"+qsconfig.Name, qsconfig.Name+"2"+qsconfigs[j].Name)
 			//err = QcpConsume("QSC1", "QOS", config.DefaultConfig().Nats) //TODO
 
 			//if err == nil {
@@ -42,6 +44,8 @@ func StartQcpConsume(conf *config.Config) (err error) {
 			//}
 		}
 	}
+
+	log.Infof("Listening on subjects %s", subjects)
 
 	return
 }
@@ -61,7 +65,7 @@ func QcpConsume(from, to, natsServerUrls string) error {
 
 		log.Infof("[#%d] Consume subject [%s] sequence [#%d] nodeAddress '%s'", i, m.Subject, tx.Sequence, tx.NodeAddress)
 
-		msgMap.AddMsgToMap(m)
+		ce.Add2Engine(m)
 	}
 
 	consummer := NATSConsumer{serverUrls: natsServerUrls, subject: from + "2" + to, CallBack: cb}
@@ -88,15 +92,7 @@ type NATSConsumer struct {
 
 func (n *NATSConsumer) Connect() (nc *nats.Conn, err error) {
 
-	nc, err = nats.Connect(n.serverUrls)
-
-	if err != nil {
-
-		log.Errorf("Can't connect: %v", err)
-
-		return nil, err
-	}
-	return
+	return connect2Nats(n.serverUrls)
 }
 
 func (n *NATSConsumer) Consume(nc *nats.Conn) (err error) {
@@ -150,4 +146,17 @@ func (n *NATSConsumer) Reply(nc *nats.Conn) error {
 
 	//runtime.Goexit()
 	return nil
+}
+
+func connect2Nats(serverUrls string) (nc *nats.Conn, err error) {
+
+	nc, err = nats.Connect(serverUrls)
+	//log.Debugf("connectting to nats :[%s]", serverUrls)
+	if err != nil {
+
+		log.Errorf("Can't connect: %v", err)
+
+		return nil, err
+	}
+	return
 }

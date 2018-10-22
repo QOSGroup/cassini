@@ -6,10 +6,26 @@ import (
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/restclient"
 	"github.com/QOSGroup/qbase/txs"
+	"github.com/nats-io/go-nats"
 	"github.com/tendermint/tendermint/crypto/tmhash"
 	"github.com/tendermint/tendermint/libs/common"
 	"strings"
 )
+
+type ConsEngine struct {
+	M *MsgMapper
+	f *Ferry
+}
+
+func NewConsEhgine() *ConsEngine {
+	ce := new(ConsEngine)
+	ce.M = &MsgMapper{MsgMap: make(map[int64]map[string]string)}
+	return ce
+}
+
+func (c *ConsEngine) Add2Engine(msg *nats.Msg) error {
+	return c.M.AddMsgToMap(msg)
+}
 
 type Ferry struct {
 }

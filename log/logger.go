@@ -6,7 +6,8 @@ import (
 
 var dfaultConfig = `
 <seelog>
-	<outputs formatid="formater"><console /></outputs>
+	<outputs formatid="formater"><console />
+	</outputs>
 	<formats>
 		<format id="formater" format="[%Date(2006-01-02 15:04:05.000000000)][%LEV] %Msg%n"/>
 	</formats>

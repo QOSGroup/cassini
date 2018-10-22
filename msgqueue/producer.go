@@ -19,12 +19,7 @@ type NATSProducer struct {
 
 func (n *NATSProducer) Connect() (nc *nats.Conn, err error) {
 
-	nc, err = nats.Connect(n.ServerUrls)
-	if err != nil {
-		log.Errorf("Can't connect: %v", err)
-		return nil, err
-	}
-	return
+	return connect2Nats(n.ServerUrls)
 }
 
 func (n *NATSProducer) Produce(nc *nats.Conn, msg []byte) (err error) {
