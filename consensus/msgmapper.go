@@ -15,7 +15,7 @@ type MsgMapper struct {
 	MsgMap map[int64]map[string]string
 }
 
-func (m *MsgMapper) AddMsgToMap(msg *nats.Msg) error {
+func (m *MsgMapper) AddMsgToMap(msg *nats.Msg, f *Ferry) error {
 
 	N := 2 //TODO 共识参数  按validator voting power
 
@@ -58,7 +58,7 @@ func (m *MsgMapper) AddMsgToMap(msg *nats.Msg) error {
 
 			log.Infof("consensus from [%s] to [%s] sequence [#%d] hash %s", event.From, event.To, event.Sequence, string(event.HashBytes))
 
-			f := Ferry{}
+			//f := Ferry{}
 			go f.ferryQCP(event.From, event.To, string(event.HashBytes), nodes, event.Sequence)
 		}
 	} else {
