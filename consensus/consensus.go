@@ -93,7 +93,7 @@ EndGet:
 
 	for _, node := range strings.Split(nodes, ",") {
 
-		qcp, err := f.getTxQcpFromNode(to, hash, node, sequence)
+		qcp, err = f.getTxQcpFromNode(to, hash, node, sequence)
 
 		if err != nil || qcp == nil {
 			continue

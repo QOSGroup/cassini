@@ -22,7 +22,7 @@ func (m *MsgMapper) AddMsgToMap(event types.Event, f *Ferry) (sequence int64, er
 
 	hashNode, ok := m.MsgMap[event.Sequence]
 
-	//log.Infof("%v", m.MsgMap)
+	//log.Infof("%v", m.MsgMap)l
 
 	//还没有sequence对应记录
 	if !ok || hashNode == nil {
