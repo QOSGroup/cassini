@@ -32,6 +32,7 @@ func (m *MsgMapper) AddMsgToMap(msg *nats.Msg, f *Ferry) error {
 
 	hashNode, ok := m.MsgMap[event.Sequence]
 
+	log.Infof("%v", m.MsgMap)
 	//还没有sequence对应记录
 	if !ok || hashNode == nil {
 
