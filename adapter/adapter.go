@@ -109,9 +109,9 @@ func (b *DefaultBroadcaster) BroadcastTx(tx txs.TxQcp) (err error) {
 	return
 }
 
-// Transform 将交易转换为交易事件
 var seq int64
 
+// Transform 将交易转换为交易事件
 func Transform(tx txs.TxQcp) (*tmtypes.EventDataTx, error) {
 	seq++
 	t := tmtypes.Tx("abc-just-for-test")
@@ -173,8 +173,7 @@ func NewHandlerService(name, id, listenAddr string) (HandlerService, error) {
 func (s *DefaultHandlerService) init() error {
 	cdc := amino.NewCodec()
 	ctypes.RegisterAmino(cdc)
-	cdc.RegisterInterface((*txs.ITx)(nil), nil)
-	cdc.RegisterConcrete(&txs.QcpTxResult{}, "qbase/txs/QcpTxResult", nil)
+	txs.RegisterCodec(cdc)
 
 	s.mux = http.NewServeMux()
 	Routes := s.Routes()
