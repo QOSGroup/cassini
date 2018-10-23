@@ -62,7 +62,7 @@ func Subscribe(remote string, query string) (context.CancelFunc, error) {
 			}
 			tx := &txs.TxQcp{
 				BlockHeight: et.Height,
-				TxIndx:      int64(et.Index),
+				TxIndex:     int64(et.Index),
 				Sequence:    seq,
 				From:        from,
 				To:          to}

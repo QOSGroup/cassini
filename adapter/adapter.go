@@ -126,7 +126,7 @@ func Transform(tx txs.TxQcp) (*tmtypes.EventDataTx, error) {
 		}}
 	return &tmtypes.EventDataTx{TxResult: tmtypes.TxResult{
 		Height: tx.BlockHeight,
-		Index:  uint32(tx.TxIndx),
+		Index:  uint32(tx.TxIndex),
 		Tx:     t,
 		Result: result,
 	}}, nil
@@ -137,7 +137,7 @@ func StringTx(tx *txs.TxQcp) string {
 	if tx == nil {
 		return ""
 	}
-	return fmt.Sprintf("[%v, %v, %v, %v, %v]", tx.From, tx.To, tx.BlockHeight, tx.TxIndx, tx.Sequence)
+	return fmt.Sprintf("[%v, %v, %v, %v, %v]", tx.From, tx.To, tx.BlockHeight, tx.TxIndex, tx.Sequence)
 }
 
 // DefaultHandlerService 服务管理结构，提供基本的启动，停止等服务管理功能。

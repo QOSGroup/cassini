@@ -119,7 +119,7 @@ func ABCIQuery(path string, data cmn.HexBytes, height int64, trusted bool) (*cty
 		From:        "qstar",
 		To:          "qos",
 		BlockHeight: height,
-		TxIndx:      -1,
+		TxIndex:     -1,
 		Sequence:    0,
 		TxStd:       tstd}
 

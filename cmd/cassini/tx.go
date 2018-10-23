@@ -10,7 +10,7 @@ import (
 	"github.com/QOSGroup/cassini/restclient"
 	"github.com/QOSGroup/qbase/example/basecoin/app"
 	bctxs "github.com/QOSGroup/qbase/example/basecoin/tx"
-	bctypes "github.com/QOSGroup/qbase/example/basecoin/types"
+	bctypes "github.com/QOSGroup/qbase/types"
 	"github.com/QOSGroup/qbase/txs"
 	"github.com/QOSGroup/qbase/types"
 	amino "github.com/tendermint/go-amino"
@@ -46,7 +46,7 @@ var txHandler = func(conf *config.Config) (context.CancelFunc, error) {
 	nonce := int64(1)
 	chainID := "qstar"
 	qcpPriKey := "0xa3288910405746e29aeec7d5ed56fac138b215e651e3244e6d995f25cc8a74c40dd1ef8d2e8ac876faaa4fb281f17fb9bebb08bc14e016c3a88c6836602ca97595ae32300b"
-	qcpseq := int64(6)
+	qcpseq := int64(8)
 	isresult := false
 
 	// cdc := amino.NewCodec()
@@ -60,7 +60,7 @@ var txHandler = func(conf *config.Config) (context.CancelFunc, error) {
 	receiverAddr, _ := types.GetAddrFromBech32(receiver)
 
 	txQcp := genQcpTx(cdc, senderAddr, receiverAddr,
-		bctypes.Coin{Name: coin, Amount: types.NewInt(amount)},
+		bctypes.BaseCoin{Name: coin, Amount: types.NewInt(amount)},
 		prikey, nonce, chainID, qcpPriKey, qcpseq, isresult)
 
 	fmt.Printf("TxQcp: %v\n", txQcp)
@@ -74,7 +74,7 @@ var txHandler = func(conf *config.Config) (context.CancelFunc, error) {
 
 // 生成QCP交易
 func genQcpTx(cdc *amino.Codec, sender types.Address, receiver types.Address,
-	coin bctypes.Coin, senderPriHex string, nonce int64,
+	coin bctypes.BaseCoin, senderPriHex string, nonce int64,
 	chainID string, caPriHex string, qcpseq int64, isresult bool) *txs.TxQcp {
 	sendTx := bctxs.NewSendTx(sender, receiver, coin)
 	std := txs.NewTxStd(&sendTx, "basecoin-chain", types.NewInt(int64(0)))
