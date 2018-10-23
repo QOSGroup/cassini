@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"time"
 
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/log"
@@ -20,7 +19,8 @@ var mocker = func(conf *config.Config) (cancel context.CancelFunc, err error) {
 			return
 		}
 		cancels = append(cancels, cancelFunc)
-		time.Sleep(100 * time.Millisecond)
+
+		//time.Sleep(1100 * time.Millisecond)
 	}
 	//cancelFunc, err = starter(conf)
 	//if err != nil {

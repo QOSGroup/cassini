@@ -24,28 +24,29 @@ func (n *NATSProducer) Connect() (nc *nats.Conn, err error) {
 
 func (n *NATSProducer) Produce(nc *nats.Conn, msg []byte) (err error) {
 
-	//if nc == nil {
-	//	return errors.New("the nats.Conn is nil")
-	//}
-	//
-	////reconnect to nats server
-	//i := nc.Status()
-	//if i != nats.CONNECTED {
-	//
-	//	if i != nats.CLOSED {
-	//		nc.Close()
-	//	} //status==2 closed
-	//
-	//	nc, err = n.Connect()
-	//	if err != nil {
-	//
-	//		return errors.New("the nats.Conn is not available")
-	//	}
-	//}
-	nc, err = n.Connect()
-	if err != nil {
-		return errors.New("the nats.Conn is not available")
+	if nc == nil {
+		return errors.New("the nats.Conn is nil")
 	}
+
+	//reconnect to nats server
+	i := nc.Status()
+	if i != nats.CONNECTED {
+
+		if i != nats.CLOSED {
+			nc.Close()
+		} //status==2 closed
+
+		nc, err = n.Connect()
+		if err != nil {
+
+			return errors.New("the nats.Conn is not available")
+		}
+	}
+
+	//nc, err = n.Connect()
+	//if err != nil {
+	//	return errors.New("the nats.Conn is not available")
+	//}
 	if e := nc.Publish(n.Subject, msg); e != nil {
 
 		return errors.New("send event to nats server faild")

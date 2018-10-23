@@ -114,26 +114,26 @@ func (n *NATSConsumer) Connect() (nc *nats.Conn, err error) {
 
 func (n *NATSConsumer) Consume(nc *nats.Conn) (err error) {
 
-	//if nc == nil {
-	//	return errors.New("the nats.Conn is nil")
-	//}
-	////reconnect to nats server
-	//i := nc.Status()
-	//
-	//if i != nats.CONNECTED {
-	//	if i != nats.CLOSED {
-	//		nc.Close()
-	//	}
-	//	nc, err = n.Connect()
-	//	if err != nil {
-	//		return errors.New("the nats.Conn is not available")
-	//	}
-	//}
-
-	nc, err = n.Connect()
-	if err != nil {
-		return errors.New("the nats.Conn is not available")
+	if nc == nil {
+		return errors.New("the nats.Conn is nil")
 	}
+	//reconnect to nats server
+	i := nc.Status()
+
+	if i != nats.CONNECTED {
+		if i != nats.CLOSED {
+			nc.Close()
+		}
+		nc, err = n.Connect()
+		if err != nil {
+			return errors.New("the nats.Conn is not available")
+		}
+	}
+
+	//nc, err = n.Connect()
+	//if err != nil {
+	//	return errors.New("the nats.Conn is not available")
+	//}
 
 	subscription, err := nc.Subscribe(n.subject, n.CallBack)
 	if err != nil {
