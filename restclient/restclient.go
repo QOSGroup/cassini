@@ -3,8 +3,10 @@ package restclient
 import (
 	"fmt"
 
+	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/qbase/txs"
 	"github.com/pkg/errors"
+	amino "github.com/tendermint/go-amino"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/rpc/client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -22,8 +24,7 @@ func newHTTP(remote string) *HTTP {
 	rc := rpcclient.NewJSONRPCClient(remote)
 	cdc := rc.Codec()
 	ctypes.RegisterAmino(cdc)
-	cdc.RegisterInterface((*txs.ITx)(nil), nil)
-	cdc.RegisterConcrete(&txs.QcpTxResult{}, "qbase/txs/QcpTxResult", nil)
+	txs.RegisterCodec(cdc)
 	rc.SetCodec(cdc)
 
 	return &HTTP{
@@ -31,13 +32,13 @@ func newHTTP(remote string) *HTTP {
 		remote: remote}
 }
 
-// ABCIQueryTxQcp 查询交易数据客户端接口实现
-func (c *HTTP) ABCIQueryTxQcp(path string, data cmn.HexBytes) (*txs.TxQcp, error) {
-	return c.abciQueryTxQcpWithOptions(path, data, client.DefaultABCIQueryOptions)
+// ABCIQuery abci query 标准接口
+func (c *HTTP) ABCIQuery(path string, data cmn.HexBytes) (*ctypes.ResultABCIQuery, error) {
+	return c.abciQueryWithOptions(path, data, client.DefaultABCIQueryOptions)
 }
 
-func (c *HTTP) abciQueryTxQcpWithOptions(path string, data cmn.HexBytes, opts client.ABCIQueryOptions) (*txs.TxQcp, error) {
-	result := new(txs.TxQcp)
+func (c *HTTP) abciQueryWithOptions(path string, data cmn.HexBytes, opts client.ABCIQueryOptions) (*ctypes.ResultABCIQuery, error) {
+	result := new(ctypes.ResultABCIQuery)
 	_, err := c.rpc.Call("abci_query",
 		map[string]interface{}{"path": path, "data": data, "height": opts.Height, "trusted": opts.Trusted},
 		result)
@@ -51,12 +52,17 @@ func (c *HTTP) abciQueryTxQcpWithOptions(path string, data cmn.HexBytes, opts cl
 type RestClient struct {
 	// *client.HTTP
 	*HTTP
+	cdc *amino.Codec
 }
 
 // NewRestClient 创建 rpc 远程访问客户端
 func NewRestClient(remote string) *RestClient {
 	// return &RestClient{HTTP: client.NewHTTP(remote, "")}
-	return &RestClient{HTTP: newHTTP(remote)}
+	// cdc := app.MakeCodec()
+	cdc := amino.NewCodec()
+	txs.RegisterCodec(cdc)
+
+	return &RestClient{HTTP: newHTTP(remote), cdc: cdc}
 }
 
 //GetTxQcp [chainId]/out/sequence //需要输出到"chainId"的qcp tx最大序号
@@ -64,18 +70,42 @@ func NewRestClient(remote string) *RestClient {
 //[chainId]/in/sequence //已经接受到来自"chainId"的qcp tx最大序号
 //[chainId]/in/pubkey //接受来自"chainId"的合法公钥
 func (r *RestClient) GetTxQcp(chainID string, sequence int64) (*txs.TxQcp, error) {
+	key := fmt.Sprintf("[%s]/out/tx_[%d]", chainID, sequence)
+	result, err := r.ABCIQuery("/store/qcp/key", []byte(key))
+	if err != nil {
+		log.Errorf("Get TxQcp error: %v", err)
+	}
 
-	path := chainID + "/out/tx_" + fmt.Sprintf("%d", sequence)
-
-	return r.ABCIQueryTxQcp(path, []byte(""))
+	var tx txs.TxQcp
+	if result.Response.GetValue() != nil {
+		err = r.cdc.UnmarshalBinaryBare(result.Response.GetValue(), &tx)
+		if err != nil {
+			log.Errorf("Get TxQcp error: %v", err)
+			return nil, err
+		}
+		log.Debugf("Get TxQcp: %s", tx.From)
+	}
+	return &tx, nil
 }
 
 //GetSequence 查询交易序列号
 func (r *RestClient) GetSequence(chainID string, outin string) (int64, error) {
-
-	// path := chainID + "/" + outin + "/sequence"
-	// r.ABCIQuery(path, []byte(""))
-	var seq int64 = 1
+	path := "/store/qcp/key"
+	data := fmt.Sprintf("[%s]/%s/sequence", chainID, outin)
+	result, err := r.ABCIQuery(path, []byte(data))
+	if err != nil {
+		log.Errorf("Get sequence error: %v", err)
+		return -1, err
+	}
+	var seq int64
+	if result.Response.GetValue() != nil {
+		err = r.cdc.UnmarshalBinaryBare(result.Response.GetValue(), &seq)
+		if err != nil {
+			log.Errorf("Get sequence error when parse: %v", err)
+			return -1, err
+		}
+	}
+	log.Debugf("Get sequence: %d", seq)
 	return seq, nil
 }
 
