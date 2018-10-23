@@ -8,6 +8,7 @@ import (
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/restclient"
+	motxs "github.com/QOSGroup/cassini/mock/tx"
 	"github.com/QOSGroup/qbase/example/basecoin/app"
 	bctxs "github.com/QOSGroup/qbase/example/basecoin/tx"
 	bctypes "github.com/QOSGroup/qbase/types"
@@ -55,6 +56,7 @@ var txHandler = func(conf *config.Config) (context.CancelFunc, error) {
 	// cdc.RegisterConcrete(&bctypes.AppAccount{}, "basecoin/AppAccount", nil)
 	// cdc.RegisterConcrete(&bctxs.SendTx{}, "basecoin/SendTx", nil)
 	cdc := app.MakeCodec()
+	cdc.RegisterConcrete(&motxs.TxMock{}, "cassini/mock/txmock", nil)
 
 	senderAddr, _ := types.GetAddrFromBech32(sender)
 	receiverAddr, _ := types.GetAddrFromBech32(receiver)

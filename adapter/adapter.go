@@ -13,6 +13,7 @@ import (
 	"github.com/QOSGroup/qbase/txs"
 	amino "github.com/tendermint/go-amino"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/crypto"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	stat "github.com/tendermint/tendermint/state"
@@ -39,6 +40,7 @@ type Receiver interface {
 type HandlerService interface {
 	Start() error
 	Stop() error
+	GetCodec() *amino.Codec
 	PublishTx(tx txs.TxQcp) error
 	PublishEvent(e tmtypes.EventDataTx) error
 	CancelTx(tx txs.TxQcp) error
@@ -111,19 +113,19 @@ func (b *DefaultBroadcaster) BroadcastTx(tx txs.TxQcp) (err error) {
 
 // Transform 将交易转换为交易事件
 func Transform(tx txs.TxQcp) (*tmtypes.EventDataTx, error) {
-	t := tmtypes.Tx("abc-just-for-test")
+	hash := crypto.Sha256(tx.GetSigData())
 	result := abcitypes.ResponseDeliverTx{
 		Data: []byte("mock"),
 		Tags: []cmn.KVPair{
 			{Key: []byte("qcp.to"), Value: []byte(tx.To)},
 			{Key: []byte("qcp.from"), Value: []byte(tx.From)},
 			{Key: []byte("qcp.sequence"), Value: []byte(fmt.Sprintf("%v", tx.Sequence))},
-			{Key: []byte("qcp.hash"), Value: []byte("abc-just-for-test")},
+			{Key: []byte("qcp.hash"), Value: hash},
 		}}
 	return &tmtypes.EventDataTx{TxResult: tmtypes.TxResult{
 		Height: tx.BlockHeight,
 		Index:  uint32(tx.TxIndex),
-		Tx:     t,
+		Tx:     tx.GetSigData(),
 		Result: result,
 	}}, nil
 }
@@ -148,6 +150,7 @@ type DefaultHandlerService struct {
 	txPool        stat.Mempool
 	mux           *http.ServeMux
 	listener      net.Listener
+	cdc           *amino.Codec
 }
 
 // NewHandlerService 创建新服务管理实例
@@ -167,15 +170,15 @@ func NewHandlerService(name, id, listenAddr string) (HandlerService, error) {
 }
 
 func (s *DefaultHandlerService) init() error {
-	cdc := amino.NewCodec()
-	ctypes.RegisterAmino(cdc)
-	txs.RegisterCodec(cdc)
+	s.cdc = amino.NewCodec()
+	ctypes.RegisterAmino(s.cdc)
+	txs.RegisterCodec(s.cdc)
 
 	s.mux = http.NewServeMux()
 	Routes := s.Routes()
-	wm := NewWebsocketManager(Routes, cdc, EventSubscriber(s.eventHub))
+	wm := NewWebsocketManager(Routes, s.cdc, EventSubscriber(s.eventHub))
 	s.mux.HandleFunc("/websocket", wm.WebsocketHandler)
-	RegisterRPCFuncs(s.mux, Routes, cdc)
+	RegisterRPCFuncs(s.mux, Routes, s.cdc)
 	return nil
 }
 
@@ -216,6 +219,11 @@ func (s DefaultHandlerService) Stop() error {
 	}
 	log.Debugf("Stop service %v - %v", s.name, s.id)
 	return nil
+}
+
+// GetCodec 获取amino.Codec 以便　Mock 时修改
+func (s DefaultHandlerService) GetCodec() *amino.Codec {
+	return s.cdc
 }
 
 // PublishTx 发布交易，提供给交易查询
