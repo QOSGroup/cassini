@@ -2,6 +2,7 @@ module github.com/QOSGroup/cassini
 
 require (
 	github.com/QOSGroup/qbase v0.0.0-20181016103316-c3574673eea3
+	github.com/QOSGroup/qos v0.0.0-20181018084942-4d47997b11ab
 	github.com/cihub/seelog v0.0.0-20170130134532-f561c5e57575
 	github.com/gorilla/websocket v1.2.0
 	github.com/nats-io/gnatsd v1.3.0 // indirect
@@ -13,7 +14,6 @@ require (
 	github.com/stretchr/testify v1.2.2
 	github.com/tendermint/go-amino v0.12.0
 	github.com/tendermint/tendermint v0.23.1
-	golang.org/x/crypto v0.0.0-20181009213950-7c1a557ab941 // indirect
 	golang.org/x/net v0.0.0-20181005035420-146acd28ed58
 
 )

@@ -29,3 +29,10 @@ func TestConfigParse(t *testing.T) {
 	assert.Equal(t, "qos", conf.Mocks[0].Name)
 	assert.Equal(t, "tcp://0.0.0.0:27658", conf.Mocks[1].RPC.ListenAddress)
 }
+
+func TestTransfrom(t *testing.T) {
+	var a uint32 = 0
+	a--
+	t.Logf("a: %v", a)
+	assert.Equal(t, true, true)
+}
