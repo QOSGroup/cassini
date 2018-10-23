@@ -21,7 +21,7 @@ type QcpConsumer struct {
 	NATSConsumer
 }
 
-var ce = consensus.NewConsEhgine()
+var ce = consensus.NewConsEngine()
 
 var wg sync.WaitGroup
 

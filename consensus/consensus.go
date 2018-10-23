@@ -5,18 +5,21 @@ import (
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/restclient"
+	"github.com/QOSGroup/cassini/types"
 	"github.com/QOSGroup/qbase/txs"
 	"github.com/nats-io/go-nats"
+	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/common"
 	"strings"
 )
 
 type ConsEngine struct {
-	M *MsgMapper
-	f *Ferry
+	M        *MsgMapper
+	f        *Ferry
+	sequence int64
 }
 
-func NewConsEhgine() *ConsEngine {
+func NewConsEngine() *ConsEngine {
 	ce := new(ConsEngine)
 	ce.M = &MsgMapper{MsgMap: make(map[int64]map[string]string)}
 	ce.f = &Ferry{}
@@ -24,7 +27,27 @@ func NewConsEhgine() *ConsEngine {
 }
 
 func (c *ConsEngine) Add2Engine(msg *nats.Msg) error {
-	return c.M.AddMsgToMap(msg, c.f)
+	event := types.Event{}
+
+	if amino.UnmarshalBinary(msg.Data, &event) != nil {
+
+		return errors.New("the event Unmarshal error")
+	}
+
+	if event.Sequence < c.sequence {
+		return errors.New("msg sequence is small then the sequence in consensus engine")
+	}
+
+	seq, err := c.M.AddMsgToMap(event, c.f)
+	if err != nil {
+		return err
+	}
+	c.setSequence(seq)
+	return nil
+}
+
+func (c *ConsEngine) setSequence(s int64) {
+	c.sequence = s
 }
 
 type Ferry struct {
