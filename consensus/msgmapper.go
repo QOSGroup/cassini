@@ -27,6 +27,7 @@ func (m *MsgMapper) AddMsgToMap(msg *nats.Msg, f *Ferry) error {
 	}
 
 	m.mtx.Lock()
+
 	defer m.mtx.Unlock()
 
 	hashNode, ok := m.MsgMap[event.Sequence]
