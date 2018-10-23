@@ -4,11 +4,13 @@ import (
 	"errors"
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/common"
+	"strconv"
 )
 
 type CassiniEventDataTx struct {
 	From      string `json:"from"` //qsc name 或 qos
 	To        string `json:"to"`   //qsc name 或 qos
+	Height    int64  `json:"height"`
 	Sequence  int64  `json:"sequence"`
 	HashBytes []byte `json:"hashBytes"` //TxQcp 做 sha256
 }
@@ -41,6 +43,7 @@ func (c *CassiniEventDataTx) ConstructFromTags(tags []common.KVPair) error {
 			c.HashBytes = tag.Value
 		}
 		if string(tag.Key) == "qcp.sequence" {
+			c.Sequence, _ = strconv.ParseInt(string(tag.Value), 10, 64) //TODO 接QOS后可能需修改
 			//bin_buf := bytes.NewBuffer(tag.Value)
 			//binary.Read(bin_buf, binary.BigEndian, &c.Sequence)
 		}

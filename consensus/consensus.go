@@ -2,85 +2,42 @@ package consensus
 
 import (
 	"errors"
-	"strings"
-	"sync"
-
-	"crypto/sha256"
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/restclient"
-	"github.com/QOSGroup/cassini/types"
 	"github.com/QOSGroup/qbase/txs"
 	"github.com/nats-io/go-nats"
-	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/common"
+	"strings"
 )
 
-type MsgMapper struct {
-	mtx    sync.RWMutex
-	MsgMap map[int64]map[string]string
+type ConsEngine struct {
+	M *MsgMapper
+	f *Ferry
 }
 
-//type HashHostsMap struct{
-//	hashHostsMap map[string]string
-//}
-
-func (m *MsgMapper) AddMsgToMap(msg *nats.Msg) error {
-
-	N := 2 //TODO 共识参数  按validator power
-
-	event := types.Event{}
-
-	if amino.UnmarshalBinary(msg.Data, &event) != nil {
-
-		return errors.New("the event Unmarshal error")
-	}
-
-	m.mtx.Lock()
-	hashNode, ok := m.MsgMap[event.Sequence]
-
-	//还没有sequence对应记录
-	if !ok || hashNode == nil {
-
-		hashNode = make(map[string]string)
-
-		hashNode[string(event.HashBytes)] = event.NodeAddress
-
-		m.MsgMap[event.Sequence] = hashNode
-
-		m.mtx.Unlock()
-
-		return nil
-	}
-
-	//sequence已经存在
-	if nodes, _ := hashNode[string(event.HashBytes)]; nodes != "" {
-
-		hashNode[string(event.HashBytes)] += "," + event.NodeAddress
-
-		nodes := hashNode[string(event.HashBytes)]
-
-		if strings.Count(nodes, ",") >= N-1 { //达成共识
-
-			log.Infof("consensus from [%s] to [%s] sequence [#%d] hash %s", event.From, event.To, event.Sequence, string(event.HashBytes))
-			go m.ferry(event.From, event.To, string(event.HashBytes), nodes, event.Sequence)
-		}
-	} else {
-		hashNode[string(event.HashBytes)] += event.NodeAddress
-	}
-
-	m.mtx.Unlock()
-	return nil
+func NewConsEhgine() *ConsEngine {
+	ce := new(ConsEngine)
+	ce.M = &MsgMapper{MsgMap: make(map[int64]map[string]string)}
+	ce.f = &Ferry{}
+	return ce
 }
 
-//ferry get qcp transaction from source chain and post it to destnation chain
+func (c *ConsEngine) Add2Engine(msg *nats.Msg) error {
+	return c.M.AddMsgToMap(msg, c.f)
+}
+
+type Ferry struct {
+}
+
+//ferryQCP get qcp transaction from source chain and post it to destnation chain
 //
 //from is chain name of the source chain
 //to is the chain name of destnation chain
 //nodes is consensus nodes of the source chain
-func (m *MsgMapper) ferry(from, to, hash, nodes string, sequence int64) (err error) {
+func (f *Ferry) ferryQCP(from, to, hash, nodes string, sequence int64) (err error) {
 
-	qcp, err := m.getTxQcp(from, to, hash, nodes, sequence)
+	qcp, err := f.getTxQcp(from, to, hash, nodes, sequence)
 
 	if err != nil {
 		return errors.New("get qcp transaction failed")
@@ -93,19 +50,19 @@ func (m *MsgMapper) ferry(from, to, hash, nodes string, sequence int64) (err err
 
 	//TODO 取目标链nodes 地址
 
-	err = m.postTxQcp(to, qcp)
+	err = f.postTxQcp(to, qcp)
 
 	if err != nil {
 		return errors.New("post qcp transaction failed")
 	}
 
-	log.Infof("success ferry txqcp from [%s] to [%s] sequence [#%d]", from, to, sequence)
+	log.Infof("success ferry qcp transaction from [%s] to [%s] sequence [#%d] \n", from, to, sequence)
 	return nil
 
 }
 
 //getTxQcp get QCP transactions from sorce chain
-func (m *MsgMapper) getTxQcp(from, to, hash, nodes string, sequence int64) (qcp *txs.TxQcp, err error) {
+func (f *Ferry) getTxQcp(from, to, hash, nodes string, sequence int64) (qcp *txs.TxQcp, err error) {
 
 	success := false
 
@@ -113,7 +70,7 @@ EndGet:
 
 	for _, node := range strings.Split(nodes, ",") {
 
-		qcp, err := m.getTxQcpFromNode(to, hash, node, sequence)
+		qcp, err := f.getTxQcpFromNode(to, hash, node, sequence)
 
 		if err != nil || qcp == nil {
 			continue
@@ -131,14 +88,14 @@ EndGet:
 	return
 }
 
-func (m *MsgMapper) getTxQcpParalle(from, to, hash, nodes string, sequence int64) (qcps []txs.TxQcp, err error) {
+func (f *Ferry) getTxQcpParalle(from, to, hash, nodes string, sequence int64) (qcps []txs.TxQcp, err error) {
 
 	nodeList := strings.Split(nodes, ",")
 	var tasks = make([]common.Task, len(nodeList))
 
 	for i := 0; i < len(tasks); i++ {
 		tasks[i] = func(i int) (res interface{}, err error, abort bool) {
-			qcp, err := m.getTxQcpFromNode(to, hash, nodeList[i], sequence)
+			qcp, err := f.getTxQcpFromNode(to, hash, nodeList[i], sequence)
 			return qcp, err, false //TODO
 		}
 	}
@@ -169,7 +126,7 @@ func (m *MsgMapper) getTxQcpParalle(from, to, hash, nodes string, sequence int64
 }
 
 //getTxQcpFromNode get QCP transactions from single chain node
-func (m *MsgMapper) getTxQcpFromNode(to, hash, node string, sequence int64) (qcp *txs.TxQcp, err error) {
+func (f *Ferry) getTxQcpFromNode(to, hash, node string, sequence int64) (qcp *txs.TxQcp, err error) {
 
 	r := restclient.NewRestClient(node) //"tcp://127.0.0.1:26657"
 	qcp, err = r.GetTxQcp(to, sequence)
@@ -178,22 +135,21 @@ func (m *MsgMapper) getTxQcpFromNode(to, hash, node string, sequence int64) (qcp
 	}
 
 	//TODO 取本地联盟链公钥验签
-	pubkey := qcp.Sig.Pubkey
-	if !pubkey.VerifyBytes(qcp.GetSigData(), qcp.Sig.Signature) {
-		return nil, errors.New("get TxQcp from " + node + " data verify failed.")
-	}
+	//pubkey := qcp.Sig.Pubkey  //mock pubkey 为 nil pnic
+	//if !pubkey.VerifyBytes(qcp.GetSigData(), qcp.Sig.Signature) {
+	//	return nil, errors.New("get TxQcp from " + node + " data verify failed.")
+	//}
 
 	//TODO qcp hash 与 hash值比对
-	h := sha256.New()
-	h.Write(qcp.GetSigData())
-	if string(h.Sum(nil)) == hash {
-		return qcp, nil
-	}
+	//if string(tmhash.Sum(qcp.GetSigData())) != hash { //算法保持 tmhash.hash 一致 sha256 前 20byte
+	//	return nil, errors.New("get TxQcp from " + node + "failed")
+	//}
 
-	return nil, errors.New("get TxQcp from " + node + "failed")
+	return qcp, nil
+
 }
 
-func (m *MsgMapper) postTxQcp(to string, qcp *txs.TxQcp) (err error) {
+func (f *Ferry) postTxQcp(to string, qcp *txs.TxQcp) (err error) {
 
 	success := false
 	qscConfig := config.DefaultQscConfig()

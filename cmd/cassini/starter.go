@@ -14,12 +14,13 @@ var starter = func(conf *config.Config) (cancel context.CancelFunc, err error) {
 
 	log.Info("begin to start cassini")
 
-	var cancels []context.CancelFunc
-	var cancelFunc context.CancelFunc
+	//var cancels []context.CancelFunc
+	//var cancelFunc context.CancelFunc
 
 	//启动事件监听 chain node
-	cancelFunc, err = event.StartEventSubscibe(conf)
-	cancels = append(cancels, cancelFunc)
+	//cancelFunc, err = event.StartEventSubscibe(conf)
+	_, err = event.StartEventSubscibe(conf)
+	//cancels = append(cancels, cancelFunc)
 	if err != nil {
 		return nil, err
 	}
@@ -27,17 +28,16 @@ var starter = func(conf *config.Config) (cancel context.CancelFunc, err error) {
 	//启动nats 消费
 	err = msgqueue.StartQcpConsume(conf)
 	if err != nil {
-		return cancelFunc, err
+		return nil, err
 	}
-	cancels = append(cancels, cancelFunc)
 
-	cancel = func() {
-		for _, cancelJob := range cancels {
-			if cancelJob != nil {
-				cancelJob()
-			}
-		}
-	}
+	//cancel = func() {
+	//	for _, cancelJob := range cancels {
+	//		if cancelJob != nil {
+	//			cancelJob()
+	//		}
+	//	}
+	//}
 
 	log.Info("cassini started \n")
 	return
