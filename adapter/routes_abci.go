@@ -80,8 +80,6 @@ func ABCIQuery(path string, data cmn.HexBytes, height int64, trusted bool) (*cty
 
 	cdc := amino.NewCodec()
 	ctypes.RegisterAmino(cdc)
-	// cdc.RegisterInterface((*txs.ITx)(nil), nil)
-	// cdc.RegisterConcrete(&txs.QcpTxResult{}, "qbase/txs/QcpTxResult", nil)
 	txs.RegisterCodec(cdc)
 
 	// key := "[qstar]/out/sequence"
@@ -123,7 +121,7 @@ func ABCIQuery(path string, data cmn.HexBytes, height int64, trusted bool) (*cty
 		BlockHeight: height,
 		TxIndx:      -1,
 		Sequence:    0,
-		Payload:     *tstd}
+		TxStd:       tstd}
 
 	var bytes []byte
 	bytes, err = cdc.MarshalBinaryBare(tx)
