@@ -14,79 +14,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
-// Subscribe for events via WebSocket.
-//
-// To tell which events you want, you need to provide a query. query is a
-// string, which has a form: "condition AND condition ..." (no OR at the
-// moment). condition has a form: "key operation operand". key is a string with
-// a restricted set of possible symbols ( \t\n\r\\()"'=>< are not allowed).
-// operation can be "=", "<", "<=", ">", ">=", "CONTAINS". operand can be a
-// string (escaped with single quotes), number, date or time.
-//
-// Examples:
-//		tm.event = 'NewBlock'								# new blocks
-//		tm.event = 'CompleteProposal'				# node got a complete proposal
-//		tm.event = 'Tx' AND tx.hash = 'XYZ' # single transaction
-//		tm.event = 'Tx' AND tx.height = 5		# all txs of the fifth block
-//		tx.height = 5												# all txs of the fifth block
-//
-// Tendermint provides a few predefined keys: tm.event, tx.hash and tx.height.
-// Note for transactions, you can define additional keys by providing tags with
-// DeliverTx response.
-//
-//		DeliverTx{
-//			Tags: []*KVPair{
-//				"agent.name": "K",
-//			}
-//	  }
-//
-//		tm.event = 'Tx' AND agent.name = 'K'
-//		tm.event = 'Tx' AND account.created_at >= TIME 2013-05-03T14:45:00Z
-//		tm.event = 'Tx' AND contract.sign_date = DATE 2017-01-01
-//		tm.event = 'Tx' AND account.owner CONTAINS 'Igor'
-//
-// See list of all possible events here
-// https://godoc.org/github.com/tendermint/tendermint/types#pkg-constants
-//
-// For complete query syntax, check out
-// https://godoc.org/github.com/tendermint/tendermint/libs/pubsub/query.
-//
-// ```go
-// import "github.com/tendermint/tendermint/libs/pubsub/query"
-// import "github.com/tendermint/tendermint/types"
-//
-// client := client.NewHTTP("tcp://0.0.0.0:26657", "/websocket")
-// ctx, cancel := context.WithTimeout(context.Background(), timeout)
-// defer cancel()
-// query := query.MustParse("tm.event = 'Tx' AND tx.height = 3")
-// txs := make(chan interface{})
-// err := client.Subscribe(ctx, "test-client", query, txs)
-//
-// go func() {
-//   for e := range txs {
-//     fmt.Println("got ", e.(types.CassiniEventDataTx))
-//	 }
-// }()
-// ```
-//
-// > The above command returns JSON structured like this:
-//
-// ```json
-// {
-// 	"error": "",
-// 	"result": {},
-// 	"id": "",
-// 	"jsonrpc": "2.0"
-// }
-// ```
-//
-// ### Query Parameters
-//
-// | Parameter | Type   | Default | Required | Description |
-// |-----------+--------+---------+----------+-------------|
-// | query     | string | ""      | true     | Query       |
-//
-// <aside class="notice">WebSocket only</aside>
+// Subscribe 指定订阅条件，订阅交易事件。
 func (s DefaultHandlerService) Subscribe(wsCtx rpctypes.WSRPCContext, query string) (*ctypes.ResultSubscribe, error) {
 	addr := wsCtx.GetRemoteAddr()
 	log.Info("Subscribe to query", "remote", addr, "query", query)
@@ -114,31 +42,7 @@ func (s DefaultHandlerService) Subscribe(wsCtx rpctypes.WSRPCContext, query stri
 	return &ctypes.ResultSubscribe{}, nil
 }
 
-// Unsubscribe from events via WebSocket.
-//
-// ```go
-// client := client.NewHTTP("tcp://0.0.0.0:26657", "/websocket")
-// err := client.Unsubscribe("test-client", query)
-// ```
-//
-// > The above command returns JSON structured like this:
-//
-// ```json
-// {
-// 	"error": "",
-// 	"result": {},
-// 	"id": "",
-// 	"jsonrpc": "2.0"
-// }
-// ```
-//
-// ### Query Parameters
-//
-// | Parameter | Type   | Default | Required | Description |
-// |-----------+--------+---------+----------+-------------|
-// | query     | string | ""      | true     | Query       |
-//
-// <aside class="notice">WebSocket only</aside>
+// Unsubscribe 根据具体订阅条件，取消交易事件的订阅。
 func (s DefaultHandlerService) Unsubscribe(wsCtx rpctypes.WSRPCContext, query string) (*ctypes.ResultUnsubscribe, error) {
 	addr := wsCtx.GetRemoteAddr()
 	log.Info("Unsubscribe from query", "remote", addr, "query", query)
@@ -153,25 +57,7 @@ func (s DefaultHandlerService) Unsubscribe(wsCtx rpctypes.WSRPCContext, query st
 	return &ctypes.ResultUnsubscribe{}, nil
 }
 
-// UnsubscribeAll Unsubscribe from all events via WebSocket.
-//
-// ```go
-// client := client.NewHTTP("tcp://0.0.0.0:26657", "/websocket")
-// err := client.UnsubscribeAll("test-client")
-// ```
-//
-// > The above command returns JSON structured like this:
-//
-// ```json
-// {
-// 	"error": "",
-// 	"result": {},
-// 	"id": "",
-// 	"jsonrpc": "2.0"
-// }
-// ```
-//
-// <aside class="notice">WebSocket only</aside>
+// UnsubscribeAll 取消全部交易事件订阅。
 func (s DefaultHandlerService) UnsubscribeAll(wsCtx rpctypes.WSRPCContext) (*ctypes.ResultUnsubscribe, error) {
 	addr := wsCtx.GetRemoteAddr()
 	log.Info("Unsubscribe from all", "remote", addr)

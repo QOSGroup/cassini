@@ -17,13 +17,10 @@ func (s DefaultHandlerService) Routes() map[string]*RPCFunc {
 		"health": NewRPCFunc(Health, ""),
 
 		// broadcast API
-		"broadcast_tx_commit": NewRPCFunc(s.BroadcastTxCommit, "tx"),
-		"broadcast_tx_sync":   NewRPCFunc(s.BroadcastTxSync, "tx"),
-		"broadcast_tx_async":  NewRPCFunc(s.BroadcastTxAsync, "tx"),
+		"broadcast_tx_sync": NewRPCFunc(s.BroadcastTxSync, "tx"),
 
 		// abci API
 		"abci_query": NewRPCFunc(ABCIQuery, "path,data,height,trusted"),
-		"abci_info":  NewRPCFunc(ABCIInfo, ""),
 	}
 	return routes
 }

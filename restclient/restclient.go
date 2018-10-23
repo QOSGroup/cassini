@@ -134,7 +134,7 @@ func (r *RestClient) GetSequence(chainID string, outin string) (int64, error) {
 	return seq, nil
 }
 
-//PostTxQcp 发布交易
+//PostTxQcp 广播交易
 func (r *RestClient) PostTxQcp(chainID string, qcp *txs.TxQcp) error {
 	tx, err := r.cdc.MarshalBinaryBare(qcp)
 	if err != nil {

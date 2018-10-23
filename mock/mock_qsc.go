@@ -37,14 +37,16 @@ func StartMock(mock config.MockConfig) (context.CancelFunc, error) {
 	log.Debug("Start mock: ", mock.Name)
 
 	adapter, err := adapter.NewAdapter(mock.Name, "mocktest-id", mock.RPC.ListenAddress, nil, nil)
-	cancel := func() {
-		adapter.Stop()
-	}
 	if err != nil {
 		return nil, err
 	}
-	adapter.Start()
-
+	err = adapter.Start()
+	if err != nil {
+		return nil, err
+	}
+	cancel := func() {
+		adapter.Stop()
+	}
 	ticker := func(mock *config.MockConfig) {
 		log.Debug("ticker: ", mock.Name)
 		// 定时发布Tx 事件
