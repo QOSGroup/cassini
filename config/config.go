@@ -72,7 +72,7 @@ func GetConfig() *Config {
 // DefaultConfig returns a default configuration for a Tendermint node
 func DefaultConfig() *Config {
 	return &Config{
-		Nats:     "nats://192.168.168.195:4222",
+		Nats:     "nats://192.168.168.195:4222,nats://192.168.168.195:4223,nats://192.168.168.195:4224",
 		Kafka:    "",
 		QscNames: DefaultQscConfig(),
 	}
@@ -97,7 +97,7 @@ func DefaultQscConfig() []QscConfig {
 			//链给relay颁发的证书文件
 			Certificate: "",
 			//区块链节点地址，多个之间用“，”分割
-			NodeAddress: "127.0.0.1:27657",
+			NodeAddress: "127.0.0.1:27657,127.0.0.1:28657",
 		},
 	}
 }

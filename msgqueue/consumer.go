@@ -21,7 +21,7 @@ type QcpConsumer struct {
 	NATSConsumer
 }
 
-var ce = consensus.NewConsEhgine()
+var ce = consensus.NewConsEngine()
 
 var wg sync.WaitGroup
 
@@ -36,7 +36,7 @@ func StartQcpConsume(conf *config.Config) (err error) {
 	var subjects string
 
 	es := make(chan error, 1024) //TODO 1024参数按需修改
-	//defer close(es)
+	defer close(es)
 
 	for i, qsconfig := range qsconfigs {
 		for j := i + 1; j < len(qsconfigs); j++ {
@@ -130,6 +130,11 @@ func (n *NATSConsumer) Consume(nc *nats.Conn) (err error) {
 		}
 	}
 
+	//nc, err = n.Connect()
+	//if err != nil {
+	//	return errors.New("the nats.Conn is not available")
+	//}
+
 	subscription, err := nc.Subscribe(n.subject, n.CallBack)
 	if err != nil {
 		return errors.New("subscribe failed :" + subscription.Subject)
@@ -167,11 +172,12 @@ func (n *NATSConsumer) Reply(nc *nats.Conn) error {
 
 func connect2Nats(serverUrls string) (nc *nats.Conn, err error) {
 
-	nc, err = nats.Connect(serverUrls)
 	log.Debugf("connectting to nats :[%s]", serverUrls)
+
+	nc, err = nats.Connect(serverUrls)
 	if err != nil {
 
-		log.Errorf("Can't connect: %v", err)
+		log.Errorf("Can't connect %v", err)
 
 		return nil, err
 	}

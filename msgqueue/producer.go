@@ -43,6 +43,10 @@ func (n *NATSProducer) Produce(nc *nats.Conn, msg []byte) (err error) {
 		}
 	}
 
+	//nc, err = n.Connect()
+	//if err != nil {
+	//	return errors.New("the nats.Conn is not available")
+	//}
 	if e := nc.Publish(n.Subject, msg); e != nil {
 
 		return errors.New("send event to nats server faild")
