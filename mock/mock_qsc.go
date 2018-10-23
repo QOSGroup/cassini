@@ -55,7 +55,7 @@ func StartMock(mock config.MockConfig) (context.CancelFunc, error) {
 				From:        mock.Name,
 				To:          mock.To,
 				BlockHeight: h,
-				TxIndx:      0,
+				TxIndex:     0,
 				Sequence:    h})
 			if err != nil {
 				log.Error("EventBus publish tx error: ", err)
