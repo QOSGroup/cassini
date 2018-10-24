@@ -5,6 +5,7 @@ import (
 
 	"github.com/QOSGroup/cassini/log"
 	motxs "github.com/QOSGroup/cassini/mock/tx"
+	catypes "github.com/QOSGroup/cassini/types"
 	bctxs "github.com/QOSGroup/qbase/example/basecoin/tx"
 	bctypes "github.com/QOSGroup/qbase/example/basecoin/types"
 	"github.com/QOSGroup/qbase/txs"
@@ -85,12 +86,9 @@ func NewRestClient(remote string) *RestClient {
 	return &RestClient{HTTP: newHTTP(remote, cdc), cdc: cdc}
 }
 
-//GetTxQcp [chainId]/out/sequence //需要输出到"chainId"的qcp tx最大序号
-//[chainId]/out/tx_[sequence] //需要输出到"chainId"的每个qcp tx
-//[chainId]/in/sequence //已经接受到来自"chainId"的qcp tx最大序号
-//[chainId]/in/pubkey //接受来自"chainId"的合法公钥
+// GetTxQcp 查询指定交易，查询键值参考
 func (r *RestClient) GetTxQcp(chainID string, sequence int64) (*txs.TxQcp, error) {
-	key := fmt.Sprintf("[%s]/out/tx_[%d]", chainID, sequence)
+	key := catypes.GetChainOutTxsKey(chainID, sequence)
 	result, err := r.ABCIQuery("/store/qcp/key", []byte(key))
 	if err != nil || result == nil {
 		log.Errorf("Get TxQcp error: %v", err)
@@ -113,11 +111,11 @@ func (r *RestClient) GetTxQcp(chainID string, sequence int64) (*txs.TxQcp, error
 	return &tx, nil
 }
 
-//GetSequence 查询交易序列号
+// GetSequence 查询交易序列号
 func (r *RestClient) GetSequence(chainID string, outin string) (int64, error) {
 	path := "/store/qcp/key"
-	data := fmt.Sprintf("[%s]/%s/sequence", chainID, outin)
-	result, err := r.ABCIQuery(path, []byte(data))
+	key := catypes.GetMaxChainOutSequenceKey(chainID)
+	result, err := r.ABCIQuery(path, []byte(key))
 	if err != nil {
 		log.Errorf("Get sequence error: %v", err)
 		return -1, err
