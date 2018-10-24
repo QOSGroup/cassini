@@ -50,7 +50,7 @@ func StartMock(mock config.MockConfig) (context.CancelFunc, error) {
 	ticker := func(mock *config.MockConfig) {
 		log.Debug("ticker: ", mock.Name)
 		// 定时发布Tx 事件
-		tick := time.NewTicker(time.Millisecond * 1)
+		tick := time.NewTicker(time.Millisecond * 1000)
 		h := int64(1)
 		for range tick.C {
 			err = adapter.BroadcastTx(txs.TxQcp{

@@ -99,8 +99,12 @@ func (r *RestClient) GetTxQcp(chainID string, sequence int64) (*txs.TxQcp, error
 	result, err := r.ABCIQuery("/store/qcp/key", []byte(key))
 	if err != nil || result == nil {
 		log.Errorf("Get TxQcp error: %v", err)
+		return nil, err
 	}
 
+	//if result.Response == nil {
+	//
+	//}
 	var tx txs.TxQcp
 
 	if result.Response.GetValue() != nil {
