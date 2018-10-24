@@ -73,7 +73,7 @@ func EventSubscribe(remote string, e chan<- error) context.CancelFunc {
 
 			event := ctypes.Event{NodeAddress: remote, CassiniEventDataTx: cassiniEventDataTx}
 
-			err := route.Event2queue(&event)
+			_, err := route.Event2queue(&event)
 
 			if err != nil {
 				log.Error("failed route event to message queue")
