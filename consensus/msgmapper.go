@@ -1,6 +1,7 @@
 package consensus
 
 import (
+	"github.com/QOSGroup/cassini/common"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/types"
 	"strings"
@@ -49,9 +50,10 @@ func (m *MsgMapper) AddMsgToMap(event types.Event, f *Ferry) (sequence int64, er
 
 		if strings.Count(nodes, ",") >= N-1 { //TODO 达成共识
 
-			log.Infof("consensus from [%s] to [%s] sequence [#%d] hash %s", event.From, event.To, event.Sequence, string(event.HashBytes))
+			hash := common.Bytes2HexStr(event.HashBytes)
+			log.Infof("consensus from [%s] to [%s] sequence [#%d] hash [%s]", event.From, event.To, event.Sequence, hash[:10])
 
-			go f.ferryQCP(event.From, event.To, string(event.HashBytes), nodes, event.Sequence)
+			go f.ferryQCP(event.From, event.To, hash, nodes, event.Sequence)
 
 			delete(m.MsgMap, event.Sequence)
 			return event.Sequence + 1, nil

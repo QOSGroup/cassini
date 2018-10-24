@@ -2,6 +2,7 @@ package consensus
 
 import (
 	"errors"
+	cmn "github.com/QOSGroup/cassini/common"
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/restclient"
@@ -9,8 +10,10 @@ import (
 	"github.com/QOSGroup/qbase/txs"
 	"github.com/nats-io/go-nats"
 	"github.com/tendermint/go-amino"
-	"github.com/tendermint/tendermint/libs/common"
+	"github.com/tendermint/tendermint/crypto"
 	"strings"
+
+	"github.com/tendermint/tendermint/libs/common"
 )
 
 type ConsEngine struct {
@@ -63,6 +66,7 @@ func (f *Ferry) ferryQCP(from, to, hash, nodes string, sequence int64) (err erro
 	qcp, err := f.getTxQcp(from, to, hash, nodes, sequence)
 
 	if err != nil {
+		log.Errorf("%v", err)
 		return errors.New("get qcp transaction failed")
 	}
 
@@ -165,8 +169,11 @@ func (f *Ferry) getTxQcpFromNode(to, hash, node string, sequence int64) (qcp *tx
 
 	//TODO qcp hash 与 hash值比对
 	//if string(tmhash.Sum(qcp.GetSigData())) != hash { //算法保持 tmhash.hash 一致 sha256 前 20byte
-	//	return nil, errors.New("get TxQcp from " + node + "failed")
-	//}
+
+	hash2 := cmn.Bytes2HexStr(crypto.Sha256(qcp.GetSigData()))
+	if hash2 != hash {
+		return nil, errors.New("get TxQcp from " + node + "failed")
+	}
 
 	return qcp, nil
 
