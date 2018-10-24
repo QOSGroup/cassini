@@ -1,8 +1,6 @@
 package restclient
 
 import (
-	"fmt"
-
 	"github.com/QOSGroup/cassini/log"
 	motxs "github.com/QOSGroup/cassini/mock/tx"
 	catypes "github.com/QOSGroup/cassini/types"
