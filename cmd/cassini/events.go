@@ -2,14 +2,14 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/QOSGroup/cassini/adapter"
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/event"
 	"github.com/QOSGroup/cassini/log"
+	"github.com/QOSGroup/cassini/types"
+	"github.com/QOSGroup/qbase/qcp"
 	"github.com/QOSGroup/qbase/txs"
 
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -31,14 +31,14 @@ var events = func(conf *config.Config) (context.CancelFunc, error) {
 //subscribe 从websocket服务端订阅event
 //remote 服务端地址 example  "tcp://127.0.0.1:27657"
 func subscribe(remote string, query string) (context.CancelFunc, error) {
-	fmt.Printf("Subscribe remote: %v, query: %v\n", remote, query)
+	log.Infof("Subscribe remote: %v, query: %v", remote, query)
 	txsChan := make(chan interface{})
 	cancel, err := event.SubscribeRemote(remote, "cassini-events", query, txsChan)
 	if err != nil {
 		log.Errorf("Remote [%s] : '%s'", remote, err)
 		return nil, err
 	}
-	fmt.Printf("Subscribe successful - remote: %v, query: %v\n", remote, query)
+	log.Debugf("Subscribe successful - remote: %v, query: %v", remote, query)
 	go func() {
 		for e := range txsChan {
 			et := e.(tmtypes.EventDataTx) //注：e类型断言为tmtypes.EventDataTx 类型
@@ -47,19 +47,19 @@ func subscribe(remote string, query string) (context.CancelFunc, error) {
 			var hash []byte
 			var err error
 			for _, kv := range et.Result.Tags {
-				if strings.EqualFold("qcp.to", string(kv.Key)) {
+				if strings.EqualFold(qcp.QcpTo, string(kv.Key)) {
 					to = string(kv.Value)
 				}
-				if strings.EqualFold("qcp.from", string(kv.Key)) {
+				if strings.EqualFold(qcp.QcpFrom, string(kv.Key)) {
 					from = string(kv.Value)
 				}
-				if strings.EqualFold("qcp.sequence", string(kv.Key)) {
-					seq, err = strconv.ParseInt(string(kv.Value), 10, 64)
+				if strings.EqualFold(qcp.QcpSequence, string(kv.Key)) {
+					seq, err = types.Bytes2Int64(kv.Value)
 					if err != nil {
 						log.Errorf("Get Tx event error: %v", err)
 					}
 				}
-				if strings.EqualFold("qcp.hash", string(kv.Key)) {
+				if strings.EqualFold(qcp.QcpHashBytes, string(kv.Key)) {
 					hash = kv.Value
 				}
 			}
@@ -69,7 +69,7 @@ func subscribe(remote string, query string) (context.CancelFunc, error) {
 				Sequence:    seq,
 				From:        from,
 				To:          to}
-			fmt.Printf("Got Tx event - %v hash: %x\n", adapter.StringTx(tx), hash)
+			log.Debugf("Got Tx event - %v hash: %x\n", adapter.StringTx(tx), hash)
 
 		}
 	}()
