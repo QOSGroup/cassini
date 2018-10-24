@@ -4,11 +4,11 @@ package adapter
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/QOSGroup/cassini/log"
 	motxs "github.com/QOSGroup/cassini/mock/tx"
-	catypes "github.com/QOSGroup/cassini/types"
 	"github.com/QOSGroup/qbase/txs"
 	amino "github.com/tendermint/go-amino"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -57,6 +57,10 @@ func ABCIQuery(path string, data cmn.HexBytes, height int64, trusted bool) (*cty
 
 	// tx/out/%s/%d
 	from, sequence, err := parseTxQueryKey(key)
+	if err != nil {
+		log.Errorf("Parse tx query key error: ", err)
+		return nil, err
+	}
 	log.Debugf("from: %s, height: %d, sequence: %d", from, height, sequence)
 	tx := motxs.NewTxQcpMock(from, "qos", height, sequence)
 
@@ -92,6 +96,6 @@ func parseTxQueryKey(key string) (from string, seq int64, err error) {
 		return
 	}
 	from = str[2]
-	seq, err = catypes.Bytes2Int64([]byte(str[3]))
+	seq, err = strconv.ParseInt(str[3], 10, 64)
 	return
 }
