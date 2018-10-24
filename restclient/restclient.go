@@ -97,11 +97,12 @@ func NewRestClient(remote string) *RestClient {
 func (r *RestClient) GetTxQcp(chainID string, sequence int64) (*txs.TxQcp, error) {
 	key := fmt.Sprintf("[%s]/out/tx_[%d]", chainID, sequence)
 	result, err := r.ABCIQuery("/store/qcp/key", []byte(key))
-	if err != nil {
+	if err != nil || result == nil {
 		log.Errorf("Get TxQcp error: %v", err)
 	}
 
 	var tx txs.TxQcp
+
 	if result.Response.GetValue() != nil {
 		err = r.cdc.UnmarshalBinaryBare(result.Response.GetValue(), &tx)
 		if err != nil {

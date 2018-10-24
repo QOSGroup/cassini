@@ -172,6 +172,10 @@ func (n *NATSConsumer) Reply(nc *nats.Conn) error {
 
 func connect2Nats(serverUrls string) (nc *nats.Conn, err error) {
 
+	////for test
+	//if !strings.Contains(serverUrls, ",") {
+	//	log.Debug("serverUrls not contains ','")
+	//}
 	log.Debugf("connectting to nats :[%s]", serverUrls)
 
 	nc, err = nats.Connect(serverUrls)
