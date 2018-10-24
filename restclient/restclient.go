@@ -152,6 +152,7 @@ func (r *RestClient) PostTxQcp(chainID string, qcp *txs.TxQcp) error {
 		return err
 	}
 
-	fmt.Println(fmt.Sprintf("Post TxQcp successful - %v", qcp))
+	log.Infof("Post TxQcp successful - %v", qcp)
+
 	return nil
 }
