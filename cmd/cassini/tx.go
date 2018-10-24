@@ -22,7 +22,7 @@ import (
 // 命令行 tx 命令执行方法
 var txHandler = func(conf *config.Config) (context.CancelFunc, error) {
 	log.Debug("tx")
-	client := restclient.NewRestClient("tcp://127.0.0.1:26657")
+	client := restclient.NewRestClient("tcp://192.168.168.196:26657")
 
 	// 调用交易查询接口
 	tx, err := client.GetTxQcp("qstar", 1)

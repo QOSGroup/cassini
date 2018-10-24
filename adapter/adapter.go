@@ -9,12 +9,10 @@ import (
 	"net/http"
 	"time"
 
+	cmn "github.com/QOSGroup/cassini/common"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/qbase/txs"
 	amino "github.com/tendermint/go-amino"
-	abcitypes "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/crypto"
-	cmn "github.com/tendermint/tendermint/libs/common"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	stat "github.com/tendermint/tendermint/state"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -28,12 +26,12 @@ const (
 
 // Broadcaster 交易广播接口，通过该接口广播的交易即表示需要通过中继跨链提交交易以最终完成交易。
 type Broadcaster interface {
-	BroadcastTx(tx txs.TxQcp) error
+	BroadcastTx(tx *txs.TxQcp) error
 }
 
 // Receiver 交易接收接口，接收中继从其他接入链发来的跨链交易。
 type Receiver interface {
-	ReceiveTx(tx txs.TxQcp) error
+	ReceiveTx(tx *txs.TxQcp) error
 }
 
 // HandlerService 中继基础服务封装接口
@@ -41,9 +39,9 @@ type HandlerService interface {
 	Start() error
 	Stop() error
 	GetCodec() *amino.Codec
-	PublishTx(tx txs.TxQcp) error
-	PublishEvent(e tmtypes.EventDataTx) error
-	CancelTx(tx txs.TxQcp) error
+	PublishTx(tx *txs.TxQcp) error
+	PublishEvent(e *tmtypes.EventDataTx) error
+	CancelTx(tx *txs.TxQcp) error
 }
 
 // Adapter 适配接口封装，封装交易广播接口和交易接收接口。
@@ -83,10 +81,10 @@ type DefaultBroadcaster struct {
 // BroadcastTx 实现交易广播接口，调用响应的交易及交易事件发布接口，以通过中继跨链提交交易以最终完成交易。
 //
 // 因为按照 QCP 协议规范定义，中继都是在接收到交易事件后查询交易数据，因此应保证先调用发布交易接口，然后再调用发布事件接口。
-func (b *DefaultBroadcaster) BroadcastTx(tx txs.TxQcp) (err error) {
+func (b *DefaultBroadcaster) BroadcastTx(tx *txs.TxQcp) (err error) {
 	var e *tmtypes.EventDataTx
-	e, err = Transform(tx)
-	s := StringTx(&tx)
+	e, err = cmn.Transform(tx)
+	s := StringTx(tx)
 	if err != nil {
 		log.Errorf("Transform tx %v error: %v", s, err)
 		return
@@ -96,7 +94,7 @@ func (b *DefaultBroadcaster) BroadcastTx(tx txs.TxQcp) (err error) {
 		log.Errorf("Publish tx %v error: %v", s, err)
 		return
 	}
-	err = b.adapter.PublishEvent(*e)
+	err = b.adapter.PublishEvent(e)
 	if err != nil {
 		log.Errorf("Publish event %v error: %v", s, err)
 		ce := b.adapter.CancelTx(tx)
@@ -109,25 +107,6 @@ func (b *DefaultBroadcaster) BroadcastTx(tx txs.TxQcp) (err error) {
 	}
 	log.Debugf("Broadcast tx: sequence[%d] [%s] ", tx.Sequence, s)
 	return
-}
-
-// Transform 将交易转换为交易事件
-func Transform(tx txs.TxQcp) (*tmtypes.EventDataTx, error) {
-	hash := crypto.Sha256(tx.GetSigData())
-	result := abcitypes.ResponseDeliverTx{
-		Data: []byte("mock"),
-		Tags: []cmn.KVPair{
-			{Key: []byte("qcp.to"), Value: []byte(tx.To)},
-			{Key: []byte("qcp.from"), Value: []byte(tx.From)},
-			{Key: []byte("qcp.sequence"), Value: []byte(fmt.Sprintf("%v", tx.Sequence))},
-			{Key: []byte("qcp.hash"), Value: hash},
-		}}
-	return &tmtypes.EventDataTx{TxResult: tmtypes.TxResult{
-		Height: tx.BlockHeight,
-		Index:  uint32(tx.TxIndex),
-		Tx:     tx.GetSigData(),
-		Result: result,
-	}}, nil
 }
 
 // StringTx 将交易转换为字符串，用于日志记录，非完全序列化
@@ -229,18 +208,18 @@ func (s DefaultHandlerService) GetCodec() *amino.Codec {
 // PublishTx 发布交易，提供给交易查询
 //
 // 因为按照 QCP 协议规范定义，中继都是在接收到交易事件后查询交易数据，因此应保证先调用发布交易接口，然后再调用发布事件接口。
-func (s DefaultHandlerService) PublishTx(tx txs.TxQcp) error {
+func (s DefaultHandlerService) PublishTx(tx *txs.TxQcp) error {
 	return nil
 }
 
 // PublishEvent 发布交易事件，提供给事件订阅
 //
 // 因为按照 QCP 协议规范定义，中继都是在接收到交易事件后查询交易数据，因此应保证先调用发布交易接口，然后再调用发布事件接口。
-func (s DefaultHandlerService) PublishEvent(e tmtypes.EventDataTx) error {
-	return s.eventHub.PublishEventTx(e)
+func (s DefaultHandlerService) PublishEvent(e *tmtypes.EventDataTx) error {
+	return s.eventHub.PublishEventTx(*e)
 }
 
 // CancelTx 撤销发布交易
-func (s DefaultHandlerService) CancelTx(tx txs.TxQcp) error {
+func (s DefaultHandlerService) CancelTx(tx *txs.TxQcp) error {
 	return nil
 }

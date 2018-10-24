@@ -57,7 +57,7 @@ func StartMock(mock config.MockConfig) (context.CancelFunc, error) {
 		h := int64(1)
 		for range tick.C {
 			tx := txs.NewTxQcpMock(mock.Name, mock.To, h, h)
-			err = adapter.BroadcastTx(*tx)
+			err = adapter.BroadcastTx(tx)
 			if err != nil {
 				log.Error("EventBus publish tx error: ", err)
 			}
