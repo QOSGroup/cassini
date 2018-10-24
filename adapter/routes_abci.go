@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/QOSGroup/cassini/log"
+	motxs "github.com/QOSGroup/cassini/mock/tx"
 	"github.com/QOSGroup/qbase/txs"
-	"github.com/QOSGroup/qbase/types"
 	amino "github.com/tendermint/go-amino"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
@@ -26,6 +26,7 @@ func ABCIQuery(path string, data cmn.HexBytes, height int64, trusted bool) (*cty
 	cdc := amino.NewCodec()
 	ctypes.RegisterAmino(cdc)
 	txs.RegisterCodec(cdc)
+	cdc.RegisterConcrete(&motxs.TxMock{}, "cassini/mock/txmock", nil)
 
 	key := string(data.Bytes())
 	if strings.HasSuffix(key, "/sequence") {
@@ -53,19 +54,7 @@ func ABCIQuery(path string, data cmn.HexBytes, height int64, trusted bool) (*cty
 		return &ctypes.ResultABCIQuery{Response: *resQuery}, nil
 	}
 
-	tstd := &txs.TxStd{
-		ITx:       nil,
-		Signature: nil,
-		ChainID:   "QOS",
-		MaxGas:    types.NewInt(999999999)}
-
-	tx := &txs.TxQcp{
-		From:        "qstar",
-		To:          "qos",
-		BlockHeight: height,
-		TxIndex:     -1,
-		Sequence:    0,
-		TxStd:       tstd}
+	tx := motxs.NewTxQcpMock("qqs", "qos", height, height)
 
 	var bytes []byte
 	bytes, err = cdc.MarshalBinaryBare(tx)

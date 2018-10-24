@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/QOSGroup/cassini/log"
-	"github.com/QOSGroup/qbase/example/basecoin/app"
+	motxs "github.com/QOSGroup/cassini/mock/tx"
 	bctxs "github.com/QOSGroup/qbase/example/basecoin/tx"
 	bctypes "github.com/QOSGroup/qbase/example/basecoin/types"
 	"github.com/QOSGroup/qbase/txs"
@@ -25,14 +25,8 @@ type HTTP struct {
 }
 
 // newHTTP 创建rpc http访问客户端 tcp://<host>:<port>
-func newHTTP(remote string) *HTTP {
+func newHTTP(remote string, cdc *amino.Codec) *HTTP {
 	rc := rpcclient.NewJSONRPCClient(remote)
-	// cdc := rc.Codec()
-	// ctypes.RegisterAmino(cdc)
-	// txs.RegisterCodec(cdc)
-	// cdc.RegisterConcrete(&bctypes.AppAccount{}, "basecoin/AppAccount", nil)
-	// cdc.RegisterConcrete(&bctxs.SendTx{}, "basecoin/SendTx", nil)
-	cdc := app.MakeCodec()
 	rc.SetCodec(cdc)
 
 	return &HTTP{
@@ -86,8 +80,9 @@ func NewRestClient(remote string) *RestClient {
 	txs.RegisterCodec(cdc)
 	cdc.RegisterConcrete(&bctypes.AppAccount{}, "basecoin/AppAccount", nil)
 	cdc.RegisterConcrete(&bctxs.SendTx{}, "basecoin/SendTx", nil)
+	cdc.RegisterConcrete(&motxs.TxMock{}, "cassini/mock/txmock", nil)
 
-	return &RestClient{HTTP: newHTTP(remote), cdc: cdc}
+	return &RestClient{HTTP: newHTTP(remote, cdc), cdc: cdc}
 }
 
 //GetTxQcp [chainId]/out/sequence //需要输出到"chainId"的qcp tx最大序号

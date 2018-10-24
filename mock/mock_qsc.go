@@ -13,7 +13,7 @@ import (
 	"github.com/QOSGroup/cassini/adapter"
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/log"
-	"github.com/QOSGroup/qbase/txs"
+	txs "github.com/QOSGroup/cassini/mock/tx"
 	"github.com/tendermint/tendermint/state/txindex"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
@@ -40,6 +40,9 @@ func StartMock(mock config.MockConfig) (context.CancelFunc, error) {
 	if err != nil {
 		return nil, err
 	}
+	cdc := adapter.GetCodec()
+	cdc.RegisterConcrete(&txs.TxMock{}, "cassini/mock/txmock", nil)
+
 	err = adapter.Start()
 	if err != nil {
 		return nil, err
@@ -53,12 +56,8 @@ func StartMock(mock config.MockConfig) (context.CancelFunc, error) {
 		tick := time.NewTicker(time.Millisecond * 1000)
 		h := int64(1)
 		for range tick.C {
-			err = adapter.BroadcastTx(txs.TxQcp{
-				From:        mock.Name,
-				To:          mock.To,
-				BlockHeight: h,
-				TxIndex:     0,
-				Sequence:    h})
+			tx := txs.NewTxQcpMock(mock.Name, mock.To, h, h)
+			err = adapter.BroadcastTx(*tx)
 			if err != nil {
 				log.Error("EventBus publish tx error: ", err)
 			}

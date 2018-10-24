@@ -17,7 +17,7 @@ import (
 
 // 命令行 events 命令执行方法
 var events = func(conf *config.Config) (context.CancelFunc, error) {
-	cancelFunc, err := Subscribe(conf.EventsListen, conf.EventsQuery)
+	cancelFunc, err := subscribe(conf.EventsListen, conf.EventsQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -28,10 +28,9 @@ var events = func(conf *config.Config) (context.CancelFunc, error) {
 	return cancel, nil
 }
 
-//EventSubscribe 从websocket服务端订阅event
+//subscribe 从websocket服务端订阅event
 //remote 服务端地址 example  "tcp://127.0.0.1:27657"
-
-func Subscribe(remote string, query string) (context.CancelFunc, error) {
+func subscribe(remote string, query string) (context.CancelFunc, error) {
 	fmt.Printf("Subscribe remote: %v, query: %v\n", remote, query)
 	txsChan := make(chan interface{})
 	cancel, err := event.SubscribeRemote(remote, "cassini-events", query, txsChan)
@@ -45,6 +44,7 @@ func Subscribe(remote string, query string) (context.CancelFunc, error) {
 			et := e.(tmtypes.EventDataTx) //注：e类型断言为tmtypes.EventDataTx 类型
 			var from, to string
 			var seq int64
+			var hash []byte
 			var err error
 			for _, kv := range et.Result.Tags {
 				if strings.EqualFold("qcp.to", string(kv.Key)) {
@@ -59,6 +59,9 @@ func Subscribe(remote string, query string) (context.CancelFunc, error) {
 						log.Errorf("Get Tx event error: %v", err)
 					}
 				}
+				if strings.EqualFold("qcp.hash", string(kv.Key)) {
+					hash = kv.Value
+				}
 			}
 			tx := &txs.TxQcp{
 				BlockHeight: et.Height,
@@ -66,7 +69,7 @@ func Subscribe(remote string, query string) (context.CancelFunc, error) {
 				Sequence:    seq,
 				From:        from,
 				To:          to}
-			fmt.Println("Got Tx event - ", adapter.StringTx(tx))
+			fmt.Printf("Got Tx event - %v hash: %x\n", adapter.StringTx(tx), hash)
 
 		}
 	}()
