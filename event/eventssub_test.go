@@ -17,7 +17,7 @@ func TestEventssubRemote(t *testing.T) {
 
 	// mockergit
 	mc := config.TestQscMockConfig()
-	cancelMock, err := mock.StartQscMock(mc)
+	cancelMock, err := mock.StartMock(*mc)
 	defer cancelMock()
 
 	listenAddr := mc.RPC.ListenAddress
