@@ -9,12 +9,10 @@ import (
 	"net/http"
 	"time"
 
+	cmn "github.com/QOSGroup/cassini/common"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/qbase/txs"
 	amino "github.com/tendermint/go-amino"
-	abcitypes "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/crypto"
-	cmn "github.com/tendermint/tendermint/libs/common"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	stat "github.com/tendermint/tendermint/state"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -85,7 +83,7 @@ type DefaultBroadcaster struct {
 // 因为按照 QCP 协议规范定义，中继都是在接收到交易事件后查询交易数据，因此应保证先调用发布交易接口，然后再调用发布事件接口。
 func (b *DefaultBroadcaster) BroadcastTx(tx txs.TxQcp) (err error) {
 	var e *tmtypes.EventDataTx
-	e, err = Transform(tx)
+	e, err = cmn.Transform(tx)
 	s := StringTx(&tx)
 	if err != nil {
 		log.Errorf("Transform tx %v error: %v", s, err)
@@ -109,25 +107,6 @@ func (b *DefaultBroadcaster) BroadcastTx(tx txs.TxQcp) (err error) {
 	}
 	log.Debugf("Broadcast tx: sequence[%d] [%s] ", tx.Sequence, s)
 	return
-}
-
-// Transform 将交易转换为交易事件
-func Transform(tx txs.TxQcp) (*tmtypes.EventDataTx, error) {
-	hash := crypto.Sha256(tx.GetSigData())
-	result := abcitypes.ResponseDeliverTx{
-		Data: []byte("mock"),
-		Tags: []cmn.KVPair{
-			{Key: []byte("qcp.to"), Value: []byte(tx.To)},
-			{Key: []byte("qcp.from"), Value: []byte(tx.From)},
-			{Key: []byte("qcp.sequence"), Value: []byte(fmt.Sprintf("%v", tx.Sequence))},
-			{Key: []byte("qcp.hash"), Value: hash},
-		}}
-	return &tmtypes.EventDataTx{TxResult: tmtypes.TxResult{
-		Height: tx.BlockHeight,
-		Index:  uint32(tx.TxIndex),
-		Tx:     tx.GetSigData(),
-		Result: result,
-	}}, nil
 }
 
 // StringTx 将交易转换为字符串，用于日志记录，非完全序列化
