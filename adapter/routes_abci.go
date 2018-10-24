@@ -8,6 +8,7 @@ import (
 
 	"github.com/QOSGroup/cassini/log"
 	motxs "github.com/QOSGroup/cassini/mock/tx"
+	catypes "github.com/QOSGroup/cassini/types"
 	"github.com/QOSGroup/qbase/txs"
 	amino "github.com/tendermint/go-amino"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -29,7 +30,7 @@ func ABCIQuery(path string, data cmn.HexBytes, height int64, trusted bool) (*cty
 	cdc.RegisterConcrete(&motxs.TxMock{}, "cassini/mock/txmock", nil)
 
 	key := string(data.Bytes())
-	if strings.HasSuffix(key, "/sequence") {
+	if strings.HasPrefix(key, "sequence/") {
 		seq := int32(3)
 
 		var bytes []byte
@@ -54,7 +55,10 @@ func ABCIQuery(path string, data cmn.HexBytes, height int64, trusted bool) (*cty
 		return &ctypes.ResultABCIQuery{Response: *resQuery}, nil
 	}
 
-	tx := motxs.NewTxQcpMock("qqs", "qos", height, height)
+	// tx/out/%s/%d
+	from, sequence, err := parseTxQueryKey(key)
+	log.Debugf("from: %s, height: %d, sequence: %d", from, height, sequence)
+	tx := motxs.NewTxQcpMock(from, "qos", height, sequence)
 
 	var bytes []byte
 	bytes, err = cdc.MarshalBinaryBare(tx)
@@ -79,4 +83,15 @@ func ABCIQuery(path string, data cmn.HexBytes, height int64, trusted bool) (*cty
 	log.Debugf("Unmarshal seq: %s", seq.From)
 
 	return &ctypes.ResultABCIQuery{Response: *resQuery}, nil
+}
+
+func parseTxQueryKey(key string) (from string, seq int64, err error) {
+	str := strings.Split(key, "/")
+	if len(str) < 4 {
+		err = fmt.Errorf("Tx query key error: %s", key)
+		return
+	}
+	from = str[2]
+	seq, err = catypes.Bytes2Int64([]byte(str[3]))
+	return
 }

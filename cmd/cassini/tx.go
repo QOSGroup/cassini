@@ -22,7 +22,7 @@ import (
 // 命令行 tx 命令执行方法
 var txHandler = func(conf *config.Config) (context.CancelFunc, error) {
 	log.Debug("tx")
-	client := restclient.NewRestClient("tcp://192.168.168.196:26657")
+	client := restclient.NewRestClient("tcp://127.0.0.1:26657")
 
 	// 调用交易查询接口
 	tx, err := client.GetTxQcp("qstar", 1)
@@ -47,7 +47,7 @@ var txHandler = func(conf *config.Config) (context.CancelFunc, error) {
 	nonce := int64(1)
 	chainID := "qstar"
 	qcpPriKey := "0xa3288910405746e29aeec7d5ed56fac138b215e651e3244e6d995f25cc8a74c40dd1ef8d2e8ac876faaa4fb281f17fb9bebb08bc14e016c3a88c6836602ca97595ae32300b"
-	qcpseq := int64(8)
+	qcpseq := int64(1)
 	isresult := false
 
 	// cdc := amino.NewCodec()

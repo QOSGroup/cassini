@@ -59,7 +59,7 @@ func subscribe(remote string, query string) (context.CancelFunc, error) {
 						log.Errorf("Get Tx event error: %v", err)
 					}
 				}
-				if strings.EqualFold(qcp.QcpHashBytes, string(kv.Key)) {
+				if strings.EqualFold(qcp.QcpHash, string(kv.Key)) {
 					hash = kv.Value
 				}
 			}
