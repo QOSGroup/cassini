@@ -22,7 +22,7 @@ func Event2queue(event *types.Event) error {
 
 	subject := event.From + "2" + event.To
 
-	producer := mq.NATSProducer{ServerUrls: config.TestConfig().Nats, Subject: subject}
+	producer := mq.NATSProducer{ServerUrls: config.DefaultConfig().Nats, Subject: subject}
 
 	np, err := producer.Connect() //TODO don't connect every time
 
