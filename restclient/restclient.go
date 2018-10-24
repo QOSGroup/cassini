@@ -104,7 +104,7 @@ func (r *RestClient) GetTxQcp(chainID string, sequence int64) (*txs.TxQcp, error
 			log.Errorf("Get TxQcp error: %v", err)
 			return nil, err
 		}
-		log.Debugf("Get TxQcp: %s", tx.From)
+		log.Debugf("Get TxQcp: %v", tx)
 	}
 	return &tx, nil
 }

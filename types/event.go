@@ -24,7 +24,7 @@ func RegisterCassiniTypesAmino(cdc *amino.Codec) {
 	//cdc.RegisterInterface((*TMEventData)(nil), nil)
 	cdc.RegisterConcrete(CassiniEventDataTx{}, "cassini/event/CassiniEventDataTx", nil)
 	cdc.RegisterConcrete(Event{}, "cassini/event/Event", nil)
-	cdc.RegisterConcrete(TxQcp{}, "cassini/txqcp/TxQcp", nil)
+	//cdc.RegisterConcrete(TxQcp{}, "cassini/txqcp/TxQcp", nil)
 }
 
 func (c *CassiniEventDataTx) ConstructFromTags(tags []common.KVPair) error {

@@ -11,16 +11,16 @@ import (
 
 //type route struct{}
 
-func Event2queue(event *types.Event) error {
+func Event2queue(event *types.Event) (subject string, err error) {
 
 	if event == nil || event.HashBytes == nil || event.From == "" || event.To == "" || event.NodeAddress == "" {
 
-		return errors.New("event is nil")
+		return "", errors.New("event is nil")
 	}
 
 	eventbytes, _ := amino.MarshalBinary(*event)
 
-	subject := event.From + "2" + event.To
+	subject = event.From + "2" + event.To
 
 	producer := mq.NATSProducer{ServerUrls: config.DefaultConfig().Nats, Subject: subject}
 
@@ -28,16 +28,16 @@ func Event2queue(event *types.Event) error {
 
 	if err != nil {
 
-		return errors.New("couldn't connect to msg server")
+		return "", errors.New("couldn't connect to msg server")
 	}
 
 	defer np.Close()
 
 	if err := producer.Produce(np, eventbytes); err != nil {
-		return err
+		return "", err
 	}
 
 	log.Infof("routed event from [%s] sequence [#%d] to subject [%s] ", event.NodeAddress, event.Sequence, subject)
 
-	return nil
+	return subject, nil
 }
