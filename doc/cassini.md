@@ -47,7 +47,6 @@ EventDataTx{
         {"qcp.to":       string  }, //qsc name 或 qos
         {"qcp.sequence": int64   },
         {"qcp.hash":     []byte  },  //TxQcp 做 sha256
-        {"qcp.height":   int64   },  //区块高度
     }
 }
 
