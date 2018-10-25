@@ -19,6 +19,25 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	// CommandStart cli command "start"
+	CommandStart = "start"
+	// CommandMock cli command "mock"
+	CommandMock = "mock"
+	// CommandEvents cli command "events"
+	CommandEvents = "events"
+	// CommandTx cli command "tx"
+	CommandTx = "tx"
+)
+
+const (
+	// DefaultNode 默认地址
+	DefaultNode string = "127.0.0.1:26657"
+
+	// DefaultEventSubscribe events 默认订阅条件
+	DefaultEventSubscribe string = "tm.event='Tx' AND qcp.to='qos'"
+)
+
 var conf string
 var logConf string
 
@@ -33,6 +52,10 @@ func NewRootCommand() *cobra.Command {
 		Use:   "cassini",
 		Short: "relay between blockchains",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
+			// if !strings.EqualFold(cmd.Use, CommandMock) &&
+			// 	!strings.EqualFold(cmd.Use, CommandStart) {
+			// 	return
+			// }
 			_, err = config.LoadConfig(conf)
 			if err != nil {
 				log.Error("Run root command error: ", err.Error())
@@ -42,7 +65,6 @@ func NewRootCommand() *cobra.Command {
 			return
 		},
 	}
-
 	return root
 }
 

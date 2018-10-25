@@ -18,7 +18,7 @@ func Transform(tx *txs.TxQcp) (*tmtypes.EventDataTx, error) {
 		Tags: []cmn.KVPair{
 			{Key: []byte(qcp.QcpTo), Value: []byte(tx.To)},
 			{Key: []byte(qcp.QcpFrom), Value: []byte(tx.From)},
-			{Key: []byte(qcp.QcpSequence), Value: []byte(fmt.Sprintf("%v", tx.Sequence))},
+			{Key: []byte(qcp.QcpSequence), Value: []byte(fmt.Sprintf("%d", tx.Sequence))},
 			{Key: []byte(qcp.QcpHash), Value: hash},
 		}}
 	return &tmtypes.EventDataTx{TxResult: tmtypes.TxResult{
