@@ -31,7 +31,7 @@ func TestConfigParse(t *testing.T) {
 }
 
 func TestTransfrom(t *testing.T) {
-	var a uint32 = 0
+	var a uint32
 	a--
 	t.Logf("a: %v", a)
 	assert.Equal(t, true, true)

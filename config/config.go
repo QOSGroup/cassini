@@ -20,14 +20,10 @@ type Config struct {
 	Kafka string `json:"kafka,omitempty"`
 
 	// Mocks 所有需要Mock的服务配置
-	Mocks []MockConfig `json:"mocks,omitempty"`
+	Mocks []*MockConfig `json:"mocks,omitempty"`
 
 	// 与relay连接的区块链
 	QscNames []QscConfig `json:"qscNames,omitempty"`
-
-	EventsListen string `json:"listen,omitempty"`
-
-	EventsQuery string `json:"query,omitempty"`
 }
 
 // QscConfig qsc 配置封装
@@ -149,6 +145,6 @@ func TestQscMockConfig() *MockConfig {
 	// }
 	return &MockConfig{
 		Name: "qsc",
-		RPC:  RPCConfig{ListenAddress: "tcp://0.0.0.0:27657"},
+		RPC:  &RPCConfig{ListenAddress: "tcp://0.0.0.0:27657"},
 	}
 }

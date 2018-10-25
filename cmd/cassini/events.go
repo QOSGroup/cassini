@@ -16,16 +16,25 @@ import (
 )
 
 // 命令行 events 命令执行方法
-var events = func(conf *config.Config) (context.CancelFunc, error) {
-	cancelFunc, err := subscribe(conf.EventsListen, conf.EventsQuery)
-	if err != nil {
-		return nil, err
+var events = func(conf *config.Config) (cancel context.CancelFunc, err error) {
+	var cancels []context.CancelFunc
+	var cancelFunc context.CancelFunc
+	for _, mockConf := range conf.Mocks {
+		cancelFunc, err = subscribe(mockConf.RPC.ListenAddress, mockConf.Subscribe)
+		if err != nil {
+			return
+		}
+		cancels = append(cancels, cancelFunc)
 	}
-	cancel := func() {
-		cancelFunc()
+	cancel = func() {
+		for _, cancelJob := range cancels {
+			if cancelJob != nil {
+				cancelJob()
+			}
+		}
 		log.Debug("Cancel events subscribe service")
 	}
-	return cancel, nil
+	return
 }
 
 //subscribe 从websocket服务端订阅event
@@ -69,7 +78,7 @@ func subscribe(remote string, query string) (context.CancelFunc, error) {
 				Sequence:    seq,
 				From:        from,
 				To:          to}
-			log.Debugf("Got Tx event - %v hash: %x\n", adapter.StringTx(tx), hash)
+			log.Debugf("Got Tx event - %v hash: %x", adapter.StringTx(tx), hash)
 
 		}
 	}()

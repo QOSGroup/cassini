@@ -12,7 +12,7 @@ func addMockFlags(cmd *cobra.Command) {
 // NewMockCommand 创建 mock/模拟服务 命令
 func NewMockCommand(run Runner, isKeepRunning bool) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "mock",
+		Use:   CommandMock,
 		Short: "mock outer interfaces for relay service test.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return commandRunner(run, isKeepRunning)

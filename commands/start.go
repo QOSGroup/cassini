@@ -12,7 +12,7 @@ func addFlags(cmd *cobra.Command) {
 // NewStartCommand 创建 start/服务启动 命令
 func NewStartCommand(run Runner, isKeepRunning bool) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "start",
+		Use:   CommandStart,
 		Short: "start relay service",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return commandRunner(run, isKeepRunning)
