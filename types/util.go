@@ -15,12 +15,23 @@ const (
 	inSequenceKey = "sequence/in/%s"
 )
 
-// Bytes2Int64 byte 数组与Int64 转换
-func Bytes2Int64(bs []byte) (int64, error) {
+// BytesInt64 Int64 转换
+func BytesInt64(bs []byte) (x int64, err error) {
 	buf := bytes.NewBuffer(bs)
-	var x int64
-	err := binary.Read(buf, binary.BigEndian, &x)
+	err = binary.Read(buf, binary.BigEndian, &x)
 	return x, err
+}
+
+// Int64Bytes int64 与 byte 数组转换
+func Int64Bytes(in int64) []byte {
+	var ret = bytes.NewBuffer([]byte{})
+	err := binary.Write(ret, binary.BigEndian, in)
+	if err != nil {
+		fmt.Printf("Int2Byte error:%s", err.Error())
+		return nil
+	}
+
+	return ret.Bytes()
 }
 
 // GetMaxChainOutSequenceKey 输出队列交易序号查询接口key值组装方法

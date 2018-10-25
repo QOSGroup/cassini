@@ -63,7 +63,7 @@ func subscribe(remote string, query string) (context.CancelFunc, error) {
 					from = string(kv.Value)
 				}
 				if strings.EqualFold(qcp.QcpSequence, string(kv.Key)) {
-					seq, err = types.Bytes2Int64(kv.Value)
+					seq, err = types.BytesInt64(kv.Value)
 					if err != nil {
 						log.Errorf("Get Tx event error: %v", err)
 					}

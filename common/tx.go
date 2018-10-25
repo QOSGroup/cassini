@@ -1,8 +1,7 @@
 package common
 
 import (
-	"fmt"
-
+	"github.com/QOSGroup/cassini/types"
 	"github.com/QOSGroup/qbase/qcp"
 	"github.com/QOSGroup/qbase/txs"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
@@ -18,7 +17,7 @@ func Transform(tx *txs.TxQcp) (*tmtypes.EventDataTx, error) {
 		Tags: []cmn.KVPair{
 			{Key: []byte(qcp.QcpTo), Value: []byte(tx.To)},
 			{Key: []byte(qcp.QcpFrom), Value: []byte(tx.From)},
-			{Key: []byte(qcp.QcpSequence), Value: []byte(fmt.Sprintf("%d", tx.Sequence))},
+			{Key: []byte(qcp.QcpSequence), Value: types.Int64Bytes(tx.Sequence)},
 			{Key: []byte(qcp.QcpHash), Value: hash},
 		}}
 	return &tmtypes.EventDataTx{TxResult: tmtypes.TxResult{

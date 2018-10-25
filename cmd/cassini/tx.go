@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	"github.com/QOSGroup/cassini/adapter"
 	"github.com/QOSGroup/cassini/config"
 	motxs "github.com/QOSGroup/cassini/mock/tx"
 	"github.com/QOSGroup/cassini/restclient"
@@ -29,7 +30,7 @@ var txHandler = func(conf *config.Config) (context.CancelFunc, error) {
 		// 调用交易查询接口
 		tx, err := client.GetTxQcp("qstar", mockConf.Sequence)
 		if err == nil {
-			fmt.Printf("Get TxQcp chain: %s to: %s\n", tx.From, tx.To)
+			fmt.Printf("Get TxQcp: %s\n", adapter.StringTx(tx))
 		}
 
 		// 调用交易序号查询接口
@@ -66,8 +67,6 @@ var txHandler = func(conf *config.Config) (context.CancelFunc, error) {
 		txQcp := genQcpTx(cdc, senderAddr, receiverAddr,
 			bctypes.BaseCoin{Name: coin, Amount: types.NewInt(amount)},
 			prikey, nonce, chainID, qcpPriKey, qcpseq, isresult)
-
-		fmt.Printf("TxQcp: %v\n", txQcp)
 
 		err = client.PostTxQcp("qstar", txQcp)
 		if err == nil {

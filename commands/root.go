@@ -12,6 +12,7 @@ package commands
 import (
 	"context"
 	"os"
+	"strings"
 
 	"github.com/QOSGroup/cassini/common"
 	"github.com/QOSGroup/cassini/config"
@@ -22,17 +23,21 @@ import (
 const (
 	// CommandStart cli command "start"
 	CommandStart = "start"
+
 	// CommandMock cli command "mock"
 	CommandMock = "mock"
+
 	// CommandEvents cli command "events"
 	CommandEvents = "events"
+
 	// CommandTx cli command "tx"
 	CommandTx = "tx"
+
+	// CommandVersion cli command "version"
+	CommandVersion = "version"
 )
 
 const (
-	// DefaultNode 默认地址
-	DefaultNode string = "127.0.0.1:26657"
 
 	// DefaultEventSubscribe events 默认订阅条件
 	DefaultEventSubscribe string = "tm.event='Tx' AND qcp.to='qos'"
@@ -52,10 +57,9 @@ func NewRootCommand() *cobra.Command {
 		Use:   "cassini",
 		Short: "relay between blockchains",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
-			// if !strings.EqualFold(cmd.Use, CommandMock) &&
-			// 	!strings.EqualFold(cmd.Use, CommandStart) {
-			// 	return
-			// }
+			if strings.EqualFold(cmd.Use, CommandVersion) {
+				return
+			}
 			_, err = config.LoadConfig(conf)
 			if err != nil {
 				log.Error("Run root command error: ", err.Error())
@@ -84,4 +88,20 @@ func commandRunner(run Runner, isKeepRunning bool) error {
 		})
 	}
 	return nil
+}
+
+func reconfigMock(node string) (mock *config.MockConfig) {
+	conf := config.GetConfig()
+	if len(conf.Mocks) < 1 {
+		mock = &config.MockConfig{
+			RPC: &config.RPCConfig{
+				ListenAddress: node}}
+		conf.Mocks = []*config.MockConfig{mock}
+	}
+	if mock == nil {
+		conf.Mocks = conf.Mocks[:1]
+		mock = conf.Mocks[0]
+		mock.RPC.ListenAddress = node
+	}
+	return
 }

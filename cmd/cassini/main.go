@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"fmt"
+
 	"github.com/QOSGroup/cassini/commands"
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/log"
@@ -28,7 +29,6 @@ func main() {
 	if err := root.Execute(); err != nil {
 		log.Error("Exit by error: ", err)
 	}
-	log.Debug("Ok.")
 }
 
 var versioner = func(conf *config.Config) (context.CancelFunc, error) {
