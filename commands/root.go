@@ -12,6 +12,7 @@ package commands
 import (
 	"context"
 	"os"
+	"strings"
 
 	"github.com/QOSGroup/cassini/common"
 	"github.com/QOSGroup/cassini/config"
@@ -22,12 +23,18 @@ import (
 const (
 	// CommandStart cli command "start"
 	CommandStart = "start"
+
 	// CommandMock cli command "mock"
 	CommandMock = "mock"
+
 	// CommandEvents cli command "events"
 	CommandEvents = "events"
+
 	// CommandTx cli command "tx"
 	CommandTx = "tx"
+
+	// CommandVersion cli command "version"
+	CommandVersion = "version"
 )
 
 const (
@@ -50,10 +57,9 @@ func NewRootCommand() *cobra.Command {
 		Use:   "cassini",
 		Short: "relay between blockchains",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
-			// if !strings.EqualFold(cmd.Use, CommandMock) &&
-			// 	!strings.EqualFold(cmd.Use, CommandStart) {
-			// 	return
-			// }
+			if strings.EqualFold(cmd.Use, CommandVersion) {
+				return
+			}
 			_, err = config.LoadConfig(conf)
 			if err != nil {
 				log.Error("Run root command error: ", err.Error())

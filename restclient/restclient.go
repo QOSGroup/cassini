@@ -1,6 +1,7 @@
 package restclient
 
 import (
+	"github.com/QOSGroup/cassini/adapter"
 	"github.com/QOSGroup/cassini/log"
 	motxs "github.com/QOSGroup/cassini/mock/tx"
 	catypes "github.com/QOSGroup/cassini/types"
@@ -93,9 +94,6 @@ func (r *RestClient) GetTxQcp(chainID string, sequence int64) (*txs.TxQcp, error
 		return nil, err
 	}
 
-	//if result.Response == nil {
-	//
-	//}
 	var tx txs.TxQcp
 
 	if result.Response.GetValue() != nil {
@@ -104,7 +102,7 @@ func (r *RestClient) GetTxQcp(chainID string, sequence int64) (*txs.TxQcp, error
 			log.Errorf("Get TxQcp error: %v", err)
 			return nil, err
 		}
-		log.Debugf("Get TxQcp: %v", tx)
+		log.Debugf("Get TxQcp: %v", adapter.StringTx(&tx))
 	}
 	return &tx, nil
 }
@@ -147,8 +145,6 @@ func (r *RestClient) PostTxQcp(chainID string, qcp *txs.TxQcp) error {
 		log.Errorf("Post TxQcp error: %v", err)
 		return err
 	}
-
-	log.Infof("Post TxQcp successful - %v", qcp)
-
+	log.Debugf("Post TxQcp successful - %v", qcp)
 	return nil
 }
