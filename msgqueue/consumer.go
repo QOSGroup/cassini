@@ -41,8 +41,8 @@ func StartQcpConsume(conf *config.Config) (err error) {
 	for i, qsconfig := range qsconfigs {
 		for j := i + 1; j < len(qsconfigs); j++ {
 			wg.Add(2)
-			go QcpConsume(qsconfigs[j].Name, qsconfig.Name, config.DefaultConfig().Nats, es)
-			go QcpConsume(qsconfig.Name, qsconfigs[j].Name, config.DefaultConfig().Nats, es)
+			go qcpConsume(qsconfigs[j].Name, qsconfig.Name, config.DefaultConfig().Nats, es)
+			go qcpConsume(qsconfig.Name, qsconfigs[j].Name, config.DefaultConfig().Nats, es)
 
 			subjects += fmt.Sprintf("[%s] [%s]", qsconfigs[j].Name+"2"+qsconfig.Name, qsconfig.Name+"2"+qsconfigs[j].Name)
 
@@ -65,7 +65,7 @@ func StartQcpConsume(conf *config.Config) (err error) {
 
 //QcpConsumer concume the message from nats server
 // from ,to is chain name for example "QOS"
-func QcpConsume(from, to, natsServerUrls string, e chan<- error) {
+func qcpConsume(from, to, natsServerUrls string, e chan<- error) {
 
 	var i int64 = 0
 
