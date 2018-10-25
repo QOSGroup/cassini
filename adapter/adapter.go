@@ -105,7 +105,7 @@ func (b *DefaultBroadcaster) BroadcastTx(tx *txs.TxQcp) (err error) {
 		}
 		return
 	}
-	log.Debugf("Broadcast tx: sequence[%d] [%s] ", tx.Sequence, s)
+	log.Debugf("Broadcast tx: sequence[%d] %s", tx.Sequence, s)
 	return
 }
 

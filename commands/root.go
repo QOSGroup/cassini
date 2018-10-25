@@ -31,8 +31,6 @@ const (
 )
 
 const (
-	// DefaultNode 默认地址
-	DefaultNode string = "127.0.0.1:26657"
 
 	// DefaultEventSubscribe events 默认订阅条件
 	DefaultEventSubscribe string = "tm.event='Tx' AND qcp.to='qos'"
@@ -84,4 +82,20 @@ func commandRunner(run Runner, isKeepRunning bool) error {
 		})
 	}
 	return nil
+}
+
+func reconfigMock(node string) (mock *config.MockConfig) {
+	conf := config.GetConfig()
+	if len(conf.Mocks) < 1 {
+		mock = &config.MockConfig{
+			RPC: &config.RPCConfig{
+				ListenAddress: node}}
+		conf.Mocks = []*config.MockConfig{mock}
+	}
+	if mock == nil {
+		conf.Mocks = conf.Mocks[:1]
+		mock = conf.Mocks[0]
+		mock.RPC.ListenAddress = node
+	}
+	return
 }
