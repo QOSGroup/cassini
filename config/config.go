@@ -22,20 +22,23 @@ type Config struct {
 	// Mocks 所有需要Mock的服务配置
 	Mocks []*MockConfig `json:"mocks,omitempty"`
 
-	// 与relay连接的区块链
-	QscNames []QscConfig `json:"qscNames,omitempty"`
+	// Qscs 与relay连接的区块链相关配置
+	Qscs []QscConfig `json:"qscs,omitempty"`
 }
 
 // QscConfig qsc 配置封装
 type QscConfig struct {
-	Name string `json:"names,omitempty"`
-	//链的公钥
+	// Name 链名称
+	Name string `json:"name,omitempty"`
+
+	// Pubkey 链的公钥
 	Pubkey string `json:"pubkey,omitempty"`
-	//链给relay颁发的证书文件
+
+	// Certificate 链给relay颁发的证书文件
 	Certificate string `json:"certificate,omitempty"`
 
-	//区块链节点地址，多个之间用“，”分割
-	NodeAddress string `json:"nodeAddress,omitempty"`
+	// NodeAddress 区块链节点地址，多个之间用“，”分割
+	NodeAddress string `json:"nodes,omitempty"`
 }
 
 var conf = &Config{}
@@ -68,9 +71,9 @@ func GetConfig() *Config {
 // DefaultConfig returns a default configuration for a Tendermint node
 func DefaultConfig() *Config {
 	return &Config{
-		Nats:     "nats://192.168.168.195:4222,nats://192.168.168.195:4223,nats://192.168.168.195:4224",
-		Kafka:    "",
-		QscNames: DefaultQscConfig(),
+		Nats:  "nats://192.168.168.226:4222",
+		Kafka: "",
+		Qscs:  DefaultQscConfig(),
 	}
 }
 
@@ -78,7 +81,7 @@ func DefaultConfig() *Config {
 func DefaultQscConfig() []QscConfig {
 	return []QscConfig{
 		QscConfig{
-			Name: "qos",
+			Name: "qsc",
 			//链的公钥
 			Pubkey: "",
 			//链给relay颁发的证书文件
@@ -87,14 +90,13 @@ func DefaultQscConfig() []QscConfig {
 			NodeAddress: "127.0.0.1:26657",
 		},
 		QscConfig{
-			Name: "qqs",
+			Name: "qos",
 			//链的公钥
 			Pubkey: "",
 			//链给relay颁发的证书文件
 			Certificate: "",
 			//区块链节点地址，多个之间用“，”分割
-			//NodeAddress: "127.0.0.1:27657,127.0.0.1:28657",
-			NodeAddress: "127.0.0.1:26657",
+			NodeAddress: "120.0.0.1:27657,127.0.0.1:28657",
 		},
 	}
 }
@@ -102,9 +104,9 @@ func DefaultQscConfig() []QscConfig {
 // TestConfig returns a configuration that can be used for testing
 func TestConfig() *Config {
 	return &Config{
-		Nats:     "nats://192.168.168.195:4222",
-		Kafka:    "",
-		QscNames: TestQscConfig(),
+		Nats:  "nats://192.168.168.195:4222",
+		Kafka: "",
+		Qscs:  TestQscConfig(),
 	}
 }
 
