@@ -13,6 +13,11 @@ import (
 var starter = func(conf *config.Config) (cancel context.CancelFunc, err error) {
 
 	log.Info("begin to start cassini")
+	log.Debug("Qscs: ", len(conf.Qscs))
+
+	for _, qsc := range conf.Qscs {
+		log.Debugf("qsc: %s %s", qsc.Name, qsc.NodeAddress)
+	}
 
 	//var cancels []context.CancelFunc
 	//var cancelFunc context.CancelFunc
