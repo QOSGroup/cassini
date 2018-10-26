@@ -18,6 +18,11 @@ func init() {
 	Replace(logger)
 }
 
+// LoadLogger 通过配置文件初始化日志模块
+func LoadLogger(conf string) (seelog.LoggerInterface, error) {
+	return seelog.LoggerFromConfigAsFile(conf)
+}
+
 // Replace logger
 func Replace(logger seelog.LoggerInterface) {
 	seelog.ReplaceLogger(logger)
@@ -43,6 +48,11 @@ func Info(v ...interface{}) {
 	seelog.Info(v...)
 }
 
+// Warn logs
+func Warn(v ...interface{}) {
+	seelog.Warn(v...)
+}
+
 // Error logs
 func Error(v ...interface{}) {
 	seelog.Error(v...)
@@ -61,6 +71,11 @@ func Debugf(format string, params ...interface{}) {
 // Infof formats logs
 func Infof(format string, params ...interface{}) {
 	seelog.Infof(format, params...)
+}
+
+// Warnf formats logs
+func Warnf(format string, params ...interface{}) {
+	seelog.Warnf(format, params...)
 }
 
 // Errorf formats logs

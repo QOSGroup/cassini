@@ -17,6 +17,7 @@ import (
 	"github.com/QOSGroup/cassini/common"
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/log"
+	"github.com/cihub/seelog"
 	"github.com/spf13/cobra"
 )
 
@@ -60,6 +61,15 @@ func NewRootCommand() *cobra.Command {
 			if strings.EqualFold(cmd.Use, CommandVersion) {
 				return
 			}
+			// 初始化日志
+			var logger seelog.LoggerInterface
+			logger, err = log.LoadLogger(logConf)
+			if err != nil {
+				log.Warn("Load log config file error: ", err)
+			} else {
+				log.Replace(logger)
+			}
+			// 初始化服务配置
 			_, err = config.LoadConfig(conf)
 			if err != nil {
 				log.Error("Run root command error: ", err.Error())
