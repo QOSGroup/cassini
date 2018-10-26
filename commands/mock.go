@@ -1,8 +1,14 @@
 package commands
 
 import (
+	"github.com/QOSGroup/cassini/config"
 	"github.com/spf13/cobra"
 )
+
+func addMockFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&config.GetConfig().ConfigFile, "config", "./config/config.conf", "config file path")
+	cmd.Flags().StringVar(&config.GetConfig().LogConfigFile, "log", "./config/log.conf", "log config file path")
+}
 
 // NewMockCommand 创建 mock/模拟服务 命令
 func NewMockCommand(run Runner, isKeepRunning bool) *cobra.Command {
@@ -13,6 +19,6 @@ func NewMockCommand(run Runner, isKeepRunning bool) *cobra.Command {
 			return commandRunner(run, isKeepRunning)
 		},
 	}
-
+	addMockFlags(cmd)
 	return cmd
 }

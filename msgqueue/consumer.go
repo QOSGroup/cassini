@@ -4,13 +4,14 @@ package msgqueue
 import (
 	"errors"
 	"fmt"
+	"sync"
+
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/consensus"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/types"
 	"github.com/nats-io/go-nats"
 	"github.com/tendermint/go-amino"
-	"sync"
 )
 
 //type Consumer interface{
@@ -27,7 +28,8 @@ var wg sync.WaitGroup
 
 func StartQcpConsume(conf *config.Config) (err error) {
 
-	qsconfigs := config.DefaultQscConfig()
+	// qsconfigs := config.DefaultQscConfig()
+	qsconfigs := conf.Qscs
 
 	if len(qsconfigs) < 2 {
 		return errors.New("config error , at least two qsc names ")

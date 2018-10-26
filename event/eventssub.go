@@ -28,7 +28,8 @@ func StartEventSubscibe(conf *config.Config) (cancel context.CancelFunc, err err
 	var subEventFrom string
 	es := make(chan error, 1024) //TODO 1024根据节点数需要修改
 
-	for _, qsconfig := range config.DefaultQscConfig() {
+	// for _, qsconfig := range config.DefaultQscConfig() {
+	for _, qsconfig := range conf.Qscs {
 		for _, nodeAddr := range strings.Split(qsconfig.NodeAddress, ",") {
 			wg.Add(1)
 
