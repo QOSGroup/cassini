@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/QOSGroup/cassini/adapter"
@@ -40,14 +41,13 @@ var events = func(conf *config.Config) (cancel context.CancelFunc, err error) {
 //subscribe 从websocket服务端订阅event
 //remote 服务端地址 example  "127.0.0.1:27657"
 func subscribe(remote string, query string) (context.CancelFunc, error) {
-	log.Infof("Subscribe remote: %v, query: %v", remote, query)
 	txsChan := make(chan interface{})
 	cancel, err := event.SubscribeRemote(remote, "cassini-events", query, txsChan)
 	if err != nil {
-		log.Errorf("Remote [%s] : '%s'", remote, err)
+		log.Errorf("Remote %s error: %s", remote, err)
 		return nil, err
 	}
-	log.Debugf("Subscribe successful - remote: %v, query: %v", remote, query)
+	log.Infof("Subscribe successful - remote: %v, subscribe: %v", remote, query)
 	go func() {
 		for e := range txsChan {
 			et := e.(tmtypes.EventDataTx) //注：e类型断言为tmtypes.EventDataTx 类型
@@ -78,7 +78,7 @@ func subscribe(remote string, query string) (context.CancelFunc, error) {
 				Sequence:    seq,
 				From:        from,
 				To:          to}
-			log.Debugf("Got Tx event - %v hash: %x", adapter.StringTx(tx), hash)
+			fmt.Printf("Got Tx event - %v hash: %x\n", adapter.StringTx(tx), hash)
 
 		}
 	}()

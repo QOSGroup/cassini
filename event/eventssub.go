@@ -8,6 +8,9 @@ import (
 
 	"errors"
 	"fmt"
+	"strings"
+	"sync"
+
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/route"
@@ -16,8 +19,6 @@ import (
 	pubsub "github.com/tendermint/tendermint/libs/pubsub/query"
 	"github.com/tendermint/tendermint/rpc/client"
 	ttypes "github.com/tendermint/tendermint/types"
-	"strings"
-	"sync"
 )
 
 var wg sync.WaitGroup
