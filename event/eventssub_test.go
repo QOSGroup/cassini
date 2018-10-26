@@ -20,13 +20,7 @@ func TestEventssubRemote(t *testing.T) {
 	cancelMock, err := mock.StartMock(*mc)
 	defer cancelMock()
 
-	listenAddr := mc.RPC.ListenAddress
-	parts := strings.SplitN(listenAddr, "://", 2)
-	if len(parts) != 2 {
-		err = fmt.Errorf("Listen address parse error: %v", listenAddr)
-		assert.NoError(t, err)
-	}
-	addr := parts[1]
+	addr := mc.RPC.NodeAddress
 
 	ipPort := strings.SplitN(addr, ":", 2)
 	if len(ipPort) != 2 {

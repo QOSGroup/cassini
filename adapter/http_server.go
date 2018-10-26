@@ -37,18 +37,8 @@ func StartHTTPServer(
 	handler http.Handler,
 	config Config,
 ) (listener net.Listener, err error) {
-	var proto, addr string
-	parts := strings.SplitN(listenAddr, "://", 2)
-	if len(parts) != 2 {
-		return nil, errors.Errorf(
-			"Invalid listening address %s (use fully formed addresses, including the tcp:// or unix:// prefix)",
-			listenAddr,
-		)
-	}
-	proto, addr = parts[0], parts[1]
-
 	log.Info(fmt.Sprintf("HTTP rpc server start on %s", listenAddr))
-	listener, err = net.Listen(proto, addr)
+	listener, err = net.Listen("tcp", listenAddr)
 	if err != nil {
 		return nil, errors.Errorf("Failed to listen on %v: %v", listenAddr, err)
 	}
