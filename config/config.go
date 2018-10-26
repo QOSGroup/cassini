@@ -10,6 +10,11 @@ import (
 // Config 封装配置数据
 type Config struct {
 
+	// Consensus 中继共识配置，为了以后支持更多共识算法，添加次配置
+	//    "no" - 不启用共识
+	//    默认 - 2/3共识
+	Consensus string `json:"consensus,omitempty"`
+
 	// 消息队列服务配置
 	// 如果既没配置Kafka也没配置Nats，则认为配置内部队列模式，仅建议用于测试环境下。
 
@@ -71,7 +76,7 @@ func GetConfig() *Config {
 // DefaultConfig returns a default configuration for a Tendermint node
 func DefaultConfig() *Config {
 	return &Config{
-		Nats:  "nats://192.168.168.226:4222",
+		Nats:  "nats://127.0.0.1:4222",
 		Kafka: "",
 		Qscs:  DefaultQscConfig(),
 	}
@@ -104,7 +109,7 @@ func DefaultQscConfig() []QscConfig {
 // TestConfig returns a configuration that can be used for testing
 func TestConfig() *Config {
 	return &Config{
-		Nats:  "nats://192.168.168.195:4222",
+		Nats:  "nats://127.0.0.1:4222",
 		Kafka: "",
 		Qscs:  TestQscConfig(),
 	}
@@ -120,7 +125,7 @@ func TestQscConfig() []QscConfig {
 			//链给relay颁发的证书文件
 			Certificate: "",
 			//区块链节点地址，多个之间用“，”分割
-			NodeAddress: "192.168.168.193",
+			NodeAddress: "127.0.0.1",
 		},
 		QscConfig{
 			Name: "qqs",
@@ -129,25 +134,15 @@ func TestQscConfig() []QscConfig {
 			//链给relay颁发的证书文件
 			Certificate: "",
 			//区块链节点地址，多个之间用“，”分割
-			NodeAddress: "192.168.168.27",
+			NodeAddress: "127.0.0.1",
 		},
 	}
 }
 
 // TestQscMockConfig 创建Qsc Mock 测试配置
 func TestQscMockConfig() *MockConfig {
-	// {
-	// 	"mocks":[
-	// 	    {
-	// 	        "name": "qsc",
-	// 	        "rpc": {
-	// 		"listen": "tcp://0.0.0.0:27657"
-	// 	        }
-	// 	    }
-	// 	]
-	// }
 	return &MockConfig{
 		Name: "qsc",
-		RPC:  &RPCConfig{ListenAddress: "tcp://0.0.0.0:27657"},
+		RPC:  &RPCConfig{NodeAddress: "0.0.0.0:27657"},
 	}
 }

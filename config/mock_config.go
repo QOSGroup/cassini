@@ -22,5 +22,5 @@ type MockConfig struct {
 // RPCConfig 相关配置
 type RPCConfig struct {
 	// 监听地址端口
-	ListenAddress string `json:"listen,omitempty"`
+	NodeAddress string `json:"nodes,omitempty"`
 }
