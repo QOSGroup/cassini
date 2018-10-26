@@ -10,6 +10,13 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
+func TestQcpKey(t *testing.T) {
+	assert.Equal(t, "qcp.to", qcp.QcpTo, "!!! Qcp Key changed !!!")
+	assert.Equal(t, "qcp.from", qcp.QcpFrom, "!!! Qcp Key changed !!!")
+	assert.Equal(t, "qcp.sequence", qcp.QcpSequence, "!!! Qcp Key changed !!!")
+	assert.Equal(t, "qcp.hash", qcp.QcpHash, "!!! Qcp Key changed !!!")
+}
+
 func TestGetTxQcpHashCheck(t *testing.T) {
 	tx := motx.NewTxQcpMock("abc", "xyz", 1, 99)
 	event, err := Transform(tx)
