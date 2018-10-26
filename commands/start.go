@@ -1,12 +1,13 @@
 package commands
 
 import (
+	"github.com/QOSGroup/cassini/config"
 	"github.com/spf13/cobra"
 )
 
 func addFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&conf, "config", "./config/config.conf", "config file path")
-	cmd.Flags().StringVar(&logConf, "log", "./config/log.conf", "log config file path")
+	cmd.Flags().StringVar(&config.GetConfig().ConfigFile, "config", "./config/config.conf", "config file path")
+	cmd.Flags().StringVar(&config.GetConfig().LogConfigFile, "log", "./config/log.conf", "log config file path")
 }
 
 // NewStartCommand 创建 start/服务启动 命令

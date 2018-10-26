@@ -10,6 +10,12 @@ import (
 // Config 封装配置数据
 type Config struct {
 
+	// ConfigFile 配置文件路径，通过命令行设置
+	ConfigFile string `json:"config,omitempty"`
+
+	// LogConfigFile 日志配置文件路径，通过命令行设置
+	LogConfigFile string `json:"log,omitempty"`
+
 	// Consensus 中继共识配置，为了以后支持更多共识算法，添加次配置
 	//    "no" - 不启用共识
 	//    默认 - 2/3共识

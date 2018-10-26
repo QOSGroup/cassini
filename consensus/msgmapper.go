@@ -1,11 +1,12 @@
 package consensus
 
 import (
+	"strings"
+	"sync"
+
 	"github.com/QOSGroup/cassini/common"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/types"
-	"strings"
-	"sync"
 )
 
 type MsgMapper struct {

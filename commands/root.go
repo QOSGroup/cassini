@@ -44,9 +44,6 @@ const (
 	DefaultEventSubscribe string = "tm.event='Tx' AND qcp.to='qos'"
 )
 
-var conf string
-var logConf string
-
 // Runner 通过配置数据执行方法，返回运行过程中出现的错误，如果返回空则代表运行成功。
 type Runner func(conf *config.Config) (context.CancelFunc, error)
 
@@ -63,19 +60,19 @@ func NewRootCommand() *cobra.Command {
 			}
 			// 初始化日志
 			var logger seelog.LoggerInterface
-			logger, err = log.LoadLogger(logConf)
+			logger, err = log.LoadLogger(config.GetConfig().LogConfigFile)
 			if err != nil {
 				log.Warn("Used the default logger because error: ", err)
 			} else {
 				log.Replace(logger)
 			}
 			// 初始化服务配置
-			_, err = config.LoadConfig(conf)
+			_, err = config.LoadConfig(config.GetConfig().ConfigFile)
 			if err != nil {
 				log.Error("Run root command error: ", err.Error())
 				return
 			}
-			log.Debug("Init config: ", conf)
+			log.Debug("Init config: ", config.GetConfig().ConfigFile)
 			return
 		},
 	}

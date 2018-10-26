@@ -1,12 +1,13 @@
 package msgqueue
 
 import (
+	"testing"
+
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/types"
 	"github.com/nats-io/go-nats"
 	"github.com/stretchr/testify/assert"
 	"github.com/tendermint/go-amino"
-	"testing"
 )
 
 func TestQcpConsume(t *testing.T) {
@@ -70,7 +71,7 @@ func TestNATSConsumer_Reply(t *testing.T) {
 func BenchmarkNATSConsumer_Consume(b *testing.B) {
 	i := 0
 	cb := func(m *nats.Msg) {
-		i += 1
+		i++
 		log.Infof("[#%d] Received on [%s]: '%s'\n", i, m.Subject, string(m.Data))
 		if string(m.Data) != DEFAULTMSG {
 			b.Error("expect the consume msg and the produce msg to match\n")
