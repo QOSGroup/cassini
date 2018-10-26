@@ -1,9 +1,8 @@
 package types
 
 import (
-	"bytes"
-	"encoding/binary"
 	"errors"
+
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/common"
 )
@@ -28,7 +27,7 @@ func RegisterCassiniTypesAmino(cdc *amino.Codec) {
 	//cdc.RegisterConcrete(TxQcp{}, "cassini/txqcp/TxQcp", nil)
 }
 
-func (c *CassiniEventDataTx) ConstructFromTags(tags []common.KVPair) error {
+func (c *CassiniEventDataTx) ConstructFromTags(tags []common.KVPair) (err error) {
 
 	if tags == nil || len(tags) == 0 {
 		return errors.New("empty tags")
@@ -44,11 +43,12 @@ func (c *CassiniEventDataTx) ConstructFromTags(tags []common.KVPair) error {
 			c.HashBytes = tag.Value
 		}
 		if string(tag.Key) == "qcp.sequence" {
-			//c.Sequence, _ = strconv.ParseInt(string(tag.Value), 10, 64) //TODO 接QOS后可能需修改
-			bin_buf := bytes.NewBuffer(tag.Value)
-			binary.Read(bin_buf, binary.BigEndian, &c.Sequence)
+			c.Sequence, err = BytesInt64(tag.Value)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
-	return nil
+	return
 }
