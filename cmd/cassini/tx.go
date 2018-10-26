@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/adapter"
 	"github.com/QOSGroup/cassini/config"
 	motxs "github.com/QOSGroup/cassini/mock/tx"
@@ -22,10 +23,10 @@ import (
 // 命令行 tx 命令执行方法
 var txHandler = func(conf *config.Config) (context.CancelFunc, error) {
 	for _, mockConf := range conf.Mocks {
-		// "tcp://127.0.0.1:26657"
-		fmt.Printf("new client: %s, sequence: %d\n",
-			mockConf.RPC.ListenAddress, mockConf.Sequence)
-		client := restclient.NewRestClient(mockConf.RPC.ListenAddress)
+		// "127.0.0.1:26657"
+		log.Debugf("new client: %s, sequence: %d\n",
+			mockConf.RPC.NodeAddress, mockConf.Sequence)
+		client := restclient.NewRestClient(mockConf.RPC.NodeAddress)
 
 		// 调用交易查询接口
 		tx, err := client.GetTxQcp("qstar", mockConf.Sequence)

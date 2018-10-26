@@ -95,13 +95,13 @@ func reconfigMock(node string) (mock *config.MockConfig) {
 	if len(conf.Mocks) < 1 {
 		mock = &config.MockConfig{
 			RPC: &config.RPCConfig{
-				ListenAddress: node}}
+				NodeAddress: node}}
 		conf.Mocks = []*config.MockConfig{mock}
 	}
 	if mock == nil {
 		conf.Mocks = conf.Mocks[:1]
 		mock = conf.Mocks[0]
-		mock.RPC.ListenAddress = node
+		mock.RPC.NodeAddress = node
 	}
 	return
 }

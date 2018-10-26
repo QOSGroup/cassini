@@ -14,19 +14,18 @@ import (
 	cmn "github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/rpc/client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
-	rpcclient "github.com/tendermint/tendermint/rpc/lib/client"
 	"github.com/tendermint/tendermint/types"
 )
 
 // HTTP rpc http 接口调用客户端封装
 type HTTP struct {
 	remote string
-	rpc    *rpcclient.JSONRPCClient
+	rpc    *JSONRPCClient
 }
 
 // newHTTP 创建rpc http访问客户端 tcp://<host>:<port>
 func newHTTP(remote string, cdc *amino.Codec) *HTTP {
-	rc := rpcclient.NewJSONRPCClient(remote)
+	rc := NewJSONRPCClient(remote)
 	rc.SetCodec(cdc)
 
 	return &HTTP{

@@ -20,7 +20,7 @@ var events = func(conf *config.Config) (cancel context.CancelFunc, err error) {
 	var cancels []context.CancelFunc
 	var cancelFunc context.CancelFunc
 	for _, mockConf := range conf.Mocks {
-		cancelFunc, err = subscribe(mockConf.RPC.ListenAddress, mockConf.Subscribe)
+		cancelFunc, err = subscribe(mockConf.RPC.NodeAddress, mockConf.Subscribe)
 		if err != nil {
 			return
 		}
@@ -38,7 +38,7 @@ var events = func(conf *config.Config) (cancel context.CancelFunc, err error) {
 }
 
 //subscribe 从websocket服务端订阅event
-//remote 服务端地址 example  "tcp://127.0.0.1:27657"
+//remote 服务端地址 example  "127.0.0.1:27657"
 func subscribe(remote string, query string) (context.CancelFunc, error) {
 	log.Infof("Subscribe remote: %v, query: %v", remote, query)
 	txsChan := make(chan interface{})

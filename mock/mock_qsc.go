@@ -36,7 +36,7 @@ var (
 func StartMock(mock config.MockConfig) (context.CancelFunc, error) {
 	log.Debug("Start mock: ", mock.Name)
 
-	adapter, err := adapter.NewAdapter(mock.Name, "mocktest-id", mock.RPC.ListenAddress, nil, nil)
+	adapter, err := adapter.NewAdapter(mock.Name, "mocktest-id", mock.RPC.NodeAddress, nil, nil)
 	if err != nil {
 		return nil, err
 	}

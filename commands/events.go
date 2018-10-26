@@ -22,7 +22,7 @@ func NewEventsCommand(run Runner, isKeepRunning bool) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			mock := reconfigMock(eventNode)
 			mock.Subscribe = eventSubscribe
-			fmt.Println("events RPC: ", mock.RPC.ListenAddress)
+			fmt.Println("events RPC: ", mock.RPC.NodeAddress)
 			return commandRunner(run, isKeepRunning)
 		},
 	}
