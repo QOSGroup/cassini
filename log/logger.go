@@ -5,7 +5,7 @@ import (
 )
 
 var dfaultConfig = `
-<seelog>
+<seelog minlevel="info">
 	<outputs formatid="formater"><console />
 	</outputs>
 	<formats>
@@ -28,6 +28,11 @@ func Flush() {
 	seelog.Flush()
 }
 
+// Trace logs 详细运行跟踪日志，可能影响程序性能，所以生产环境不配置输出，仅在开发测试环境使用
+func Trace(v ...interface{}) {
+	seelog.Trace(v...)
+}
+
 // Debug logs
 func Debug(v ...interface{}) {
 	seelog.Debug(v...)
@@ -41,6 +46,11 @@ func Info(v ...interface{}) {
 // Error logs
 func Error(v ...interface{}) {
 	seelog.Error(v...)
+}
+
+// Tracef logs 详细运行跟踪日志，可能影响程序性能，所以生产环境不配置输出，仅在开发测试环境使用
+func Tracef(format string, params ...interface{}) {
+	seelog.Tracef(format, params...)
 }
 
 // Debugf formats logs
