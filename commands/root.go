@@ -65,7 +65,7 @@ func NewRootCommand() *cobra.Command {
 			var logger seelog.LoggerInterface
 			logger, err = log.LoadLogger(logConf)
 			if err != nil {
-				log.Warn("Load log config file error: ", err)
+				log.Warn("Used the default logger because error: ", err)
 			} else {
 				log.Replace(logger)
 			}
