@@ -2,6 +2,7 @@ package restclient
 
 import (
 	"strings"
+
 	"github.com/QOSGroup/cassini/adapter"
 	"github.com/QOSGroup/cassini/log"
 	motxs "github.com/QOSGroup/cassini/mock/tx"
@@ -87,7 +88,7 @@ func NewRestClient(remote string) *RestClient {
 
 // GetTxQcp 查询指定交易，查询键值参考
 func (r *RestClient) GetTxQcp(chainID string, sequence int64) (*txs.TxQcp, error) {
-	key := catypes.GetChainOutTxsKey(chainID, sequence)
+	key := catypes.Key4OutChainTx(chainID, sequence)
 	result, err := r.ABCIQuery("/store/qcp/key", []byte(key))
 	if err != nil || result == nil {
 		log.Errorf("Get TxQcp error: %v", err)
@@ -111,10 +112,10 @@ func (r *RestClient) GetTxQcp(chainID string, sequence int64) (*txs.TxQcp, error
 func (r *RestClient) GetSequence(chainID string, outin string) (int64, error) {
 	path := "/store/qcp/key"
 	var key string
-	if strings.EqualFold("in", outin){
-		key = catypes.GetMaxChainInSequenceKey(chainID)
-	}else{
-		key = catypes.GetMaxChainOutSequenceKey(chainID)
+	if strings.EqualFold("in", outin) {
+		key = catypes.Key4InChainSequence(chainID)
+	} else {
+		key = catypes.Key4OutChainSequence(chainID)
 	}
 	result, err := r.ABCIQuery(path, []byte(key))
 	if err != nil {
