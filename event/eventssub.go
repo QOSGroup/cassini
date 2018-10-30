@@ -23,6 +23,7 @@ import (
 
 var wg sync.WaitGroup
 
+// StartEventSubscibe Start event listening
 func StartEventSubscibe(conf *config.Config) (cancel context.CancelFunc, err error) {
 
 	var subEventFrom string
@@ -33,7 +34,7 @@ func StartEventSubscibe(conf *config.Config) (cancel context.CancelFunc, err err
 		for _, nodeAddr := range strings.Split(qsconfig.NodeAddress, ",") {
 			wg.Add(1)
 
-			go EventSubscribe("tcp://"+nodeAddr, es)
+			go EventsSubscribe("tcp://"+nodeAddr, es)
 			subEventFrom += fmt.Sprintf("[%s] ", nodeAddr)
 
 		}
@@ -50,9 +51,9 @@ func StartEventSubscibe(conf *config.Config) (cancel context.CancelFunc, err err
 	return
 }
 
-//EventSubscribe 从websocket服务端订阅event
+// EventsSubscribe 从websocket服务端订阅event
 //remote 服务端地址 example  "tcp://192.168.168.27:26657"
-func EventSubscribe(remote string, e chan<- error) context.CancelFunc {
+func EventsSubscribe(remote string, e chan<- error) context.CancelFunc {
 
 	txs := make(chan interface{})
 
@@ -67,7 +68,7 @@ func EventSubscribe(remote string, e chan<- error) context.CancelFunc {
 		for ed := range txs {
 
 			eventData := ed.(ttypes.EventDataTx)
-			log.Infof("received event from '%s'", eventData)
+			log.Infof("Received event from %s - '%s'", remote, eventData)
 
 			cassiniEventDataTx := ctypes.CassiniEventDataTx{}
 			cassiniEventDataTx.Height = eventData.Height

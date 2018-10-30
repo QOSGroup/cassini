@@ -22,6 +22,9 @@ type Config struct {
 	//    默认 - 2/3共识
 	Consensus string `json:"consensus,omitempty"`
 
+	// Prikey Cassini relay's private key
+	Prikey string `json:"prikey,omitempty"`
+
 	// 消息队列服务配置
 	// 如果既没配置Kafka也没配置Nats，则认为配置内部队列模式，仅建议用于测试环境下。
 
@@ -42,6 +45,11 @@ type Config struct {
 type QscConfig struct {
 	// Name 链名称
 	Name string `json:"name,omitempty"`
+
+	// Signature if need sign tx data for this chain
+	// true - required
+	// false/default - not required
+	Signature bool `json:"signature,omitempty"`
 
 	// Pubkey 链的公钥
 	Pubkey string `json:"pubkey,omitempty"`

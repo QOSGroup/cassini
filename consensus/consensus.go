@@ -12,16 +12,18 @@ import (
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto"
 	"strings"
-
 	"github.com/tendermint/tendermint/libs/common"
+	"github.com/QOSGroup/qbase/example/basecoin/app"
 )
 
+// ConsEngine Consensus engine
 type ConsEngine struct {
 	M        *MsgMapper
 	f        *Ferry
 	sequence int64
 }
 
+// NewConsEngine New a consensus engine
 func NewConsEngine() *ConsEngine {
 	ce := new(ConsEngine)
 	ce.M = &MsgMapper{MsgMap: make(map[int64]map[string]string)}
@@ -29,6 +31,7 @@ func NewConsEngine() *ConsEngine {
 	return ce
 }
 
+// Add2Engine Add a message to consensus engine
 func (c *ConsEngine) Add2Engine(msg *nats.Msg) error {
 	event := types.Event{}
 
@@ -53,6 +56,7 @@ func (c *ConsEngine) setSequence(s int64) {
 	c.sequence = s
 }
 
+// Ferry Comsumer tx message and handle(consensus, broadcast...) it.
 type Ferry struct {
 }
 
@@ -72,12 +76,20 @@ func (f *Ferry) ferryQCP(from, to, hash, nodes string, sequence int64) (err erro
 		return errors.New("get qcp transaction failed")
 	}
 
-	//TODO 公链签名
-	if from == "QOS" {
+	qscConf := config.GetConfig().GetQscConfig(from)
 
+	// Sign data for public chain
+	// Config in QscConfig.Signature
+	// true - required
+	// false/default - not required
+	if qscConf.Signature {
+		cdc := app.MakeCodec()
+		err = cmn.SignTxQcp(qcp, config.GetConfig().Prikey, cdc)
+		if err!=nil {
+			log.Errorf("Sign Tx Qcp error: %v", err)
+		}
+		log.Debugf("Sign Tx Qcp for chain: %s", from)
 	}
-
-	//TODO 取目标链nodes 地址
 
 	err = f.postTxQcp(to, qcp)
 

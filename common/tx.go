@@ -1,10 +1,14 @@
 package common
 
 import (
+	"encoding/hex"
+
 	"github.com/QOSGroup/cassini/types"
 	"github.com/QOSGroup/qbase/qcp"
 	"github.com/QOSGroup/qbase/txs"
+	amino "github.com/tendermint/go-amino"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/crypto/ed25519"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
@@ -26,4 +30,19 @@ func Transform(tx *txs.TxQcp) (*tmtypes.EventDataTx, error) {
 		Tx:     tx.GetSigData(),
 		Result: result,
 	}}, nil
+}
+
+// SignTxQcp Sign Tx data for chain
+func SignTxQcp(tx *txs.TxQcp, prikey string, cdc *amino.Codec) error {
+	hex, err := hex.DecodeString(prikey)
+	if err != nil {
+		return err
+	}
+	var signer ed25519.PrivKeyEd25519
+	cdc.MustUnmarshalBinaryBare(hex, &signer)
+
+	tx.Sig.Pubkey = signer.PubKey()
+	tx.Sig.Signature, err = tx.SignTx(signer)
+
+	return err
 }

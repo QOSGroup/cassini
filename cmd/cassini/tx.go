@@ -31,7 +31,7 @@ var txHandler = func(conf *config.Config) (context.CancelFunc, error) {
 		client := restclient.NewRestClient(mockConf.RPC.NodeAddress)
 
 		// 调用交易查询接口
-		tx, err := client.GetTxQcp("qstar", mockConf.Sequence)
+		tx, err := client.GetTxQcp("main-chain", mockConf.Sequence)
 		if err == nil {
 			fmt.Printf("Get TxQcp: %s\n", adapter.StringTx(tx))
 			// hash := cmn.Bytes2HexStr(crypto.Sha256(tx.GetSigData()))
