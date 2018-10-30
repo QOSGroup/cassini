@@ -39,6 +39,11 @@ func GetMaxChainOutSequenceKey(outChain string) string {
 	return fmt.Sprintf(outSequenceKey, outChain)
 }
 
+// GetMaxChainInSequenceKey 输出队列交易序号查询接口key值组装方法
+func GetMaxChainInSequenceKey(chain string) string {
+	return fmt.Sprintf(inSequenceKey, chain)
+}
+
 // GetChainOutTxsKey 输出队列交易查询接口key值组装方法
 func GetChainOutTxsKey(outChain string, sequence int64) string {
 	return fmt.Sprintf(outSequenceTxKey, outChain, sequence)

@@ -1,6 +1,7 @@
 package restclient
 
 import (
+	"strings"
 	"github.com/QOSGroup/cassini/adapter"
 	"github.com/QOSGroup/cassini/log"
 	motxs "github.com/QOSGroup/cassini/mock/tx"
@@ -109,7 +110,12 @@ func (r *RestClient) GetTxQcp(chainID string, sequence int64) (*txs.TxQcp, error
 // GetSequence 查询交易序列号
 func (r *RestClient) GetSequence(chainID string, outin string) (int64, error) {
 	path := "/store/qcp/key"
-	key := catypes.GetMaxChainOutSequenceKey(chainID)
+	var key string
+	if strings.EqualFold("in", outin){
+		key = catypes.GetMaxChainInSequenceKey(chainID)
+	}else{
+		key = catypes.GetMaxChainOutSequenceKey(chainID)
+	}
 	result, err := r.ABCIQuery(path, []byte(key))
 	if err != nil {
 		log.Errorf("Get sequence error: %v", err)
@@ -129,6 +135,7 @@ func (r *RestClient) GetSequence(chainID string, outin string) (int64, error) {
 
 //PostTxQcp 广播交易
 func (r *RestClient) PostTxQcp(chainID string, qcp *txs.TxQcp) error {
+	log.Debugf("Post TxQcp chain: [%s], tx.ftom: [%s], tx.to: [%s]", chainID, qcp.From, qcp.To)
 	tx, err := r.cdc.MarshalBinaryBare(qcp)
 	if err != nil {
 		log.Errorf("Marshal TxQcp error: %v", err)
