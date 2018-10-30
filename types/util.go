@@ -4,15 +4,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-)
 
-const (
-	//需要输出到"chainId"的qcp tx最大序号
-	outSequenceKey = "sequence/out/%s"
-	//需要输出到"chainId"的每个qcp tx
-	outSequenceTxKey = "tx/out/%s/%d"
-	//已经接受到来自"chainId"的qcp tx最大序号
-	inSequenceKey = "sequence/in/%s"
+	"github.com/QOSGroup/qbase/qcp"
 )
 
 // BytesInt64 Int64 转换
@@ -34,17 +27,17 @@ func Int64Bytes(in int64) []byte {
 	return ret.Bytes()
 }
 
-// GetMaxChainOutSequenceKey 输出队列交易序号查询接口key值组装方法
-func GetMaxChainOutSequenceKey(outChain string) string {
-	return fmt.Sprintf(outSequenceKey, outChain)
+// Key4OutChainSequence 输出队列交易序号查询接口key值组装方法
+func Key4OutChainSequence(outChain string) string {
+	return string(qcp.BuildOutSequenceKey(outChain))
 }
 
-// GetMaxChainInSequenceKey 输出队列交易序号查询接口key值组装方法
-func GetMaxChainInSequenceKey(chain string) string {
-	return fmt.Sprintf(inSequenceKey, chain)
+// Key4InChainSequence 输出队列交易序号查询接口key值组装方法
+func Key4InChainSequence(chain string) string {
+	return string(qcp.BuildInSequenceKey(chain))
 }
 
-// GetChainOutTxsKey 输出队列交易查询接口key值组装方法
-func GetChainOutTxsKey(outChain string, sequence int64) string {
-	return fmt.Sprintf(outSequenceTxKey, outChain, sequence)
+// Key4OutChainTx 输出队列交易查询接口key值组装方法
+func Key4OutChainTx(outChain string, sequence int64) string {
+	return string(qcp.BuildOutSequenceTxKey(outChain, sequence))
 }

@@ -1,7 +1,7 @@
 module github.com/QOSGroup/cassini
 
 require (
-	github.com/QOSGroup/qbase v0.0.3
+	github.com/QOSGroup/qbase v0.0.4
 	github.com/QOSGroup/qos v0.0.0-20181018084942-4d47997b11ab
 	github.com/cihub/seelog v0.0.0-20170130134532-f561c5e57575
 	github.com/gorilla/websocket v1.2.0
