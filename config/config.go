@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"io/ioutil"
+	"strings"
 
 	"github.com/QOSGroup/cassini/log"
 )
@@ -34,7 +35,7 @@ type Config struct {
 	Mocks []*MockConfig `json:"mocks,omitempty"`
 
 	// Qscs 与relay连接的区块链相关配置
-	Qscs []QscConfig `json:"qscs,omitempty"`
+	Qscs []*QscConfig `json:"qscs,omitempty"`
 }
 
 // QscConfig qsc 配置封装
@@ -79,6 +80,19 @@ func GetConfig() *Config {
 	return conf
 }
 
+// GetQscConfig 获取指定 ChainID 的 QSC 配置
+func (c *Config) GetQscConfig(chainID string) (qsc QscConfig) {
+	if len(c.Qscs) > 0 {
+		for _, s := range c.Qscs {
+			if strings.EqualFold(chainID, s.Name) {
+				qsc = *s
+				return
+			}
+		}
+	}
+	return
+}
+
 // DefaultConfig returns a default configuration for a Tendermint node
 func DefaultConfig() *Config {
 	return &Config{
@@ -89,9 +103,9 @@ func DefaultConfig() *Config {
 }
 
 // DefaultQscConfig 创建默认配置
-func DefaultQscConfig() []QscConfig {
-	return []QscConfig{
-		QscConfig{
+func DefaultQscConfig() []*QscConfig {
+	return []*QscConfig{
+		&QscConfig{
 			Name: "qsc",
 			//链的公钥
 			Pubkey: "",
@@ -100,7 +114,7 @@ func DefaultQscConfig() []QscConfig {
 			//区块链节点地址，多个之间用“，”分割
 			NodeAddress: "127.0.0.1:26657",
 		},
-		QscConfig{
+		&QscConfig{
 			Name: "qos",
 			//链的公钥
 			Pubkey: "",
@@ -122,9 +136,9 @@ func TestConfig() *Config {
 }
 
 // TestQscConfig 创建测试配置
-func TestQscConfig() []QscConfig {
-	return []QscConfig{
-		QscConfig{
+func TestQscConfig() []*QscConfig {
+	return []*QscConfig{
+		&QscConfig{
 			Name: "qos",
 			//链的公钥
 			Pubkey: "",
@@ -133,7 +147,7 @@ func TestQscConfig() []QscConfig {
 			//区块链节点地址，多个之间用“，”分割
 			NodeAddress: "127.0.0.1",
 		},
-		QscConfig{
+		&QscConfig{
 			Name: "qqs",
 			//链的公钥
 			Pubkey: "",

@@ -184,9 +184,8 @@ func (f *Ferry) getTxQcpFromNode(to, hash, node string, sequence int64) (qcp *tx
 func (f *Ferry) postTxQcp(to string, qcp *txs.TxQcp) (err error) {
 
 	success := false
-	qscConfig := config.DefaultQscConfig()
-	toNodes := qscConfig[0].NodeAddress //TODO 取目标链nodes 地址
-
+	qscConfig := config.GetConfig().GetQscConfig(to)
+	toNodes := qscConfig.NodeAddress
 EndPost:
 	for _, node := range strings.Split(toNodes, ",") {
 

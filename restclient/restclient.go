@@ -136,7 +136,7 @@ func (r *RestClient) GetSequence(chainID string, outin string) (int64, error) {
 
 //PostTxQcp 广播交易
 func (r *RestClient) PostTxQcp(chainID string, qcp *txs.TxQcp) error {
-	log.Debugf("Post TxQcp chain: [%s], tx.ftom: [%s], tx.to: [%s]", chainID, qcp.From, qcp.To)
+	log.Debugf("Post TxQcp chain: [%s], tx.from: [%s], tx.to: [%s]", chainID, qcp.From, qcp.To)
 	tx, err := r.cdc.MarshalBinaryBare(qcp)
 	if err != nil {
 		log.Errorf("Marshal TxQcp error: %v", err)
