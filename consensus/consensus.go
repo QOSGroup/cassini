@@ -63,6 +63,8 @@ type Ferry struct {
 //nodes is consensus nodes of the source chain
 func (f *Ferry) ferryQCP(from, to, hash, nodes string, sequence int64) (err error) {
 
+	log.Debugf("Ferry qcp from [%s] to [%s], sequence=%d", from, to, sequence)
+
 	qcp, err := f.getTxQcp(from, to, hash, nodes, sequence)
 
 	if err != nil {

@@ -3,6 +3,7 @@ package consensus
 import (
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/QOSGroup/cassini/common"
 	"github.com/QOSGroup/cassini/log"
@@ -16,11 +17,23 @@ type MsgMapper struct {
 
 func (m *MsgMapper) AddMsgToMap(event types.Event, f *Ferry) (sequence int64, err error) {
 
-	N := 2 //TODO 共识参数  按validator voting power
+	N := 1 //TODO 共识参数  按validator voting power
+
+	// 临时测试代码
+
+	// 监听到交易事件后立即查询需要等待一段时间才能查询到交易数据；
+	//TODO 此处需优化
+	// 需要监听New Block 事件以确认交易数据入块，abco query 接口才能够查询出交易
+	time.Sleep(1 * time.Second)
 
 	m.mtx.Lock()
-
 	defer m.mtx.Unlock()
+
+	// 仅为测试，临时添加
+	h := common.Bytes2HexStr(event.HashBytes)
+	n := "127.0.0.1:26657"
+	go f.ferryQCP(event.From, event.To, h, n, event.Sequence)
+	//----------------
 
 	hashNode, ok := m.MsgMap[event.Sequence]
 
@@ -34,7 +47,7 @@ func (m *MsgMapper) AddMsgToMap(event types.Event, f *Ferry) (sequence int64, er
 		hashNode[string(event.HashBytes)] = event.NodeAddress
 
 		m.MsgMap[event.Sequence] = hashNode
-
+		log.Debugf("msgmapper.AddMsgToMap has no sequence map yet!")
 		return 0, nil
 	}
 
@@ -57,6 +70,7 @@ func (m *MsgMapper) AddMsgToMap(event types.Event, f *Ferry) (sequence int64, er
 			go f.ferryQCP(event.From, event.To, hash, nodes, event.Sequence)
 
 			delete(m.MsgMap, event.Sequence)
+			log.Debugf("msgmapper.AddMsgToMap ferryQCP")
 			return event.Sequence + 1, nil
 
 		}
@@ -64,6 +78,6 @@ func (m *MsgMapper) AddMsgToMap(event types.Event, f *Ferry) (sequence int64, er
 
 		hashNode[string(event.HashBytes)] += event.NodeAddress
 	}
-
+	log.Debugf("msgmapper.AddMsgToMap ?")
 	return 0, nil
 }

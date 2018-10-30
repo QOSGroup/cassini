@@ -68,7 +68,7 @@ func StartQcpConsume(conf *config.Config) (err error) {
 //QcpConsumer concume the message from nats server
 // from ,to is chain name for example "QOS"
 func qcpConsume(from, to, natsServerUrls string, e chan<- error) {
-
+	log.Debugf("Consume qcp from [%s] to [%s]", from, to)
 	var i int64 = 0
 
 	defer wg.Add(-1)

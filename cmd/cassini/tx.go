@@ -18,6 +18,8 @@ import (
 	amino "github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 	// ctypes "github.com/tendermint/tendermint/rpc/core/types"
+	cmn "github.com/QOSGroup/cassini/common"
+	"github.com/tendermint/tendermint/crypto"
 )
 
 // 命令行 tx 命令执行方法
@@ -32,13 +34,20 @@ var txHandler = func(conf *config.Config) (context.CancelFunc, error) {
 		tx, err := client.GetTxQcp("qstar", mockConf.Sequence)
 		if err == nil {
 			fmt.Printf("Get TxQcp: %s\n", adapter.StringTx(tx))
+			// hash := cmn.Bytes2HexStr(crypto.Sha256(tx.GetSigData()))
+			// log.Debugf("Tx hash: %s", hash)
+
 		}
 
 		// 调用交易序号查询接口
 		var seq int64
 		seq, err = client.GetSequence("qstar", "out")
 		if err == nil {
-			fmt.Println("Get sequence: ", seq)
+			fmt.Println("Get out sequence: ", seq)
+		}
+		seq, err = client.GetSequence("qstar", "in")
+		if err == nil {
+			fmt.Println("Get in sequence: ", seq)
 		}
 
 		// 调用交易广播接口
@@ -73,6 +82,14 @@ var txHandler = func(conf *config.Config) (context.CancelFunc, error) {
 		err = client.PostTxQcp("qstar", txQcp)
 		if err == nil {
 			fmt.Println(fmt.Sprintf("Post tx is %v", txQcp))
+		}
+
+		// 调用交易查询接口并计算hash
+		tx, err = client.GetTxQcp("qstar", mockConf.Sequence)
+		if err == nil {
+			hash := cmn.Bytes2HexStr(crypto.Sha256(tx.GetSigData()))
+			log.Debugf("Tx %s hash: %s", adapter.StringTx(tx),hash)
+
 		}
 	}
 	return nil, nil
