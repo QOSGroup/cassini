@@ -70,7 +70,6 @@ func (c *ConsEngine) StartEngine(from, to string) error {
 
 		seq, err := c.M.AddMsgToMap(event, c.f)
 		if err != nil {
-			log.Error("")
 			return err
 		}
 		if seq > 0 {
@@ -214,9 +213,8 @@ func (f *Ferry) getTxQcpFromNode(to, hash, node string, sequence int64) (qcp *tx
 	//	return nil, errors.New("get TxQcp from " + node + " data verify failed.")
 	//}
 
-	//TODO qcp hash 与 hash值比对
+	// qcp hash 与 hash值比对
 	//if string(tmhash.Sum(qcp.GetSigData())) != hash { //算法保持 tmhash.hash 一致 sha256 前 20byte
-
 	hash2 := cmn.Bytes2HexStr(crypto.Sha256(qcp.GetSigData()))
 	if hash2 != hash {
 		return nil, errors.New("get TxQcp from " + node + "failed")
