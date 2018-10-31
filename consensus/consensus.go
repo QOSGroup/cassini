@@ -7,13 +7,13 @@ import (
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/restclient"
 	"github.com/QOSGroup/cassini/types"
+	"github.com/QOSGroup/qbase/example/basecoin/app"
 	"github.com/QOSGroup/qbase/txs"
 	"github.com/nats-io/go-nats"
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto"
-	"strings"
 	"github.com/tendermint/tendermint/libs/common"
-	"github.com/QOSGroup/qbase/example/basecoin/app"
+	"strings"
 )
 
 // ConsEngine Consensus engine
@@ -48,11 +48,44 @@ func (c *ConsEngine) Add2Engine(msg *nats.Msg) error {
 	if err != nil {
 		return err
 	}
-	c.setSequence(seq)
+	c.SetSequence(seq)
 	return nil
 }
 
-func (c *ConsEngine) setSequence(s int64) {
+func (c *ConsEngine) StartEngine(from, to string) error {
+
+	nodes := config.GetConfig().GetQscConfig(from).NodeAddress
+
+	for _, node := range strings.Split(nodes, ",") {
+
+		qcp, err := c.f.queryTxQcpFromNode(to, node, c.sequence)
+
+		if err != nil || qcp == nil {
+			continue
+		}
+		hash := crypto.Sha256(qcp.GetSigData())
+		ced := types.CassiniEventDataTx{From: from, To: to, Height: qcp.BlockHeight, Sequence: c.sequence}
+		ced.HashBytes = hash
+		event := types.Event{NodeAddress: node, CassiniEventDataTx: ced}
+
+		seq, err := c.M.AddMsgToMap(event, c.f)
+		if err != nil {
+			log.Error("")
+			return err
+		}
+		if seq > 0 {
+			c.SetSequence(seq)
+			return nil
+		}
+
+	}
+
+	return nil
+
+}
+
+func (c *ConsEngine) SetSequence(s int64) {
+	log.Infof("sequence set to [#%d]", s)
 	c.sequence = s
 }
 
@@ -85,7 +118,7 @@ func (f *Ferry) ferryQCP(from, to, hash, nodes string, sequence int64) (err erro
 	if qscConf.Signature {
 		cdc := app.MakeCodec()
 		err = cmn.SignTxQcp(qcp, config.GetConfig().Prikey, cdc)
-		if err!=nil {
+		if err != nil {
 			log.Errorf("Sign Tx Qcp error: %v", err)
 		}
 		log.Debugf("Sign Tx Qcp for chain: %s", from)
@@ -169,8 +202,8 @@ func (f *Ferry) getTxQcpParalle(from, to, hash, nodes string, sequence int64) (q
 //getTxQcpFromNode get QCP transactions from single chain node
 func (f *Ferry) getTxQcpFromNode(to, hash, node string, sequence int64) (qcp *txs.TxQcp, err error) {
 
-	r := restclient.NewRestClient(node) //"tcp://127.0.0.1:26657"
-	qcp, err = r.GetTxQcp(to, sequence)
+	qcp, err = f.queryTxQcpFromNode(to, node, sequence)
+
 	if err != nil || qcp == nil {
 		return nil, errors.New("get TxQcp from " + node + "failed.")
 	}
@@ -187,6 +220,18 @@ func (f *Ferry) getTxQcpFromNode(to, hash, node string, sequence int64) (qcp *tx
 	hash2 := cmn.Bytes2HexStr(crypto.Sha256(qcp.GetSigData()))
 	if hash2 != hash {
 		return nil, errors.New("get TxQcp from " + node + "failed")
+	}
+
+	return qcp, nil
+
+}
+
+func (f *Ferry) queryTxQcpFromNode(to, node string, sequence int64) (qcp *txs.TxQcp, err error) {
+
+	r := restclient.NewRestClient(node) //"tcp://127.0.0.1:26657"
+	qcp, err = r.GetTxQcp(to, sequence)
+	if err != nil || qcp == nil {
+		return nil, errors.New("get TxQcp from " + node + "failed.")
 	}
 
 	return qcp, nil
