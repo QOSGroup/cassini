@@ -23,8 +23,6 @@ type QcpConsumer struct {
 	NATSConsumer
 }
 
-var ce = consensus.NewConsEngine()
-
 var wg sync.WaitGroup
 
 func StartQcpConsume(conf *config.Config) (err error) {
@@ -70,6 +68,8 @@ func StartQcpConsume(conf *config.Config) (err error) {
 // from ,to is chain name for example "QOS"
 func qcpConsume(from, to, natsServerUrls string, e chan<- error) {
 	log.Debugf("Consume qcp from [%s] to [%s]", from, to)
+
+	var ce = consensus.NewConsEngine()
 	var i int64 = 0
 
 	defer wg.Add(-1)
