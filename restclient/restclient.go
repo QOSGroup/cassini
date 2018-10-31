@@ -5,10 +5,7 @@ import (
 
 	"github.com/QOSGroup/cassini/adapter"
 	"github.com/QOSGroup/cassini/log"
-	motxs "github.com/QOSGroup/cassini/mock/tx"
 	catypes "github.com/QOSGroup/cassini/types"
-	bctxs "github.com/QOSGroup/qbase/example/basecoin/tx"
-	bctypes "github.com/QOSGroup/qbase/example/basecoin/types"
 	"github.com/QOSGroup/qbase/txs"
 	"github.com/pkg/errors"
 	amino "github.com/tendermint/go-amino"
@@ -74,15 +71,7 @@ type RestClient struct {
 
 // NewRestClient 创建 rpc 远程访问客户端
 func NewRestClient(remote string) *RestClient {
-	// return &RestClient{HTTP: client.NewHTTP(remote, "")}
-	// cdc := app.MakeCodec()
-	cdc := amino.NewCodec()
-	ctypes.RegisterAmino(cdc)
-	txs.RegisterCodec(cdc)
-	cdc.RegisterConcrete(&bctypes.AppAccount{}, "basecoin/AppAccount", nil)
-	cdc.RegisterConcrete(&bctxs.SendTx{}, "basecoin/SendTx", nil)
-	cdc.RegisterConcrete(&motxs.TxMock{}, "cassini/mock/txmock", nil)
-
+	cdc := catypes.CreateCompleteCodec()
 	return &RestClient{HTTP: newHTTP(remote, cdc), cdc: cdc}
 }
 
