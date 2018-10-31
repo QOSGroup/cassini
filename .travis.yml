@@ -8,7 +8,7 @@ go:
 before_install:
   - go mod download
   - go get github.com/nats-io/gnatsd
-  - gnatsd
+  - gnatsd &
 
 script:
   - go test ./... -race -coverprofile=coverage.txt -covermode=atomic
