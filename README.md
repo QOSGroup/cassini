@@ -10,7 +10,9 @@ https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/6874
 [![license](https://img.shields.io/github/license/QOSGroup/cassini.svg)](https://github.com/QOSGroup/cassini/blob/master/LICENSE)
 [![](https://tokei.rs/b1/github/QOSGroup/cassini?category=lines)](https://github.com/QOSGroup/cassini)
 
-cassini 是跨链交易的中继服务，遵循[QOSGroup/qbase](https://github.com/QOSGroup/qbase)定义的QCP跨链协议，以实现对跨链交易的获取，验证和共识等中继支持。
+cassini 是跨链交易的中继服务，遵循[QOSGroup/qbase](https://github.com/QOSGroup/qbase)定义的QCP跨链协议，
+
+以实现对跨链交易的获取，验证和共识等中继支持。
 
 当前为非正式版本，我们会持续完善。
 

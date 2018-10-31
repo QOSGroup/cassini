@@ -6,7 +6,7 @@ import (
 
 const (
 	DEFAULTMSG        = "the test msg"
-	DEFAULTSERVERURLS = "nats://192.168.1.226:4222"
+	DEFAULTSERVERURLS = "nats://127.0.0.1:4222"
 	DEFAULTSUBJECT    = "QSC12QOS"
 )
 
