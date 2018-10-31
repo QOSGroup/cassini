@@ -18,7 +18,7 @@ package msgqueue
 //		t.Error("couldn't connect to msg server")
 //	}
 //	if err	:=producer.Produce(np,[]byte(DEFAULTMSG)) ;err != nil {
-//		t.Error(err) //TODO 错误提示不直接 比如 连接超时
+//		t.Error(err)
 //	}
 //}
 //
