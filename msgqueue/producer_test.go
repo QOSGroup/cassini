@@ -6,7 +6,7 @@ import (
 
 const (
 	DEFAULTMSG        = "the test msg"
-	DEFAULTSERVERURLS = "nats://127.0.0.1:4222"
+	DEFAULTSERVERURLS = "nats://192.168.1.226:4222"
 	DEFAULTSUBJECT    = "QSC12QOS"
 )
 
@@ -21,16 +21,16 @@ func TestNATSProducer_Produce(t *testing.T) {
 	}
 }
 
-func TestNATSProducer_ProduceWithReply(t *testing.T) {
-	producer := NATSProducer{ServerUrls: DEFAULTSERVERURLS, Subject: DEFAULTSUBJECT}
-	np, err := producer.Connect()
-	if err != nil {
-		t.Error("couldn't connect to msg server")
-	}
-	if err := producer.ProduceWithReply(np, "reply test", []byte(DEFAULTMSG)); err != nil {
-		t.Error(err)
-	}
-}
+//func TestNATSProducer_ProduceWithReply(t *testing.T) {
+//	producer := NATSProducer{ServerUrls: DEFAULTSERVERURLS, Subject: DEFAULTSUBJECT}
+//	np, err := producer.Connect()
+//	if err != nil {
+//		t.Error("couldn't connect to msg server")
+//	}
+//	if err := producer.ProduceWithReply(np, "reply test", []byte(DEFAULTMSG)); err != nil {
+//		t.Error(err)
+//	}
+//}
 
 func BenchmarkNATSProducer_Produce(b *testing.B) {
 	producer := NATSProducer{ServerUrls: DEFAULTSERVERURLS, Subject: DEFAULTSUBJECT}
