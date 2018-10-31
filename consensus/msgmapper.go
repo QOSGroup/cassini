@@ -3,7 +3,6 @@ package consensus
 import (
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/QOSGroup/cassini/common"
 	"github.com/QOSGroup/cassini/config"
@@ -19,13 +18,6 @@ type MsgMapper struct {
 func (m *MsgMapper) AddMsgToMap(event types.Event, f *Ferry) (sequence int64, err error) {
 
 	N := 1 //TODO 共识参数  按validator voting power
-
-	// 临时测试代码
-
-	// 监听到交易事件后立即查询需要等待一段时间才能查询到交易数据；
-	//TODO 此处需优化
-	// 需要监听New Block 事件以确认交易数据入块，abco query 接口才能够查询出交易
-	time.Sleep(10 * time.Second)
 
 	m.mtx.Lock()
 	defer m.mtx.Unlock()

@@ -22,6 +22,11 @@ type Config struct {
 	//    默认 - 2/3共识
 	Consensus string `json:"consensus,omitempty"`
 
+	// EventWaitMillitime 交易事件被监听到后需要等待的事件，
+	// <=0 不等待
+	// >0 等待相应毫秒数
+	EventWaitMillitime int64 `json:"eventWaitMillitime,omitempty"`
+
 	// Prikey Cassini relay's private key
 	Prikey string `json:"prikey,omitempty"`
 
