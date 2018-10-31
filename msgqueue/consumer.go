@@ -15,16 +15,9 @@ import (
 	"github.com/tendermint/go-amino"
 )
 
-//type Consumer interface{
-//	Consume(nc *nats.Conn) (err error)
-//}
-
-type QcpConsumer struct {
-	NATSConsumer
-}
-
 var wg sync.WaitGroup
 
+// StartQcpConsume Start to consume tx msg
 func StartQcpConsume(conf *config.Config) (err error) {
 
 	// qsconfigs := config.DefaultQscConfig()
@@ -70,7 +63,8 @@ func qcpConsume(from, to, natsServerUrls string, e chan<- error) {
 	log.Debugf("Consume qcp from [%s] to [%s]", from, to)
 
 	var ce = consensus.NewConsEngine()
-	var i int64 = 0
+
+	var i int64
 
 	defer wg.Add(-1)
 
@@ -111,6 +105,7 @@ func qcpConsume(from, to, natsServerUrls string, e chan<- error) {
 	return
 }
 
+// NATSConsumer Gnatsd consumer
 type NATSConsumer struct {
 	serverUrls string //消息队列服务地址，多个用","分割  例如 "nats://192.168.168.195:4222，nats://192.168.168.195:4223"
 
@@ -119,11 +114,13 @@ type NATSConsumer struct {
 	CallBack func(msg *nats.Msg) //处理消息的回调函数
 }
 
+// Connect Connect to gnatsd server
 func (n *NATSConsumer) Connect() (nc *nats.Conn, err error) {
 
 	return connect2Nats(n.serverUrls)
 }
 
+// Consume Consume tx msg
 func (n *NATSConsumer) Consume(nc *nats.Conn) (err error) {
 
 	if nc == nil {
@@ -162,6 +159,7 @@ func (n *NATSConsumer) Consume(nc *nats.Conn) (err error) {
 	return nil
 }
 
+// Reply Consume tx msg and reply a msg
 func (n *NATSConsumer) Reply(nc *nats.Conn) error {
 
 	i := 0
