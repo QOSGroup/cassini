@@ -88,7 +88,8 @@ func qcpConsume(from, to, natsServerUrls string, e chan<- error) {
 		// 需要监听下一个块的New Block 事件以确认交易数据入块，abco query 接口才能够查询出交易；
 		// 同时提供定时出发机制，以保证共识模块在交易事件丢失或网络错误等问题出现时仍然能够正常运行。
 		if config.GetConfig().EventWaitMillitime > 0 {
-			time.Sleep(config.GetConfig().EventWaitMillitime * time.Millisecond)
+			time.Sleep(time.Duration(config.GetConfig().EventWaitMillitime) *
+				time.Millisecond)
 		}
 
 		ce.Add2Engine(m)
