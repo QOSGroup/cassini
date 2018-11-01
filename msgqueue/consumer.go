@@ -81,12 +81,14 @@ func createConsensusEngine(from, to, nats string, e chan<- error) (ce *consensus
 
 	qsc := config.GetConfig().GetQscConfig(to)
 	client := restclient.NewRestClient(qsc.NodeAddress)
-	seq, err := client.GetSequence(to, "in")
+	seq, err := client.GetSequence(from, "in")
 	if err!=nil{
 		log.Errorf("Create consensus engine error: %v", err)
 	}else{
 		log.Debugf("Create consensus engine query chain %s in-sequence: %d", to, seq)
-		ce.SetSequence(seq)
+		// abci_query接口查询的in sequence都是以执行完的交易序列号，
+		// 因此共识查询需要完成的快联交易序号需要加 1
+		ce.SetSequence(seq+1)
 		err = ce.StartEngine()
 		if err!=nil {
 			log.Errorf("Start consensus engine error: %v", err)
