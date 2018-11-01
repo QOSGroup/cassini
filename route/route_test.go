@@ -9,7 +9,7 @@ import (
 
 //TODO local nats server
 func TestEvent2queue(t *testing.T) {
-	conf, err := config.LoadConfig("./config/config.conf")
+	conf, err := config.LoadConfig("../config/config.conf")
 
 	cEventDatatx := types.CassiniEventDataTx{From: "QSC1", To: "QOS", Sequence: 1, HashBytes: []byte("sha256")}
 	event := types.Event{CassiniEventDataTx: cEventDatatx, NodeAddress: "127.0.0.1:26657"}
