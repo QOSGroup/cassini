@@ -99,6 +99,7 @@ func createConsensusEngine(from, to, nats string, e chan<- error) (ce *consensus
 }
 
 //QcpConsumer concume the message from nats server
+//
 // from ,to is chain name for example "QOS"
 func qcpConsume(ce *consensus.ConsEngine, from, to, natsServerUrls string, e chan<- error) {
 	log.Debugf("Consume qcp from [%s] to [%s]", from, to)
@@ -225,7 +226,7 @@ func connect2Nats(serverUrls string) (nc *nats.Conn, err error) {
 	//if !strings.Contains(serverUrls, ",") {
 	//	log.Debug("serverUrls not contains ','")
 	//}
-	log.Debugf("connectting to nats :[%s]", serverUrls)
+	log.Infof("connectting to nats :[%s]", serverUrls)
 
 	nc, err = nats.Connect(serverUrls)
 	if err != nil {

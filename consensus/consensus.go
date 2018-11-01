@@ -71,7 +71,9 @@ func (c *ConsEngine) StartEngine() error {
 		}
 		hash := crypto.Sha256(qcp.GetSigData())
 		ced := types.CassiniEventDataTx{From: c.from, To: c.to, Height: qcp.BlockHeight, Sequence: c.sequence}
+
 		ced.HashBytes = hash
+
 		event := types.Event{NodeAddress: node, CassiniEventDataTx: ced}
 
 		seq, err := c.M.AddMsgToMap(event, c.f)
@@ -240,7 +242,6 @@ func (f *Ferry) queryTxQcpFromNode(to, node string, sequence int64) (qcp *txs.Tx
 	}
 
 	return qcp, nil
-
 }
 
 func (f *Ferry) postTxQcp(to string, qcp *txs.TxQcp) (err error) {
