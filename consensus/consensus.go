@@ -23,15 +23,17 @@ type ConsEngine struct {
 	sequence int64
 	from     string
 	to       string
+	conf     *config.Config
 }
 
 // NewConsEngine New a consensus engine
 func NewConsEngine(from, to string) *ConsEngine {
 	ce := new(ConsEngine)
 	ce.M = &MsgMapper{MsgMap: make(map[int64]map[string]string)}
-	ce.f = &Ferry{}
+	ce.f = &Ferry{config.GetConfig()}
 	ce.from = from
 	ce.to = to
+	ce.conf = config.GetConfig()
 	return ce
 }
 
@@ -48,7 +50,7 @@ func (c *ConsEngine) Add2Engine(msg *nats.Msg) error {
 		return errors.New("msg sequence is small then the sequence in consensus engine")
 	}
 
-	seq, err := c.M.AddMsgToMap(event, c.f)
+	seq, err := c.M.AddMsgToMap(c.conf, c.f, event)
 	if err != nil {
 		return err
 	}
@@ -60,7 +62,7 @@ func (c *ConsEngine) Add2Engine(msg *nats.Msg) error {
 func (c *ConsEngine) StartEngine() error {
 	log.Debugf("Start consensus engine from: [%s] to: [%s] sequence: [%d]",
 		c.from, c.to, c.sequence)
-	nodes := config.GetConfig().GetQscConfig(c.from).NodeAddress
+	nodes := c.conf.GetQscConfig(c.from).NodeAddress
 
 	for _, node := range strings.Split(nodes, ",") {
 
@@ -71,10 +73,12 @@ func (c *ConsEngine) StartEngine() error {
 		}
 		hash := crypto.Sha256(qcp.GetSigData())
 		ced := types.CassiniEventDataTx{From: c.from, To: c.to, Height: qcp.BlockHeight, Sequence: c.sequence}
+
 		ced.HashBytes = hash
+
 		event := types.Event{NodeAddress: node, CassiniEventDataTx: ced}
 
-		seq, err := c.M.AddMsgToMap(event, c.f)
+		seq, err := c.M.AddMsgToMap(c.conf, c.f, event)
 		if err != nil {
 			return err
 		}
@@ -97,6 +101,7 @@ func (c *ConsEngine) SetSequence(s int64) {
 
 // Ferry Comsumer tx message and handle(consensus, broadcast...) it.
 type Ferry struct {
+	conf *config.Config
 }
 
 //ferryQCP get qcp transaction from source chain and post it to destnation chain
@@ -115,7 +120,7 @@ func (f *Ferry) ferryQCP(from, to, hash, nodes string, sequence int64) (err erro
 		return errors.New("get qcp transaction failed")
 	}
 
-	qscConf := config.GetConfig().GetQscConfig(from)
+	qscConf := f.conf.GetQscConfig(from)
 
 	// Sign data for public chain
 	// Config in QscConfig.Signature
@@ -123,7 +128,7 @@ func (f *Ferry) ferryQCP(from, to, hash, nodes string, sequence int64) (err erro
 	// false/default - not required
 	if qscConf.Signature {
 		cdc := app.MakeCodec()
-		err = cmn.SignTxQcp(qcp, config.GetConfig().Prikey, cdc)
+		err = cmn.SignTxQcp(qcp, f.conf.Prikey, cdc)
 		if err != nil {
 			log.Errorf("Sign Tx Qcp error: %v", err)
 		}
@@ -240,13 +245,12 @@ func (f *Ferry) queryTxQcpFromNode(to, node string, sequence int64) (qcp *txs.Tx
 	}
 
 	return qcp, nil
-
 }
 
 func (f *Ferry) postTxQcp(to string, qcp *txs.TxQcp) (err error) {
 
 	success := false
-	qscConfig := config.GetConfig().GetQscConfig(to)
+	qscConfig := f.conf.GetQscConfig(to)
 	toNodes := qscConfig.NodeAddress
 EndPost:
 	for _, node := range strings.Split(toNodes, ",") {

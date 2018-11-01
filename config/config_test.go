@@ -35,10 +35,10 @@ func TestLoadConfig(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, "no", conf.Consensus)
-	assert.Equal(t, "nats://192.168.1.99:4222", conf.Nats)
+	assert.Equal(t, "nats://127.0.0.1:4222", conf.Nats)
 	assert.Equal(t, int(2), len(conf.Qscs))
 	assert.Equal(t, "qqs", conf.Qscs[1].Name)
-	assert.Equal(t, "192.168.1.100:26657", conf.Qscs[0].NodeAddress)
+	assert.Equal(t, "127.0.0.1:26657", conf.Qscs[0].NodeAddress)
 
 	assert.Equal(t, int(2), len(conf.Mocks))
 	assert.Equal(t, "qos", conf.Mocks[0].Name)

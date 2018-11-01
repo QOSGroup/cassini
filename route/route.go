@@ -11,7 +11,7 @@ import (
 
 //type route struct{}
 
-func Event2queue(event *types.Event) (subject string, err error) {
+func Event2queue(conf *config.Config, event *types.Event) (subject string, err error) {
 
 	if event == nil || event.HashBytes == nil || event.From == "" || event.To == "" || event.NodeAddress == "" {
 
@@ -22,7 +22,7 @@ func Event2queue(event *types.Event) (subject string, err error) {
 
 	subject = event.From + "2" + event.To
 
-	producer := mq.NATSProducer{ServerUrls: config.DefaultConfig().Nats, Subject: subject}
+	producer := mq.NATSProducer{ServerUrls: conf.Nats, Subject: subject}
 
 	np, err := producer.Connect() //TODO don't connect every time
 

@@ -1,6 +1,5 @@
 package types
 
-//
 //import (
 //	"testing"
 //
