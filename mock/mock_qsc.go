@@ -40,8 +40,6 @@ func StartMock(mock config.MockConfig) (context.CancelFunc, error) {
 	if err != nil {
 		return nil, err
 	}
-	cdc := adapter.GetCodec()
-	cdc.RegisterConcrete(&txs.TxMock{}, "cassini/mock/txmock", nil)
 
 	err = adapter.Start()
 	if err != nil {

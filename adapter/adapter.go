@@ -11,9 +11,9 @@ import (
 
 	cmn "github.com/QOSGroup/cassini/common"
 	"github.com/QOSGroup/cassini/log"
+	"github.com/QOSGroup/cassini/types"
 	"github.com/QOSGroup/qbase/txs"
 	amino "github.com/tendermint/go-amino"
-	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	stat "github.com/tendermint/tendermint/state"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
@@ -149,9 +149,7 @@ func NewHandlerService(name, id, listenAddr string) (HandlerService, error) {
 }
 
 func (s *DefaultHandlerService) init() error {
-	s.cdc = amino.NewCodec()
-	ctypes.RegisterAmino(s.cdc)
-	txs.RegisterCodec(s.cdc)
+	s.cdc = types.CreateCompleteCodec()
 
 	s.mux = http.NewServeMux()
 	Routes := s.Routes()
