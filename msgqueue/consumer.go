@@ -10,6 +10,7 @@ import (
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/consensus"
 	"github.com/QOSGroup/cassini/log"
+	"github.com/QOSGroup/cassini/restclient"
 	"github.com/QOSGroup/cassini/types"
 	"github.com/nats-io/go-nats"
 	"github.com/tendermint/go-amino"
@@ -32,12 +33,26 @@ func StartQcpConsume(conf *config.Config) (err error) {
 	es := make(chan error, 1024) //TODO 1024参数按需修改
 	defer close(es)
 
+	engines := make([]*consensus.ConsEngine, 0)
+	var ce *consensus.ConsEngine
 	for i, qsconfig := range qsconfigs {
 		for j := i + 1; j < len(qsconfigs); j++ {
 			wg.Add(2)
-			go qcpConsume(qsconfigs[j].Name, qsconfig.Name, config.DefaultConfig().Nats, es)
-			go qcpConsume(qsconfig.Name, qsconfigs[j].Name, config.DefaultConfig().Nats, es)
 
+			ce, err = createConsensusEngine(qsconfigs[j].Name, qsconfig.Name,
+				config.GetConfig().Nats, es)
+			if err!=nil {
+				log.Errorf("Create consensus engine error: %v", err)
+			}else{
+				engines = append(engines, ce)
+			}
+			ce ,err= createConsensusEngine(qsconfig.Name, qsconfigs[j].Name,
+				config.GetConfig().Nats, es)
+			if err!=nil{
+				log.Errorf("Create consensus engine error: %v", err)
+			}else{
+				engines = append(engines, ce)
+			}
 			subjects += fmt.Sprintf("[%s] [%s]", qsconfigs[j].Name+"2"+qsconfig.Name, qsconfig.Name+"2"+qsconfigs[j].Name)
 
 		}
@@ -54,15 +69,40 @@ func StartQcpConsume(conf *config.Config) (err error) {
 
 	log.Infof("Listening on subjects %s", subjects)
 
+	ticker := func(engines []*consensus.ConsEngine) {
+		// 定时触发共识引擎
+		tick := time.NewTicker(time.Millisecond * 1000)
+		for range tick.C {
+			log.Debug("Consensus engine ticker...")
+			for _, ce := range engines {
+				ce.StartEngine()
+			}
+		}
+	}
+	go ticker(engines)
 	return
+}
+
+func createConsensusEngine(from, to, nats string, e chan<- error) (*consensus.ConsEngine, error) {
+	ce := consensus.NewConsEngine(from, to)
+	qsc := config.GetConfig().GetQscConfig(to)
+client := restclient.NewRestClient(qsc.NodeAddress)
+seq, err := client.GetSequence(to, "in")
+if err!=nil{
+	return nil, err
+}
+	ce.SetSequence(seq)
+	ce.StartEngine()
+
+	go qcpConsume(ce, from, to, nats, e)
+	return ce, nil
+
 }
 
 //QcpConsumer concume the message from nats server
 // from ,to is chain name for example "QOS"
-func qcpConsume(from, to, natsServerUrls string, e chan<- error) {
+func qcpConsume(ce *consensus.ConsEngine, from, to, natsServerUrls string, e chan<- error) {
 	log.Debugf("Consume qcp from [%s] to [%s]", from, to)
-
-	var ce = consensus.NewConsEngine()
 
 	var i int64
 

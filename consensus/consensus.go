@@ -21,13 +21,17 @@ type ConsEngine struct {
 	M        *MsgMapper
 	f        *Ferry
 	sequence int64
+	from     string
+	to       string
 }
 
 // NewConsEngine New a consensus engine
-func NewConsEngine() *ConsEngine {
+func NewConsEngine(from, to string) *ConsEngine {
 	ce := new(ConsEngine)
 	ce.M = &MsgMapper{MsgMap: make(map[int64]map[string]string)}
 	ce.f = &Ferry{}
+	ce.from = from
+	ce.to = to
 	return ce
 }
 
@@ -52,19 +56,20 @@ func (c *ConsEngine) Add2Engine(msg *nats.Msg) error {
 	return nil
 }
 
-func (c *ConsEngine) StartEngine(from, to string) error {
+// StartEngine 出发共识引擎尝试处理下一个交易
+func (c *ConsEngine) StartEngine() error {
 
-	nodes := config.GetConfig().GetQscConfig(from).NodeAddress
+	nodes := config.GetConfig().GetQscConfig(c.from).NodeAddress
 
 	for _, node := range strings.Split(nodes, ",") {
 
-		qcp, err := c.f.queryTxQcpFromNode(to, node, c.sequence)
+		qcp, err := c.f.queryTxQcpFromNode(c.to, node, c.sequence)
 
 		if err != nil || qcp == nil {
 			continue
 		}
 		hash := crypto.Sha256(qcp.GetSigData())
-		ced := types.CassiniEventDataTx{From: from, To: to, Height: qcp.BlockHeight, Sequence: c.sequence}
+		ced := types.CassiniEventDataTx{From: c.from, To: c.to, Height: qcp.BlockHeight, Sequence: c.sequence}
 		ced.HashBytes = hash
 		event := types.Event{NodeAddress: node, CassiniEventDataTx: ced}
 
@@ -83,6 +88,7 @@ func (c *ConsEngine) StartEngine(from, to string) error {
 
 }
 
+// SetSequence 初始化交易序列号
 func (c *ConsEngine) SetSequence(s int64) {
 	log.Infof("sequence set to [#%d]", s)
 	c.sequence = s
