@@ -16,9 +16,13 @@ cassini 是跨链交易的中继服务，遵循[QOSGroup/qbase](https://github.c
 
 当前为非正式版本，我们会持续完善。
 
-## QCP跨链协议
+## Cassini Principle
 
-[QCP跨链协议](https://github.com/QOSGroup/cassini/blob/master/doc/cassini.md)
+[Cassini Principle](./doc/cassini.md)
+
+## Cassini Deployment
+
+[Cassini Deployment](./doc/cassini-deployment.md)
 
 ## Quick Start
 

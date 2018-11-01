@@ -41,6 +41,7 @@ vendor
 # Testing
 coverage.txt
 profile.out
+dev_config.conf
 
 # Vagrant
 .vagrant/
