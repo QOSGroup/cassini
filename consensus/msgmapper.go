@@ -15,7 +15,7 @@ type MsgMapper struct {
 	MsgMap map[int64]map[string]string
 }
 
-func (m *MsgMapper) AddMsgToMap(event types.Event, f *Ferry) (sequence int64, err error) {
+func (m *MsgMapper) AddMsgToMap(conf *config.Config, f *Ferry, event types.Event) (sequence int64, err error) {
 
 	N := 1 //TODO 共识参数  按validator voting power
 
@@ -23,9 +23,9 @@ func (m *MsgMapper) AddMsgToMap(event types.Event, f *Ferry) (sequence int64, er
 	defer m.mtx.Unlock()
 
 	// 仅为测试，临时添加
-	if strings.EqualFold("no", config.GetConfig().Consensus) {
+	if strings.EqualFold("no", conf.Consensus) {
 		h := common.Bytes2HexStr(event.HashBytes)
-		n := config.GetConfig().GetQscConfig(event.From).NodeAddress
+		n := conf.GetQscConfig(event.From).NodeAddress
 		go f.ferryQCP(event.From, event.To, h, n, event.Sequence)
 		return event.Sequence + 1, nil
 	}

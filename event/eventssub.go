@@ -34,7 +34,7 @@ func StartEventSubscibe(conf *config.Config) (cancel context.CancelFunc, err err
 		for _, nodeAddr := range strings.Split(qsconfig.NodeAddress, ",") {
 			wg.Add(1)
 
-			go EventsSubscribe("tcp://"+nodeAddr, es)
+			go EventsSubscribe(conf, "tcp://"+nodeAddr, es)
 			subEventFrom += fmt.Sprintf("[%s] ", nodeAddr)
 
 		}
@@ -53,10 +53,10 @@ func StartEventSubscibe(conf *config.Config) (cancel context.CancelFunc, err err
 
 // EventsSubscribe 从websocket服务端订阅event
 //remote 服务端地址 example  "tcp://192.168.168.27:26657"
-func EventsSubscribe(remote string, e chan<- error) context.CancelFunc {
+func EventsSubscribe(conf *config.Config, remote string, e chan<- error) context.CancelFunc {
 
 	txs := make(chan interface{})
-
+	//TODO query 条件?? "tm.event = 'Tx' AND qcp.to != ''"
 	cancel, err := SubscribeRemote(remote, "cassini", "tm.event = 'Tx'", txs)
 	if err != nil {
 		e <- err
@@ -76,7 +76,7 @@ func EventsSubscribe(remote string, e chan<- error) context.CancelFunc {
 
 			event := ctypes.Event{NodeAddress: remote, CassiniEventDataTx: cassiniEventDataTx}
 
-			_, err := route.Event2queue(&event)
+			_, err := route.Event2queue(conf, &event)
 
 			if err != nil {
 				log.Error("failed route event to message queue")

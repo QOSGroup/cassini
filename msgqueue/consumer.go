@@ -39,11 +39,10 @@ func StartQcpConsume(conf *config.Config) (err error) {
 		for j := i + 1; j < len(qsconfigs); j++ {
 			wg.Add(2)
 
-			ce = createConsensusEngine(qsconfigs[j].Name, qsconfig.Name,
-				config.GetConfig().Nats, es)
+			ce = createConsensusEngine(qsconfigs[j].Name, qsconfig.Name, conf, es)
 			engines = append(engines, ce)
-			ce = createConsensusEngine(qsconfig.Name, qsconfigs[j].Name,
-				config.GetConfig().Nats, es)
+			ce = createConsensusEngine(qsconfig.Name, qsconfigs[j].Name, conf, es)
+
 			engines = append(engines, ce)
 			subjects += fmt.Sprintf("[%s] [%s]", qsconfigs[j].Name+"2"+qsconfig.Name, qsconfig.Name+"2"+qsconfigs[j].Name)
 
@@ -76,32 +75,32 @@ func StartQcpConsume(conf *config.Config) (err error) {
 	return
 }
 
-func createConsensusEngine(from, to, nats string, e chan<- error) (ce *consensus.ConsEngine) {
+func createConsensusEngine(from, to string, conf *config.Config, e chan<- error) (ce *consensus.ConsEngine) {
 	ce = consensus.NewConsEngine(from, to)
 
-	qsc := config.GetConfig().GetQscConfig(to)
+	qsc := conf.GetQscConfig(to)
 	client := restclient.NewRestClient(qsc.NodeAddress)
 	seq, err := client.GetSequence(from, "in")
-	if err!=nil{
+	if err != nil {
 		log.Errorf("Create consensus engine error: %v", err)
-	}else{
+	} else {
 		log.Debugf("Create consensus engine query chain %s in-sequence: %d", to, seq)
 		// abci_query接口查询的in sequence都是以执行完的交易序列号，
 		// 因此共识查询需要完成的快联交易序号需要加 1
-		ce.SetSequence(seq+1)
+		ce.SetSequence(seq + 1)
 		err = ce.StartEngine()
-		if err!=nil {
+		if err != nil {
 			log.Errorf("Start consensus engine error: %v", err)
 		}
 	}
-	go qcpConsume(ce, from, to, nats, e)
+	go qcpConsume(ce, from, to, conf, e)
 	return
 }
 
 //QcpConsumer concume the message from nats server
 //
 // from ,to is chain name for example "QOS"
-func qcpConsume(ce *consensus.ConsEngine, from, to, natsServerUrls string, e chan<- error) {
+func qcpConsume(ce *consensus.ConsEngine, from, to string, conf *config.Config, e chan<- error) {
 	log.Debugf("Consume qcp from [%s] to [%s]", from, to)
 
 	var i int64
@@ -121,15 +120,15 @@ func qcpConsume(ce *consensus.ConsEngine, from, to, natsServerUrls string, e cha
 		//TODO 优化
 		// 需要监听下一个块的New Block 事件以确认交易数据入块，abco query 接口才能够查询出交易；
 		// 同时提供定时出发机制，以保证共识模块在交易事件丢失或网络错误等问题出现时仍然能够正常运行。
-		if config.GetConfig().EventWaitMillitime > 0 {
-			time.Sleep(time.Duration(config.GetConfig().EventWaitMillitime) *
+		if conf.EventWaitMillitime > 0 {
+			time.Sleep(time.Duration(conf.EventWaitMillitime) *
 				time.Millisecond)
 		}
 
 		ce.Add2Engine(m)
 	}
 
-	consummer := NATSConsumer{serverUrls: natsServerUrls, subject: from + "2" + to, CallBack: cb}
+	consummer := NATSConsumer{serverUrls: conf.Nats, subject: from + "2" + to, CallBack: cb}
 
 	nc, err := consummer.Connect()
 	if err != nil {
