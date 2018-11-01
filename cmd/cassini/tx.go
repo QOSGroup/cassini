@@ -31,7 +31,7 @@ var txHandler = func(conf *config.Config) (context.CancelFunc, error) {
 		client := restclient.NewRestClient(mockConf.RPC.NodeAddress)
 
 		// 调用交易查询接口
-		tx, err := client.GetTxQcp("main-chain", mockConf.Sequence)
+		tx, err := client.GetTxQcp("qos-test", mockConf.Sequence)
 		if err == nil {
 			fmt.Printf("Get TxQcp: %s\n", adapter.StringTx(tx))
 			// hash := cmn.Bytes2HexStr(crypto.Sha256(tx.GetSigData()))
@@ -41,11 +41,11 @@ var txHandler = func(conf *config.Config) (context.CancelFunc, error) {
 
 		// 调用交易序号查询接口
 		var seq int64
-		seq, err = client.GetSequence("qstar", "out")
+		seq, err = client.GetSequence("qstars-test", "out")
 		if err == nil {
 			fmt.Println("Get out sequence: ", seq)
 		}
-		seq, err = client.GetSequence("qstar", "in")
+		seq, err = client.GetSequence("qstars-test", "in")
 		if err == nil {
 			fmt.Println("Get in sequence: ", seq)
 		}

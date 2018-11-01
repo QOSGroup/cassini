@@ -27,7 +27,7 @@ func (m *MsgMapper) AddMsgToMap(event types.Event, f *Ferry) (sequence int64, er
 		h := common.Bytes2HexStr(event.HashBytes)
 		n := config.GetConfig().GetQscConfig(event.From).NodeAddress
 		go f.ferryQCP(event.From, event.To, h, n, event.Sequence)
-		return event.Sequence, nil
+		return event.Sequence + 1, nil
 	}
 	//----------------
 
