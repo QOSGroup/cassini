@@ -21,16 +21,16 @@ func TestNATSProducer_Produce(t *testing.T) {
 	}
 }
 
-func TestNATSProducer_ProduceWithReply(t *testing.T) {
-	producer := NATSProducer{ServerUrls: DEFAULTSERVERURLS, Subject: DEFAULTSUBJECT}
-	np, err := producer.Connect()
-	if err != nil {
-		t.Error("couldn't connect to msg server")
-	}
-	if err := producer.ProduceWithReply(np, "reply test", []byte(DEFAULTMSG)); err != nil {
-		t.Error(err)
-	}
-}
+//func TestNATSProducer_ProduceWithReply(t *testing.T) {
+//	producer := NATSProducer{ServerUrls: DEFAULTSERVERURLS, Subject: DEFAULTSUBJECT}
+//	np, err := producer.Connect()
+//	if err != nil {
+//		t.Error("couldn't connect to msg server")
+//	}
+//	if err := producer.ProduceWithReply(np, "reply test", []byte(DEFAULTMSG)); err != nil {
+//		t.Error(err)
+//	}
+//}
 
 func BenchmarkNATSProducer_Produce(b *testing.B) {
 	producer := NATSProducer{ServerUrls: DEFAULTSERVERURLS, Subject: DEFAULTSUBJECT}
