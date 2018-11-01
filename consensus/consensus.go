@@ -58,7 +58,7 @@ func (c *ConsEngine) Add2Engine(msg *nats.Msg) error {
 
 // StartEngine 出发共识引擎尝试处理下一个交易
 func (c *ConsEngine) StartEngine() error {
-
+	log.Debugf("Start consensus engine from: %s to: %s", c.from, c.to)
 	nodes := config.GetConfig().GetQscConfig(c.from).NodeAddress
 
 	for _, node := range strings.Split(nodes, ",") {

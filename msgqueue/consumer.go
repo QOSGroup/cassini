@@ -39,20 +39,12 @@ func StartQcpConsume(conf *config.Config) (err error) {
 		for j := i + 1; j < len(qsconfigs); j++ {
 			wg.Add(2)
 
-			ce, err = createConsensusEngine(qsconfigs[j].Name, qsconfig.Name,
+			ce = createConsensusEngine(qsconfigs[j].Name, qsconfig.Name,
 				config.GetConfig().Nats, es)
-			if err!=nil {
-				log.Errorf("Create consensus engine error: %v", err)
-			}else{
-				engines = append(engines, ce)
-			}
-			ce ,err= createConsensusEngine(qsconfig.Name, qsconfigs[j].Name,
+			engines = append(engines, ce)
+			ce = createConsensusEngine(qsconfig.Name, qsconfigs[j].Name,
 				config.GetConfig().Nats, es)
-			if err!=nil{
-				log.Errorf("Create consensus engine error: %v", err)
-			}else{
-				engines = append(engines, ce)
-			}
+			engines = append(engines, ce)
 			subjects += fmt.Sprintf("[%s] [%s]", qsconfigs[j].Name+"2"+qsconfig.Name, qsconfig.Name+"2"+qsconfigs[j].Name)
 
 		}
@@ -70,6 +62,7 @@ func StartQcpConsume(conf *config.Config) (err error) {
 	log.Infof("Listening on subjects %s", subjects)
 
 	ticker := func(engines []*consensus.ConsEngine) {
+		log.Debugf("Start consensus engine ticker...%d", len(engines))
 		// 定时触发共识引擎
 		tick := time.NewTicker(time.Millisecond * 1000)
 		for range tick.C {
@@ -83,20 +76,24 @@ func StartQcpConsume(conf *config.Config) (err error) {
 	return
 }
 
-func createConsensusEngine(from, to, nats string, e chan<- error) (*consensus.ConsEngine, error) {
-	ce := consensus.NewConsEngine(from, to)
+func createConsensusEngine(from, to, nats string, e chan<- error) (ce *consensus.ConsEngine) {
+	ce = consensus.NewConsEngine(from, to)
+
 	qsc := config.GetConfig().GetQscConfig(to)
-client := restclient.NewRestClient(qsc.NodeAddress)
-seq, err := client.GetSequence(to, "in")
-if err!=nil{
-	return nil, err
-}
-	ce.SetSequence(seq)
-	ce.StartEngine()
-
+	client := restclient.NewRestClient(qsc.NodeAddress)
+	seq, err := client.GetSequence(to, "in")
+	if err!=nil{
+		log.Errorf("Create consensus engine error: %v", err)
+	}else{
+		log.Debugf("Create consensus engine query chain %s in-sequence: %d", to, seq)
+		ce.SetSequence(seq)
+		err = ce.StartEngine()
+		if err!=nil {
+			log.Errorf("Start consensus engine error: %v", err)
+		}
+	}
 	go qcpConsume(ce, from, to, nats, e)
-	return ce, nil
-
+	return
 }
 
 //QcpConsumer concume the message from nats server

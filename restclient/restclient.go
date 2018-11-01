@@ -86,14 +86,16 @@ func (r *RestClient) GetTxQcp(chainID string, sequence int64) (*txs.TxQcp, error
 
 	var tx txs.TxQcp
 
-	if result.Response.GetValue() != nil {
-		err = r.cdc.UnmarshalBinaryBare(result.Response.GetValue(), &tx)
-		if err != nil {
-			log.Errorf("Get TxQcp error: %v", err)
-			return nil, err
-		}
-		log.Debugf("Get TxQcp: %v", adapter.StringTx(&tx))
+	if result.Response.GetValue() == nil {
+		log.Errorf("Get TxQcp error: No result value(tx data).")
+		return nil, errors.New("No result value(tx data)")
 	}
+	err = r.cdc.UnmarshalBinaryBare(result.Response.GetValue(), &tx)
+	if err != nil {
+		log.Errorf("Get TxQcp error: %v", err)
+		return nil, err
+	}
+	log.Debugf("Get TxQcp: %v", adapter.StringTx(&tx))
 	return &tx, nil
 }
 

@@ -27,7 +27,8 @@ var starter = func(conf *config.Config) (cancel context.CancelFunc, err error) {
 	_, err = event.StartEventSubscibe(conf)
 	//cancels = append(cancels, cancelFunc)
 	if err != nil {
-		return nil, err
+		// return nil, err
+		log.Errorf("Cassini start error: %v", err)
 	}
 
 	//启动nats 消费
