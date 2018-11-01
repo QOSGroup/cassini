@@ -5,11 +5,10 @@ import (
 
 	motxs "github.com/QOSGroup/cassini/mock/tx"
 	bcapp "github.com/QOSGroup/qbase/example/basecoin/app"
-	"github.com/QOSGroup/qbase/txs"
 	qosapp "github.com/QOSGroup/qos/app"
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/common"
-	ctypes "github.com/tendermint/tendermint/rpc/core/types"
+	tmttypes "github.com/tendermint/tendermint/types"
 )
 
 type CassiniEventDataTx struct {
@@ -32,24 +31,24 @@ func CreateCompleteCodec() *amino.Codec {
 	cdc := qosapp.MakeCodec()
 
 	// tedermint cdc
-	ctypes.RegisterAmino(cdc)
+	// ctypes.RegisterAmino(cdc)
+	// ctypes "github.com/tendermint/tendermint/rpc/core/types"
+	tmttypes.RegisterEventDatas(cdc)
+	tmttypes.RegisterEvidences(cdc)
 
 	// qbase cdc
-	txs.RegisterCodec(cdc)
 	bcapp.RegisterCodec(cdc)
 
 	// cassini cdc
 	RegisterCassiniTypesAmino(cdc)
-	cdc.RegisterConcrete(&motxs.TxMock{}, "cassini/mock/txmock", nil)
 	return cdc
 }
 
 // RegisterCassiniTypesAmino 注册中继自定义类型
 func RegisterCassiniTypesAmino(cdc *amino.Codec) {
-	//cdc.RegisterInterface((*TMEventData)(nil), nil)
 	cdc.RegisterConcrete(CassiniEventDataTx{}, "cassini/event/CassiniEventDataTx", nil)
 	cdc.RegisterConcrete(Event{}, "cassini/event/Event", nil)
-	//cdc.RegisterConcrete(TxQcp{}, "cassini/txqcp/TxQcp", nil)
+	cdc.RegisterConcrete(&motxs.TxMock{}, "cassini/mock/TxMock", nil)
 }
 
 func (c *CassiniEventDataTx) ConstructFromTags(tags []common.KVPair) (err error) {
