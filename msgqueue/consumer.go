@@ -25,7 +25,7 @@ func StartQcpConsume(conf *config.Config) (err error) {
 	qsconfigs := conf.Qscs
 
 	if len(qsconfigs) < 2 {
-		return errors.New("config error , at least two qsc names ")
+		return errors.New("config error , at least two chain names ")
 	}
 
 	var subjects string
@@ -42,10 +42,10 @@ func StartQcpConsume(conf *config.Config) (err error) {
 			ce = createConsensusEngine(qsconfigs[j].Name, qsconfig.Name, conf, es)
 			engines = append(engines, ce)
 			ce = createConsensusEngine(qsconfig.Name, qsconfigs[j].Name, conf, es)
-
 			engines = append(engines, ce)
 
-			//go qcpConsume(ce, from, to, conf, e)
+			//go qcpConsume(ce, qsconfigs[j].Name, qsconfig.Name, conf, es)
+			//go qcpConsume(ce, qsconfig.Name, qsconfigs[j].Name, conf, es)
 
 			subjects += fmt.Sprintf("[%s] [%s]", qsconfigs[j].Name+"2"+qsconfig.Name, qsconfig.Name+"2"+qsconfigs[j].Name)
 
@@ -85,7 +85,7 @@ func createConsensusEngine(from, to string, conf *config.Config, e chan<- error)
 
 	qsc := conf.GetQscConfig(to)
 	client := restclient.NewRestClient(qsc.NodeAddress)
-	seq, err := client.GetSequence(from, "in")
+	seq, err := client.GetSequence(to, "in") // be  GetSequence(from, "in")
 	if err != nil {
 		log.Errorf("Create consensus engine error: %v", err)
 	} else {

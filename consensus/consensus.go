@@ -85,7 +85,7 @@ func (c *ConsEngine) StartEngine() error {
 
 	for _, node := range strings.Split(nodes, ",") {
 
-		qcp, err := c.F.queryTxQcpFromNode(c.to, node, c.F.sequence)
+		qcp, err := c.F.queryTxQcpFromNode(c.from, node, c.F.sequence) // be (c.to, node, c.F.sequence)
 
 		if err != nil || qcp == nil {
 			continue
