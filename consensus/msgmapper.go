@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/QOSGroup/cassini/common"
-	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/types"
 )
@@ -15,19 +14,17 @@ type MsgMapper struct {
 	MsgMap map[int64]map[string]string
 }
 
-func (m *MsgMapper) AddMsgToMap(conf *config.Config, f *Ferry, event types.Event) (int64, error) {
+func (m *MsgMapper) AddMsgToMap(f *Ferry, event types.Event) (sequence int64, err error) {
 
 	N := 1 //TODO 共识参数  按validator voting power
 
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
-	var err error
-
 	// 仅为测试，临时添加
-	if strings.EqualFold("no", conf.Consensus) {
+	if strings.EqualFold("no", f.conf.Consensus) {
 		h := common.Bytes2HexStr(event.HashBytes)
-		n := conf.GetQscConfig(event.From).NodeAddress
+		n := f.conf.GetQscConfig(event.From).NodeAddress
 		err = f.ferryQCP(event.From, event.To, h, n, event.Sequence)
 		if err != nil {
 			return 0, err

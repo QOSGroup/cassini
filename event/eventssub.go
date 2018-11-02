@@ -57,7 +57,7 @@ func EventsSubscribe(conf *config.Config, remote string, e chan<- error) context
 
 	txs := make(chan interface{})
 	//TODO query 条件?? "tm.event = 'Tx' AND qcp.to != ''"
-	cancel, err := SubscribeRemote(remote, "cassini", "tm.event = 'Tx'", txs)
+	cancel, err := SubscribeRemote(remote, "cassini", "tm.event = 'Tx' AND qcp.sequence > 0", txs)
 	if err != nil {
 		e <- err
 		log.Errorf("Remote [%s] : '%s'", remote, err)

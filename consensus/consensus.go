@@ -23,7 +23,7 @@ type ConsEngine struct {
 	sequence int64
 	from     string
 	to       string
-	conf     *config.Config
+	//conf     *config.Config
 }
 
 // NewConsEngine New a consensus engine
@@ -33,7 +33,7 @@ func NewConsEngine(from, to string) *ConsEngine {
 	ce.f = &Ferry{config.GetConfig()}
 	ce.from = from
 	ce.to = to
-	ce.conf = config.GetConfig()
+	//ce.conf = config.GetConfig()
 	return ce
 }
 
@@ -50,7 +50,7 @@ func (c *ConsEngine) Add2Engine(msg *nats.Msg) error {
 		return errors.New("msg sequence is small then the sequence in consensus engine")
 	}
 
-	seq, err := c.M.AddMsgToMap(c.conf, c.f, event)
+	seq, err := c.M.AddMsgToMap(c.f, event)
 	if err != nil {
 		return err
 	}
@@ -58,11 +58,11 @@ func (c *ConsEngine) Add2Engine(msg *nats.Msg) error {
 	return nil
 }
 
-// StartEngine 出发共识引擎尝试处理下一个交易
+// StartEngine 触发共识引擎尝试处理下一个交易
 func (c *ConsEngine) StartEngine() error {
 	log.Debugf("Start consensus engine from: [%s] to: [%s] sequence: [%d]",
 		c.from, c.to, c.sequence)
-	nodes := c.conf.GetQscConfig(c.from).NodeAddress
+	nodes := c.f.conf.GetQscConfig(c.from).NodeAddress
 
 	for _, node := range strings.Split(nodes, ",") {
 
@@ -78,7 +78,7 @@ func (c *ConsEngine) StartEngine() error {
 
 		event := types.Event{NodeAddress: node, CassiniEventDataTx: ced}
 
-		seq, err := c.M.AddMsgToMap(c.conf, c.f, event)
+		seq, err := c.M.AddMsgToMap(c.f, event)
 		if err != nil {
 			return err
 		}
