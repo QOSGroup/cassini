@@ -14,15 +14,16 @@ import (
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/libs/common"
 	"strings"
+	"sync"
 )
 
 // ConsEngine Consensus engine
 type ConsEngine struct {
-	M        *MsgMapper
-	f        *Ferry
-	sequence int64
-	from     string
-	to       string
+	M *MsgMapper
+	F *Ferry
+	//sequence int64
+	from string
+	to   string
 	//conf     *config.Config
 }
 
@@ -30,7 +31,7 @@ type ConsEngine struct {
 func NewConsEngine(from, to string) *ConsEngine {
 	ce := new(ConsEngine)
 	ce.M = &MsgMapper{MsgMap: make(map[int64]map[string]string)}
-	ce.f = &Ferry{config.GetConfig()}
+	ce.F = &Ferry{sequence: 0, conf: config.GetConfig()}
 	ce.from = from
 	ce.to = to
 	//ce.conf = config.GetConfig()
@@ -46,62 +47,83 @@ func (c *ConsEngine) Add2Engine(msg *nats.Msg) error {
 		return errors.New("the event Unmarshal error")
 	}
 
-	if event.Sequence < c.sequence {
+	if event.Sequence < c.F.sequence {
 		return errors.New("msg sequence is small then the sequence in consensus engine")
 	}
 
-	seq, err := c.M.AddMsgToMap(c.f, event)
+	_, err := c.M.AddMsgToMap(c.F, event, c.consensus32())
 	if err != nil {
 		return err
 	}
-	c.SetSequence(seq)
+	//c.F.SetSequence(seq)
 	return nil
+}
+
+func (c *ConsEngine) consensus32() (N int) {
+	nodes := c.F.conf.GetQscConfig(c.from).NodeAddress
+
+	n := len(strings.Split(nodes, ","))
+
+	if n%3 == 0 {
+		N = n * 2 / 3
+	} else {
+		N = n*2/3 + 1
+	}
+
+	log.Debugf("[consensus N #%d]", N)
+	return int(N)
 }
 
 // StartEngine 触发共识引擎尝试处理下一个交易
 func (c *ConsEngine) StartEngine() error {
-	log.Debugf("Start consensus engine from: [%s] to: [%s] sequence: [%d]",
-		c.from, c.to, c.sequence)
-	nodes := c.f.conf.GetQscConfig(c.from).NodeAddress
+
+	log.Debugf("Start consensus engine from: [%s] to: [%s] sequence: [%d]", c.from, c.to, c.F.sequence)
+
+	nodes := c.F.conf.GetQscConfig(c.from).NodeAddress
+
+	N := c.consensus32()
 
 	for _, node := range strings.Split(nodes, ",") {
 
-		qcp, err := c.f.queryTxQcpFromNode(c.to, node, c.sequence)
+		qcp, err := c.F.queryTxQcpFromNode(c.to, node, c.F.sequence)
 
 		if err != nil || qcp == nil {
 			continue
 		}
 		hash := crypto.Sha256(qcp.GetSigData())
-		ced := types.CassiniEventDataTx{From: c.from, To: c.to, Height: qcp.BlockHeight, Sequence: c.sequence}
+		ced := types.CassiniEventDataTx{From: c.from, To: c.to, Height: qcp.BlockHeight, Sequence: c.F.sequence}
 
 		ced.HashBytes = hash
 
 		event := types.Event{NodeAddress: node, CassiniEventDataTx: ced}
 
-		seq, err := c.M.AddMsgToMap(c.f, event)
+		_, err = c.M.AddMsgToMap(c.F, event, N)
 		if err != nil {
 			return err
-		}
-		if seq > 0 {
-			c.SetSequence(seq)
-			return nil
 		}
 
 	}
 
 	return nil
-
-}
-
-// SetSequence 初始化交易序列号
-func (c *ConsEngine) SetSequence(s int64) {
-	log.Infof("sequence set to [#%d]", s)
-	c.sequence = s
 }
 
 // Ferry Comsumer tx message and handle(consensus, broadcast...) it.
 type Ferry struct {
+	mtx sync.RWMutex
+
+	sequence int64 //already ferry max sequence
+
 	conf *config.Config
+}
+
+// SetSequence 设置交易序列号
+func (f *Ferry) SetSequence(s int64) {
+
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	f.sequence = s
+	log.Infof("sequence set to [#%d]", s)
 }
 
 //ferryQCP get qcp transaction from source chain and post it to destnation chain
@@ -142,6 +164,9 @@ func (f *Ferry) ferryQCP(from, to, hash, nodes string, sequence int64) (err erro
 	}
 
 	log.Infof("success ferry qcp transaction from [%s] to [%s] sequence [#%d] \n", from, to, sequence)
+
+	f.SetSequence(f.sequence + 1)
+
 	return nil
 
 }

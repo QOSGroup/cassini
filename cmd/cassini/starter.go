@@ -19,15 +19,9 @@ var starter = func(conf *config.Config) (cancel context.CancelFunc, err error) {
 		log.Tracef("qsc: %s %s", qsc.Name, qsc.NodeAddress)
 	}
 
-	//var cancels []context.CancelFunc
-	//var cancelFunc context.CancelFunc
-
 	//启动事件监听 chain node
-	//cancelFunc, err = event.StartEventSubscibe(conf)
 	_, err = event.StartEventSubscibe(conf)
-	//cancels = append(cancels, cancelFunc)
 	if err != nil {
-		// return nil, err
 		log.Errorf("Cassini start error: %v", err)
 	}
 
@@ -36,14 +30,6 @@ var starter = func(conf *config.Config) (cancel context.CancelFunc, err error) {
 	if err != nil {
 		return nil, err
 	}
-
-	//cancel = func() {
-	//	for _, cancelJob := range cancels {
-	//		if cancelJob != nil {
-	//			cancelJob()
-	//		}
-	//	}
-	//}
 
 	log.Info("cassini started \n")
 	return

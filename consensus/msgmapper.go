@@ -14,9 +14,7 @@ type MsgMapper struct {
 	MsgMap map[int64]map[string]string
 }
 
-func (m *MsgMapper) AddMsgToMap(f *Ferry, event types.Event) (sequence int64, err error) {
-
-	N := 1 //TODO 共识参数  按validator voting power
+func (m *MsgMapper) AddMsgToMap(f *Ferry, event types.Event, N int) (sequence int64, err error) {
 
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
@@ -60,7 +58,7 @@ func (m *MsgMapper) AddMsgToMap(f *Ferry, event types.Event) (sequence int64, er
 
 		nodes := hashNode[string(event.HashBytes)]
 
-		if strings.Count(nodes, ",") >= N-1 { //TODO 达成共识
+		if strings.Count(nodes, ",") >= N { //TODO 达成共识
 
 			hash := common.Bytes2HexStr(event.HashBytes)
 			log.Infof("consensus from [%s] to [%s] sequence [#%d] hash [%s]", event.From, event.To, event.Sequence, hash[:10])

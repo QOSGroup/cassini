@@ -56,8 +56,8 @@ func StartEventSubscibe(conf *config.Config) (cancel context.CancelFunc, err err
 func EventsSubscribe(conf *config.Config, remote string, e chan<- error) context.CancelFunc {
 
 	txs := make(chan interface{})
-	//TODO query 条件?? "tm.event = 'Tx' AND qcp.to != ''"
-	cancel, err := SubscribeRemote(remote, "cassini", "tm.event = 'Tx' AND qcp.sequence > 0", txs)
+	//TODO query 条件?? "tm.event = 'Tx' AND qcp.to != '' AND qcp.sequence > 0"
+	cancel, err := SubscribeRemote(remote, "cassini", "tm.event = 'Tx'", txs)
 	if err != nil {
 		e <- err
 		log.Errorf("Remote [%s] : '%s'", remote, err)
