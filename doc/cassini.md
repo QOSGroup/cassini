@@ -15,7 +15,7 @@ QCP跨链协议中中继（Cassini）作为链之间连接的纽带，使跨链�
 
 ## 体系结构：
 
-![framework](https://github.com/QOSGroup/static/blob/master/cassini-principle.jpg?raw=true)
+![framework](https://github.com/QOSGroup/static/blob/master/cassini.jpg?raw=true)
 
 - BlockchainA和BlockchainB连接共同的中继Cassini；
 - Cassini订阅链上跨链交易事件，获取交易摘要，进行2/3共识，随机找一个诚实节点获取跨链交易；
