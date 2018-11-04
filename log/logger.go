@@ -5,7 +5,7 @@ import (
 )
 
 var dfaultConfig = `
-<seelog minlevel="info">
+<seelog minlevel="debug">
 	<outputs formatid="formater"><console />
 	</outputs>
 	<formats>
