@@ -5,9 +5,9 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/adapter"
 	"github.com/QOSGroup/cassini/config"
+	"github.com/QOSGroup/cassini/log"
 	motxs "github.com/QOSGroup/cassini/mock/tx"
 	"github.com/QOSGroup/cassini/restclient"
 	"github.com/QOSGroup/qbase/example/basecoin/app"
@@ -88,7 +88,7 @@ var txHandler = func(conf *config.Config) (context.CancelFunc, error) {
 		tx, err = client.GetTxQcp("qstar", mockConf.Sequence)
 		if err == nil {
 			hash := cmn.Bytes2HexStr(crypto.Sha256(tx.GetSigData()))
-			log.Debugf("Tx %s hash: %s", adapter.StringTx(tx),hash)
+			log.Debugf("Tx %s hash: %s", adapter.StringTx(tx), hash)
 
 		}
 	}
@@ -111,7 +111,7 @@ func genQcpTx(cdc *amino.Codec, sender types.Address, receiver types.Address,
 		Signature: signature,
 		Nonce:     nonce,
 	}}
-	tx := txs.NewTxQCP(std, chainName, chainID, qcpseq, 0, 0, isresult)
+	tx := txs.NewTxQCP(std, chainName, chainID, qcpseq, 0, 0, isresult, "")
 	caHex, _ := hex.DecodeString(caPriHex[2:])
 	var caPriKey ed25519.PrivKeyEd25519
 	cdc.MustUnmarshalBinaryBare(caHex, &caPriKey)

@@ -19,8 +19,8 @@ func newTxMock(data string) *TxMock {
 }
 
 // ValidateData Mock 交易，实现txs.ITx 接口
-func (tx *TxMock) ValidateData(ctx context.Context) bool {
-	return true
+func (tx *TxMock) ValidateData(ctx context.Context) error {
+	return nil
 }
 
 // Exec Mock 交易，实现txs.ITx 接口
