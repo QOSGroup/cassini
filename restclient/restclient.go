@@ -22,6 +22,8 @@ type HTTP struct {
 	rpc    *JSONRPCClient
 }
 
+const ERR_emptyqcp = "empty qcp transaction"
+
 // newHTTP 创建rpc http访问客户端 tcp://<host>:<port>
 func newHTTP(remote string, cdc *amino.Codec) *HTTP {
 	rc := NewJSONRPCClient(remote)
@@ -96,7 +98,7 @@ func (r *RestClient) GetTxQcp(chainID string, sequence int64) (*txs.TxQcp, error
 		return &tx, nil
 	}
 	//log.Errorf("empty qcp transaction chainid [%s] sequence [#%d]", chainID, sequence)
-	return nil, errors.New("empty qcp transaction")
+	return nil, errors.New(ERR_emptyqcp)
 }
 
 // GetSequence 查询交易序列号

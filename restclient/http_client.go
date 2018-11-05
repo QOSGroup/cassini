@@ -72,7 +72,7 @@ func makeHTTPDialer(remoteAddr string) (string, string, func(string, string) (ne
 // We overwrite the http.Client.Dial so we can do http over tcp or unix.
 // remoteAddr should be fully featured (eg. with tcp:// or unix://)
 func makeHTTPClient(remoteAddr string) (string, *http.Client) {
-	protocol, address, dialer := makeHTTPDialer(remoteAddr)
+	protocol, address, dialer := makeHTTPDialer(remoteAddr) //debug to many open files
 	return protocol + "://" + address, &http.Client{
 		Transport: &http.Transport{
 			Dial: dialer,
