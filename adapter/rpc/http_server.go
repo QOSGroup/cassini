@@ -1,4 +1,4 @@
-package adapter
+package rpc
 
 // copy from tendermint/rpc/lib/server/http_server.go
 
@@ -12,11 +12,19 @@ import (
 	"strings"
 	"time"
 
+	"github.com/QOSGroup/cassini/adapter/pool"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/pkg/errors"
 	"golang.org/x/net/netutil"
 
-	types "github.com/tendermint/tendermint/rpc/lib/types"
+	trtypes "github.com/tendermint/tendermint/rpc/lib/types"
+	tmtypes "github.com/tendermint/tendermint/types"
+)
+
+const (
+	// === tendermint/rpc/core/pipe.go
+
+	subscribeTimeout = 5 * time.Second
 )
 
 // Config is an RPC server configuration.
@@ -29,6 +37,19 @@ const (
 	// server will read parsing the request body.
 	MaxBodyBytes = int64(1000000) // 1MB
 )
+
+// RequestHandler handle rpc request
+type RequestHandler struct {
+	hub  *tmtypes.EventBus
+	pool *pool.TxPool
+}
+
+// NewRequestHandler new a rpc request handler
+func NewRequestHandler(h *tmtypes.EventBus, p *pool.TxPool) *RequestHandler {
+	return &RequestHandler{
+		hub:  h,
+		pool: p}
+}
 
 // StartHTTPServer starts an HTTP server on listenAddr with the given handler.
 // It wraps handler with RecoverAndLogHandler.
@@ -107,7 +128,7 @@ func StartHTTPAndTLSServer(
 func WriteRPCResponseHTTPError(
 	w http.ResponseWriter,
 	httpCode int,
-	res types.RPCResponse,
+	res trtypes.RPCResponse,
 ) {
 	jsonBytes, err := json.MarshalIndent(res, "", "  ")
 	if err != nil {
@@ -120,7 +141,7 @@ func WriteRPCResponseHTTPError(
 }
 
 // WriteRPCResponseHTTP write rpc response
-func WriteRPCResponseHTTP(w http.ResponseWriter, res types.RPCResponse) {
+func WriteRPCResponseHTTP(w http.ResponseWriter, res trtypes.RPCResponse) {
 	jsonBytes, err := json.MarshalIndent(res, "", "  ")
 	if err != nil {
 		panic(err)
@@ -155,7 +176,7 @@ func RecoverAndLogHandler(handler http.Handler) http.Handler {
 			if e := recover(); e != nil {
 
 				// If RPCResponse
-				if res, ok := e.(types.RPCResponse); ok {
+				if res, ok := e.(trtypes.RPCResponse); ok {
 					WriteRPCResponseHTTP(rww, res)
 				} else {
 					// For the rest,
@@ -163,7 +184,7 @@ func RecoverAndLogHandler(handler http.Handler) http.Handler {
 						e, string(debug.Stack()),
 					)
 					rww.WriteHeader(http.StatusInternalServerError)
-					WriteRPCResponseHTTP(rww, types.RPCInternalError("", e.(error)))
+					WriteRPCResponseHTTP(rww, trtypes.RPCInternalError("", e.(error)))
 				}
 			}
 

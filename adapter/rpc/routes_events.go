@@ -1,4 +1,4 @@
-package adapter
+package rpc
 
 // copy from tendermint/rpc/core/events.go
 
@@ -15,7 +15,7 @@ import (
 )
 
 // Subscribe 指定订阅条件，订阅交易事件。
-func (s DefaultHandlerService) Subscribe(wsCtx rpctypes.WSRPCContext, query string) (*ctypes.ResultSubscribe, error) {
+func (s RequestHandler) Subscribe(wsCtx rpctypes.WSRPCContext, query string) (*ctypes.ResultSubscribe, error) {
 	addr := wsCtx.GetRemoteAddr()
 	log.Info("Subscribe to query", "remote", addr, "query", query)
 
@@ -43,7 +43,7 @@ func (s DefaultHandlerService) Subscribe(wsCtx rpctypes.WSRPCContext, query stri
 }
 
 // Unsubscribe 根据具体订阅条件，取消交易事件的订阅。
-func (s DefaultHandlerService) Unsubscribe(wsCtx rpctypes.WSRPCContext, query string) (*ctypes.ResultUnsubscribe, error) {
+func (s RequestHandler) Unsubscribe(wsCtx rpctypes.WSRPCContext, query string) (*ctypes.ResultUnsubscribe, error) {
 	addr := wsCtx.GetRemoteAddr()
 	log.Info("Unsubscribe from query", "remote", addr, "query", query)
 	q, err := tmquery.New(query)
@@ -58,7 +58,7 @@ func (s DefaultHandlerService) Unsubscribe(wsCtx rpctypes.WSRPCContext, query st
 }
 
 // UnsubscribeAll 取消全部交易事件订阅。
-func (s DefaultHandlerService) UnsubscribeAll(wsCtx rpctypes.WSRPCContext) (*ctypes.ResultUnsubscribe, error) {
+func (s RequestHandler) UnsubscribeAll(wsCtx rpctypes.WSRPCContext) (*ctypes.ResultUnsubscribe, error) {
 	addr := wsCtx.GetRemoteAddr()
 	log.Info("Unsubscribe from all", "remote", addr)
 	err := s.eventBusFor(wsCtx).UnsubscribeAll(context.Background(), addr)
@@ -68,10 +68,10 @@ func (s DefaultHandlerService) UnsubscribeAll(wsCtx rpctypes.WSRPCContext) (*cty
 	return &ctypes.ResultUnsubscribe{}, nil
 }
 
-func (s DefaultHandlerService) eventBusFor(wsCtx rpctypes.WSRPCContext) tmtypes.EventBusSubscriber {
+func (s RequestHandler) eventBusFor(wsCtx rpctypes.WSRPCContext) tmtypes.EventBusSubscriber {
 	es := wsCtx.GetEventSubscriber()
 	if es == nil {
-		es = s.eventHub
+		es = s.hub
 	}
 	return es
 }

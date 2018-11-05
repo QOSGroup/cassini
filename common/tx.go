@@ -2,6 +2,7 @@ package common
 
 import (
 	"encoding/hex"
+	"fmt"
 
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/types"
@@ -46,4 +47,12 @@ func SignTxQcp(tx *txs.TxQcp, prikey string, cdc *amino.Codec) error {
 	tx.Sig.Signature, err = tx.SignTx(signer)
 	log.Infof("tx.sig %v", tx.Sig)
 	return err
+}
+
+// StringTx 将交易转换为字符串，用于日志记录，非完全序列化
+func StringTx(tx *txs.TxQcp) string {
+	if tx == nil {
+		return ""
+	}
+	return fmt.Sprintf("[%v, %v, %v, %v, %v]", tx.From, tx.To, tx.BlockHeight, tx.TxIndex, tx.Sequence)
 }
