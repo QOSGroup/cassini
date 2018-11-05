@@ -68,7 +68,7 @@ func StartQcpConsume(conf *config.Config) (err error) {
 		// 定时触发共识引擎
 		tick := time.NewTicker(time.Millisecond * 1000)
 		for range tick.C {
-			log.Debug("Consensus engine ticker...")
+			log.Info("Consensus engine ticker...")
 			for _, ce := range engines {
 				ce.StartEngine()
 			}
@@ -85,7 +85,7 @@ func createConsensusEngine(from, to string, conf *config.Config, e chan<- error)
 
 	qsc := conf.GetQscConfig(to)
 	client := restclient.NewRestClient(qsc.NodeAddress)
-	seq, err := client.GetSequence(to, "in") // be  GetSequence(from, "in")
+	seq, err := client.GetSequence(from, "in") // be  GetSequence(from, "in")
 	if err != nil {
 		log.Errorf("Create consensus engine error: %v", err)
 	} else {

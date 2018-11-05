@@ -5,7 +5,6 @@ require (
 	github.com/QOSGroup/qos v0.0.2-0.20181105092243-6ec5680d4ed7
 	github.com/cihub/seelog v0.0.0-20170130134532-f561c5e57575
 	github.com/gorilla/websocket v1.2.0
-	github.com/magiconair/properties v1.8.0
 	github.com/nats-io/gnatsd v1.3.0 // indirect
 	github.com/nats-io/go-nats v1.6.0
 	github.com/nats-io/nuid v1.0.0 // indirect

@@ -63,11 +63,12 @@ func (c *ConsEngine) consensus32() (N int) {
 
 	n := len(strings.Split(nodes, ","))
 
-	if n%3 == 0 {
-		N = n * 2 / 3
-	} else {
-		N = n*2/3 + 1
-	}
+	N = (n*2 + 2) / 3
+	//if n%3 == 0 {
+	//	N = n * 2 / 3
+	//} else {
+	//	N = n*2/3 + 1
+	//}
 
 	log.Debugf("[consensus N #%d]", N)
 	return int(N)
@@ -279,6 +280,9 @@ func (f *Ferry) getTxQcpFromNode(to, hash, node string, sequence int64) (qcp *tx
 
 }
 
+//queryTxQcpFromNode get TxQcp from node
+//
+//to destnation chain id
 func (f *Ferry) queryTxQcpFromNode(to, node string, sequence int64) (qcp *txs.TxQcp, err error) {
 
 	//"tcp://127.0.0.1:26657"
