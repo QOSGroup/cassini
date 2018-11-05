@@ -66,7 +66,7 @@ func StartQcpConsume(conf *config.Config) (err error) {
 	ticker := func(engines []*consensus.ConsEngine) {
 		log.Debugf("Start consensus engine ticker...%d", len(engines))
 		// 定时触发共识引擎
-		tick := time.NewTicker(time.Millisecond * 1000)
+		tick := time.NewTicker(time.Millisecond * 10000)
 		for range tick.C {
 			log.Debug("Consensus engine ticker...")
 			for _, ce := range engines {
