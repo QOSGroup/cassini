@@ -68,6 +68,7 @@ func (c *CassiniEventDataTx) ConstructFromTags(tags []common.KVPair) (err error)
 		}
 		if string(tag.Key) == "qcp.sequence" {
 			c.Sequence, err = BytesInt64(tag.Value)
+			//c.Sequence, err = strconv.ParseInt(string(tag.Value), 10, 64)
 			if err != nil {
 				return err
 			}

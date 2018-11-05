@@ -36,8 +36,8 @@ type HTTPClient interface {
 // TODO: Deprecate support for IP:PORT or /path/to/socket
 func makeHTTPDialer(remoteAddr string) (string, string, func(string, string) (net.Conn, error)) {
 	// protocol to use for http operations, to support both http and https
+	//clientProtocol := protoHTTP
 	clientProtocol := protoHTTP
-
 	parts := strings.SplitN(remoteAddr, "://", 2)
 	var protocol, address string
 	if len(parts) == 1 {

@@ -25,7 +25,7 @@ func StartQcpConsume(conf *config.Config) (err error) {
 	qsconfigs := conf.Qscs
 
 	if len(qsconfigs) < 2 {
-		return errors.New("config error , at least two qsc names ")
+		return errors.New("config error , at least two chain names ")
 	}
 
 	var subjects string
@@ -42,8 +42,11 @@ func StartQcpConsume(conf *config.Config) (err error) {
 			ce = createConsensusEngine(qsconfigs[j].Name, qsconfig.Name, conf, es)
 			engines = append(engines, ce)
 			ce = createConsensusEngine(qsconfig.Name, qsconfigs[j].Name, conf, es)
-
 			engines = append(engines, ce)
+
+			//go qcpConsume(ce, qsconfigs[j].Name, qsconfig.Name, conf, es)
+			//go qcpConsume(ce, qsconfig.Name, qsconfigs[j].Name, conf, es)
+
 			subjects += fmt.Sprintf("[%s] [%s]", qsconfigs[j].Name+"2"+qsconfig.Name, qsconfig.Name+"2"+qsconfigs[j].Name)
 
 		}
@@ -63,7 +66,7 @@ func StartQcpConsume(conf *config.Config) (err error) {
 	ticker := func(engines []*consensus.ConsEngine) {
 		log.Debugf("Start consensus engine ticker...%d", len(engines))
 		// 定时触发共识引擎
-		tick := time.NewTicker(time.Millisecond * 1000)
+		tick := time.NewTicker(time.Millisecond * 10000)
 		for range tick.C {
 			log.Debug("Consensus engine ticker...")
 			for _, ce := range engines {
@@ -71,7 +74,9 @@ func StartQcpConsume(conf *config.Config) (err error) {
 			}
 		}
 	}
+
 	go ticker(engines)
+
 	return
 }
 
@@ -80,14 +85,14 @@ func createConsensusEngine(from, to string, conf *config.Config, e chan<- error)
 
 	qsc := conf.GetQscConfig(to)
 	client := restclient.NewRestClient(qsc.NodeAddress)
-	seq, err := client.GetSequence(from, "in")
+	seq, err := client.GetSequence(to, "in") // be  GetSequence(from, "in")
 	if err != nil {
 		log.Errorf("Create consensus engine error: %v", err)
 	} else {
 		log.Debugf("Create consensus engine query chain %s in-sequence: %d", to, seq)
 		// abci_query接口查询的in sequence都是以执行完的交易序列号，
 		// 因此共识查询需要完成的快联交易序号需要加 1
-		ce.SetSequence(seq + 1)
+		ce.F.SetSequence(seq + 1)
 		err = ce.StartEngine()
 		if err != nil {
 			log.Errorf("Start consensus engine error: %v", err)

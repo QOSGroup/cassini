@@ -95,7 +95,7 @@ func (r *RestClient) GetTxQcp(chainID string, sequence int64) (*txs.TxQcp, error
 		log.Debugf("Get TxQcp: %v", adapter.StringTx(&tx))
 		return &tx, nil
 	}
-	log.Errorf("empty qcp transaction chainid [%s] sequence [#%d]", chainID, sequence)
+	//log.Errorf("empty qcp transaction chainid [%s] sequence [#%d]", chainID, sequence)
 	return nil, errors.New("empty qcp transaction")
 }
 
