@@ -71,7 +71,7 @@ func (s RequestHandler) UnsubscribeAll(wsCtx rpctypes.WSRPCContext) (*ctypes.Res
 func (s RequestHandler) eventBusFor(wsCtx rpctypes.WSRPCContext) tmtypes.EventBusSubscriber {
 	es := wsCtx.GetEventSubscriber()
 	if es == nil {
-		es = s.EventHub
+		es = s.hub
 	}
 	return es
 }

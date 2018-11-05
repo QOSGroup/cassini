@@ -5,12 +5,13 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/QOSGroup/cassini/adapter"
+	cmn "github.com/QOSGroup/cassini/common"
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/log"
-	motxs "github.com/QOSGroup/cassini/mock/tx"
+
+	// motxs "github.com/QOSGroup/cassini/mock/tx"
 	"github.com/QOSGroup/cassini/restclient"
-	"github.com/QOSGroup/qbase/example/basecoin/app"
+	// "github.com/QOSGroup/qbase/example/basecoin/app"
 	bctxs "github.com/QOSGroup/qbase/example/basecoin/tx"
 	"github.com/QOSGroup/qbase/txs"
 	"github.com/QOSGroup/qbase/types"
@@ -18,8 +19,8 @@ import (
 	amino "github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 	// ctypes "github.com/tendermint/tendermint/rpc/core/types"
-	cmn "github.com/QOSGroup/cassini/common"
-	"github.com/tendermint/tendermint/crypto"
+	// cmn "github.com/QOSGroup/cassini/common"
+	// "github.com/tendermint/tendermint/crypto"
 )
 
 // 命令行 tx 命令执行方法
@@ -33,7 +34,7 @@ var txHandler = func(conf *config.Config) (context.CancelFunc, error) {
 		// 调用交易查询接口
 		tx, err := client.GetTxQcp("qos-test", mockConf.Sequence)
 		if err == nil {
-			fmt.Printf("Get TxQcp: %s\n", adapter.StringTx(tx))
+			fmt.Printf("Get TxQcp: %s\n", cmn.StringTx(tx))
 			// hash := cmn.Bytes2HexStr(crypto.Sha256(tx.GetSigData()))
 			// log.Debugf("Tx hash: %s", hash)
 
@@ -50,47 +51,47 @@ var txHandler = func(conf *config.Config) (context.CancelFunc, error) {
 			fmt.Println("Get in sequence: ", seq)
 		}
 
-		// 调用交易广播接口
-		// -m=qcpTransfer -from=xxx -to=xxx -coin=xxx,xxx -prikey=xxx -nonce=xxx(>=0) -chainid=xxx -qcpprikey=xxx -qcpseq=xxx")
-		sender := "address1k0m8ucnqug974maa6g36zw7g2wvfd4sug6uxay"
-		receiver := "address1srrhd4quypqn0vu5sgrmutgudtnmgm2t2juwya"
-		coin := "qstar"
-		amount := int64(11)
-		prikey := "0xa328891040ae9b773bcd30005235f99a8d62df03a89e4f690f9fa03abb1bf22715fc9ca05613f2d8061492e9f8149510b5b67d340d199ff24f34c85dbbbd7e0df780e9a6cc"
-		nonce := int64(1)
-		chainName := "qstar"
-		chainID := "basecoin-chain"
-		qcpPriKey := "0xa3288910405746e29aeec7d5ed56fac138b215e651e3244e6d995f25cc8a74c40dd1ef8d2e8ac876faaa4fb281f17fb9bebb08bc14e016c3a88c6836602ca97595ae32300b"
-		qcpseq := mockConf.Sequence
-		isresult := false
+		// // 调用交易广播接口
+		// // -m=qcpTransfer -from=xxx -to=xxx -coin=xxx,xxx -prikey=xxx -nonce=xxx(>=0) -chainid=xxx -qcpprikey=xxx -qcpseq=xxx")
+		// sender := "address1k0m8ucnqug974maa6g36zw7g2wvfd4sug6uxay"
+		// receiver := "address1srrhd4quypqn0vu5sgrmutgudtnmgm2t2juwya"
+		// coin := "qstar"
+		// amount := int64(11)
+		// prikey := "0xa328891040ae9b773bcd30005235f99a8d62df03a89e4f690f9fa03abb1bf22715fc9ca05613f2d8061492e9f8149510b5b67d340d199ff24f34c85dbbbd7e0df780e9a6cc"
+		// nonce := int64(1)
+		// chainName := "qstar"
+		// chainID := "basecoin-chain"
+		// qcpPriKey := "0xa3288910405746e29aeec7d5ed56fac138b215e651e3244e6d995f25cc8a74c40dd1ef8d2e8ac876faaa4fb281f17fb9bebb08bc14e016c3a88c6836602ca97595ae32300b"
+		// qcpseq := mockConf.Sequence
+		// isresult := false
 
-		// cdc := amino.NewCodec()
-		// ctypes.RegisterAmino(cdc)
-		// txs.RegisterCodec(cdc)
-		// cdc.RegisterConcrete(&bctypes.AppAccount{}, "basecoin/AppAccount", nil)
-		// cdc.RegisterConcrete(&bctxs.SendTx{}, "basecoin/SendTx", nil)
-		cdc := app.MakeCodec()
-		cdc.RegisterConcrete(&motxs.TxMock{}, "cassini/mock/txmock", nil)
+		// // cdc := amino.NewCodec()
+		// // ctypes.RegisterAmino(cdc)
+		// // txs.RegisterCodec(cdc)
+		// // cdc.RegisterConcrete(&bctypes.AppAccount{}, "basecoin/AppAccount", nil)
+		// // cdc.RegisterConcrete(&bctxs.SendTx{}, "basecoin/SendTx", nil)
+		// cdc := app.MakeCodec()
+		// cdc.RegisterConcrete(&motxs.TxMock{}, "cassini/mock/txmock", nil)
 
-		senderAddr, _ := types.GetAddrFromBech32(sender)
-		receiverAddr, _ := types.GetAddrFromBech32(receiver)
+		// senderAddr, _ := types.GetAddrFromBech32(sender)
+		// receiverAddr, _ := types.GetAddrFromBech32(receiver)
 
-		txQcp := genQcpTx(cdc, senderAddr, receiverAddr,
-			bctypes.BaseCoin{Name: coin, Amount: types.NewInt(amount)},
-			prikey, nonce, chainName, chainID, qcpPriKey, qcpseq, isresult)
+		// txQcp := genQcpTx(cdc, senderAddr, receiverAddr,
+		// 	bctypes.BaseCoin{Name: coin, Amount: types.NewInt(amount)},
+		// 	prikey, nonce, chainName, chainID, qcpPriKey, qcpseq, isresult)
 
-		err = client.PostTxQcp("qstar", txQcp)
-		if err == nil {
-			fmt.Println(fmt.Sprintf("Post tx is %v", txQcp))
-		}
+		// err = client.PostTxQcp("qstar", txQcp)
+		// if err == nil {
+		// 	fmt.Println(fmt.Sprintf("Post tx is %v", txQcp))
+		// }
 
-		// 调用交易查询接口并计算hash
-		tx, err = client.GetTxQcp("qstar", mockConf.Sequence)
-		if err == nil {
-			hash := cmn.Bytes2HexStr(crypto.Sha256(tx.GetSigData()))
-			log.Debugf("Tx %s hash: %s", adapter.StringTx(tx), hash)
+		// // 调用交易查询接口并计算hash
+		// tx, err = client.GetTxQcp("qstar", mockConf.Sequence)
+		// if err == nil {
+		// 	hash := cmn.Bytes2HexStr(crypto.Sha256(tx.GetSigData()))
+		// 	log.Debugf("Tx %s hash: %s", adapter.StringTx(tx), hash)
 
-		}
+		// }
 	}
 	return nil, nil
 }

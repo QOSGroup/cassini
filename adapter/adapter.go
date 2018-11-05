@@ -4,8 +4,6 @@
 package adapter
 
 import (
-	"fmt"
-
 	cmn "github.com/QOSGroup/cassini/common"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/qbase/txs"
@@ -72,7 +70,7 @@ type DefaultBroadcaster struct {
 func (b *DefaultBroadcaster) BroadcastTx(tx *txs.TxQcp) (err error) {
 	var e *tmtypes.EventDataTx
 	e, err = cmn.Transform(tx)
-	s := StringTx(tx)
+	s := cmn.StringTx(tx)
 	if err != nil {
 		log.Errorf("Transform tx %v error: %v", s, err)
 		return
@@ -89,12 +87,4 @@ func (b *DefaultBroadcaster) BroadcastTx(tx *txs.TxQcp) (err error) {
 	}
 	log.Debugf("Broadcast tx: sequence[%d] %s", tx.Sequence, s)
 	return
-}
-
-// StringTx 将交易转换为字符串，用于日志记录，非完全序列化
-func StringTx(tx *txs.TxQcp) string {
-	if tx == nil {
-		return ""
-	}
-	return fmt.Sprintf("[%v, %v, %v, %v, %v]", tx.From, tx.To, tx.BlockHeight, tx.TxIndex, tx.Sequence)
 }

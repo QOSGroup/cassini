@@ -1,6 +1,10 @@
-package adapter
+package pool
 
 import (
+	"errors"
+
+	cmn "github.com/QOSGroup/cassini/common"
+	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/qbase/txs"
 )
 
@@ -18,9 +22,12 @@ func NewTxPool(size uint32) *TxPool {
 }
 
 // Publish publish a qcp tx
-func (p TxPool) Publish(tx *txs.TxQcp) {
+func (p TxPool) Publish(tx *txs.TxQcp) error {
 	if tx == nil {
-		return
+		return errors.New("TxQcp is nil")
 	}
-
+	i := uint32(tx.Sequence) % p.size
+	p.pool[i] = tx
+	log.Tracef("TxPool cached tx: %s", cmn.StringTx(tx))
+	return nil
 }

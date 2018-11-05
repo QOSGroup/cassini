@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/QOSGroup/cassini/adapter/pool"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/pkg/errors"
 	"golang.org/x/net/netutil"
@@ -39,7 +40,15 @@ const (
 
 // RequestHandler handle rpc request
 type RequestHandler struct {
-	EventHub *tmtypes.EventBus
+	hub  *tmtypes.EventBus
+	pool *pool.TxPool
+}
+
+// NewRequestHandler new a rpc request handler
+func NewRequestHandler(h *tmtypes.EventBus, p *pool.TxPool) *RequestHandler {
+	return &RequestHandler{
+		hub:  h,
+		pool: p}
 }
 
 // StartHTTPServer starts an HTTP server on listenAddr with the given handler.

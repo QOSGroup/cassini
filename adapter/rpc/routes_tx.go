@@ -15,10 +15,11 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
+	tmttypes "github.com/tendermint/tendermint/types"
 )
 
 // ABCIQuery 交易、交易序号查询。
-func ABCIQuery(path string, data cmn.HexBytes, height int64, trusted bool) (*ctypes.ResultABCIQuery, error) {
+func (s RequestHandler) ABCIQuery(path string, data cmn.HexBytes, height int64, trusted bool) (*ctypes.ResultABCIQuery, error) {
 	if height < 0 {
 		log.Errorf("Query sequence error: height [%d] < 0, height must be non-negative", height)
 		return nil, fmt.Errorf("height must be non-negative")
@@ -85,6 +86,14 @@ func ABCIQuery(path string, data cmn.HexBytes, height int64, trusted bool) (*cty
 	log.Debugf("Unmarshal seq: %s", seq.From)
 
 	return &ctypes.ResultABCIQuery{Response: *resQuery}, nil
+}
+
+// BroadcastTxSync 广播交易。
+func (s RequestHandler) BroadcastTxSync(tx tmttypes.Tx) (*ctypes.ResultBroadcastTx, error) {
+	return &ctypes.ResultBroadcastTx{
+		Code: abci.CodeTypeOK,
+		Hash: tx.Hash(),
+	}, nil
 }
 
 func parseTxQueryKey(key string) (from string, seq int64, err error) {

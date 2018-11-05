@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/QOSGroup/cassini/adapter"
+	cmn "github.com/QOSGroup/cassini/common"
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/event"
 	"github.com/QOSGroup/cassini/log"
@@ -68,6 +68,6 @@ func handle(e interface{}) {
 			From:        ca.From,
 			To:          ca.To}
 		fmt.Printf("Got Tx event - %v hash: %x\n",
-			adapter.StringTx(tx), ca.HashBytes)
+			cmn.StringTx(tx), ca.HashBytes)
 	}
 }

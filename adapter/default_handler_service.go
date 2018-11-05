@@ -4,12 +4,12 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/QOSGroup/cassini/adapter/pool"
 	"github.com/QOSGroup/cassini/adapter/rpc"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/types"
 	"github.com/QOSGroup/qbase/txs"
 	amino "github.com/tendermint/go-amino"
-	"github.com/tendermint/tendermint/mempool"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
@@ -19,7 +19,8 @@ func NewHandlerService(name, id, listenAddr string) (HandlerService, error) {
 		name:          name,
 		id:            id,
 		listenAddress: listenAddr,
-		eventHub:      tmtypes.NewEventBus()}
+		eventHub:      tmtypes.NewEventBus(),
+		txPool:        pool.NewTxPool(1000)}
 	err := s.init()
 
 	if err != nil {
@@ -38,7 +39,7 @@ type DefaultHandlerService struct {
 	id            string
 	listenAddress string
 	eventHub      *tmtypes.EventBus
-	txPool        *mempool.Mempool
+	txPool        *pool.TxPool
 	mux           *http.ServeMux
 	listener      net.Listener
 	cdc           *amino.Codec
@@ -50,8 +51,7 @@ func (s *DefaultHandlerService) init() error {
 	s.cdc = types.CreateCompleteCodec()
 
 	s.mux = http.NewServeMux()
-	s.handler = &rpc.RequestHandler{
-		EventHub: s.eventHub}
+	s.handler = rpc.NewRequestHandler(s.eventHub, s.txPool)
 	Routes := s.handler.Routes()
 	wm := rpc.NewWebsocketManager(Routes, s.cdc, rpc.EventSubscriber(s.eventHub))
 	s.mux.HandleFunc("/websocket", wm.WebsocketHandler)
@@ -107,8 +107,7 @@ func (s DefaultHandlerService) GetCodec() *amino.Codec {
 //
 // 因为按照 QCP 协议规范定义，中继都是在接收到交易事件后查询交易数据，因此应保证先调用发布交易接口，然后再调用发布事件接口。
 func (s DefaultHandlerService) PublishTx(tx *txs.TxQcp) error {
-
-	return nil
+	return s.txPool.Publish(tx)
 }
 
 // PublishEvent 发布交易事件，提供给事件订阅

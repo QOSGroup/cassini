@@ -3,14 +3,14 @@ package restclient
 import (
 	"strings"
 
-	"github.com/QOSGroup/cassini/adapter"
+	cmn "github.com/QOSGroup/cassini/common"
 	"github.com/QOSGroup/cassini/log"
 	catypes "github.com/QOSGroup/cassini/types"
 	"github.com/QOSGroup/qbase/txs"
 	"github.com/pkg/errors"
 	amino "github.com/tendermint/go-amino"
 	abci "github.com/tendermint/tendermint/abci/types"
-	cmn "github.com/tendermint/tendermint/libs/common"
+	tcmn "github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/rpc/client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	"github.com/tendermint/tendermint/types"
@@ -35,11 +35,11 @@ func newHTTP(remote string, cdc *amino.Codec) *HTTP {
 }
 
 // ABCIQuery abci query 标准接口
-func (c *HTTP) ABCIQuery(path string, data cmn.HexBytes) (*ctypes.ResultABCIQuery, error) {
+func (c *HTTP) ABCIQuery(path string, data tcmn.HexBytes) (*ctypes.ResultABCIQuery, error) {
 	return c.abciQueryWithOptions(path, data, client.DefaultABCIQueryOptions)
 }
 
-func (c *HTTP) abciQueryWithOptions(path string, data cmn.HexBytes, opts client.ABCIQueryOptions) (*ctypes.ResultABCIQuery, error) {
+func (c *HTTP) abciQueryWithOptions(path string, data tcmn.HexBytes, opts client.ABCIQueryOptions) (*ctypes.ResultABCIQuery, error) {
 	result := new(ctypes.ResultABCIQuery)
 	_, err := c.rpc.Call("abci_query",
 		map[string]interface{}{"path": path, "data": data, "height": opts.Height, "trusted": opts.Trusted},
@@ -94,7 +94,7 @@ func (r *RestClient) GetTxQcp(chainID string, sequence int64) (*txs.TxQcp, error
 			log.Errorf("Get TxQcp error: %v", err)
 			return nil, err
 		}
-		log.Debugf("Get TxQcp: %v", adapter.StringTx(&tx))
+		log.Debugf("Get TxQcp: %v", cmn.StringTx(&tx))
 		return &tx, nil
 	}
 	//log.Errorf("empty qcp transaction chainid [%s] sequence [#%d]", chainID, sequence)
