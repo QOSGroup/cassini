@@ -1,4 +1,4 @@
-package adapter
+package rpc
 
 // copy from tendermint/rpc/lib/server/http_server.go
 
@@ -17,6 +17,12 @@ import (
 	"golang.org/x/net/netutil"
 
 	types "github.com/tendermint/tendermint/rpc/lib/types"
+)
+
+const (
+	// === tendermint/rpc/core/pipe.go
+
+	subscribeTimeout = 5 * time.Second
 )
 
 // Config is an RPC server configuration.

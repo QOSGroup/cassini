@@ -7,21 +7,14 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"time"
 
 	cmn "github.com/QOSGroup/cassini/common"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/types"
 	"github.com/QOSGroup/qbase/txs"
 	amino "github.com/tendermint/go-amino"
-	stat "github.com/tendermint/tendermint/state"
+	"github.com/tendermint/tendermint/mempool"
 	tmtypes "github.com/tendermint/tendermint/types"
-)
-
-const (
-	// === tendermint/rpc/core/pipe.go
-
-	subscribeTimeout = 5 * time.Second
 )
 
 // Broadcaster 交易广播接口，通过该接口广播的交易即表示需要通过中继跨链提交交易以最终完成交易。
@@ -126,7 +119,7 @@ type DefaultHandlerService struct {
 	id            string
 	listenAddress string
 	eventHub      *tmtypes.EventBus
-	txPool        stat.Mempool
+	txPool        *mempool.Mempool
 	mux           *http.ServeMux
 	listener      net.Listener
 	cdc           *amino.Codec
@@ -138,7 +131,8 @@ func NewHandlerService(name, id, listenAddr string) (HandlerService, error) {
 		name:          name,
 		id:            id,
 		listenAddress: listenAddr,
-		eventHub:      tmtypes.NewEventBus()}
+		eventHub:      tmtypes.NewEventBus(),
+		txPool:        NewMempool()}
 	err := s.init()
 
 	if err != nil {
@@ -207,6 +201,7 @@ func (s DefaultHandlerService) GetCodec() *amino.Codec {
 //
 // 因为按照 QCP 协议规范定义，中继都是在接收到交易事件后查询交易数据，因此应保证先调用发布交易接口，然后再调用发布事件接口。
 func (s DefaultHandlerService) PublishTx(tx *txs.TxQcp) error {
+
 	return nil
 }
 

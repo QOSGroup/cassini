@@ -1,4 +1,4 @@
-package adapter
+package rpc
 
 // copy from tendermint/rpc/lib/server/http_params.go
 

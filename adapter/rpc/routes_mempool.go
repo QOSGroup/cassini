@@ -1,4 +1,4 @@
-package adapter
+package rpc
 
 // copy from tendermint/rpc/core/mempool.go
 

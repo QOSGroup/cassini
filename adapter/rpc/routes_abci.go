@@ -1,4 +1,4 @@
-package adapter
+package rpc
 
 // copy from tendermint/rpc/core/abci.go
 
@@ -9,8 +9,9 @@ import (
 
 	"github.com/QOSGroup/cassini/log"
 	motxs "github.com/QOSGroup/cassini/mock/tx"
+	"github.com/QOSGroup/cassini/types"
+
 	"github.com/QOSGroup/qbase/txs"
-	amino "github.com/tendermint/go-amino"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -24,10 +25,7 @@ func ABCIQuery(path string, data cmn.HexBytes, height int64, trusted bool) (*cty
 	}
 	var err error
 
-	cdc := amino.NewCodec()
-	ctypes.RegisterAmino(cdc)
-	txs.RegisterCodec(cdc)
-	cdc.RegisterConcrete(&motxs.TxMock{}, "cassini/mock/txmock", nil)
+	cdc := types.CreateCompleteCodec()
 
 	key := string(data.Bytes())
 	if strings.HasPrefix(key, "sequence/") {
