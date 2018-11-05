@@ -108,9 +108,7 @@ func (c *JSONRPCClient) Call(method string, params map[string]interface{}, resul
 	if err != nil {
 		return nil, err
 	}
-	// log.Info(string(requestBytes))
 	requestBuf := bytes.NewBuffer(requestBytes)
-	// log.Info(Fmt("RPC request to %v (%v): %v", c.remote, method, string(requestBytes)))
 	httpResponse, err := c.client.Post(c.address, "text/json", requestBuf)
 	if err != nil {
 		return nil, err
@@ -121,8 +119,7 @@ func (c *JSONRPCClient) Call(method string, params map[string]interface{}, resul
 	if err != nil {
 		return nil, err
 	}
-	// 	log.Info(Fmt("RPC response: %v", string(responseBytes)))
-	log.Debug("RPC response:", string(responseBytes))
+	log.Tracef("RPC response: %s", string(responseBytes))
 	return unmarshalResponseBytes(c.cdc, responseBytes, result)
 }
 
