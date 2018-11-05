@@ -3,7 +3,7 @@ package rpc
 // copy from tendermint/rpc/core/routes.go
 
 // Routes 创建接口路由映射
-func (s DefaultHandlerService) Routes() map[string]*RPCFunc {
+func (s RequestHandler) Routes() map[string]*RPCFunc {
 	// routes 封装接口映射
 	// TODO: better system than "unsafe" prefix
 	// NOTE: Amino is registered in rpc/core/types/wire.go.
