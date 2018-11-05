@@ -19,8 +19,7 @@ func NewHandlerService(name, id, listenAddr string) (HandlerService, error) {
 		name:          name,
 		id:            id,
 		listenAddress: listenAddr,
-		eventHub:      tmtypes.NewEventBus(),
-		txPool:        NewMempool()}
+		eventHub:      tmtypes.NewEventBus()}
 	err := s.init()
 
 	if err != nil {
