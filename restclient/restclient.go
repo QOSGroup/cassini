@@ -143,6 +143,7 @@ func (r *RestClient) PostTxQcp(chainID string, qcp *txs.TxQcp) error {
 	}
 	if err != nil {
 		log.Errorf("Post TxQcp error: %v", err)
+		log.Errorf("qcp:%v", qcp)
 		return err
 	}
 	log.Debugf("Post TxQcp successful - %v", qcp)
