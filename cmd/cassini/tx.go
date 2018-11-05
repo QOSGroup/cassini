@@ -27,26 +27,27 @@ import (
 var txHandler = func(conf *config.Config) (context.CancelFunc, error) {
 	for _, mockConf := range conf.Mocks {
 		// "127.0.0.1:26657"
-		log.Debugf("new client: %s, sequence: %d\n",
+		log.Debugf("new client: %s, sequence: %d",
 			mockConf.RPC.NodeAddress, mockConf.Sequence)
 		client := restclient.NewRestClient(mockConf.RPC.NodeAddress)
 
 		// 调用交易查询接口
-		tx, err := client.GetTxQcp("qos-test", mockConf.Sequence)
+		tx, err := client.GetTxQcp(mockConf.Name, mockConf.Sequence)
 		if err == nil {
 			fmt.Printf("Get TxQcp: %s\n", cmn.StringTx(tx))
 			// hash := cmn.Bytes2HexStr(crypto.Sha256(tx.GetSigData()))
 			// log.Debugf("Tx hash: %s", hash)
-
+		} else {
+			fmt.Printf("Get no TxQcp on error: %s\n", err)
 		}
 
 		// 调用交易序号查询接口
 		var seq int64
-		seq, err = client.GetSequence("qstars-test", "out")
+		seq, err = client.GetSequence(mockConf.Name, "out")
 		if err == nil {
 			fmt.Println("Get out sequence: ", seq)
 		}
-		seq, err = client.GetSequence("qstars-test", "in")
+		seq, err = client.GetSequence(mockConf.Name, "in")
 		if err == nil {
 			fmt.Println("Get in sequence: ", seq)
 		}
