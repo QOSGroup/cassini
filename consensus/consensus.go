@@ -31,10 +31,9 @@ type ConsEngine struct {
 func NewConsEngine(from, to string) *ConsEngine {
 	ce := new(ConsEngine)
 	ce.M = &MsgMapper{MsgMap: make(map[int64]map[string]string)}
-	ce.F = &Ferry{sequence: 0, conf: config.GetConfig()}
+	ce.F = NewFerry(config.GetConfig(), from, to, 0)
 	ce.from = from
 	ce.to = to
-	//ce.conf = config.GetConfig()
 	return ce
 }
 
@@ -113,7 +112,26 @@ type Ferry struct {
 
 	sequence int64 //already ferry max sequence
 
+	rmap map[string]*restclient.RestClient //node -> restclient
+
 	conf *config.Config
+}
+
+func NewFerry(conf *config.Config, from, to string, sequence int64) *Ferry {
+
+	f := &Ferry{sequence: 0, conf: conf}
+	f.rmap = make(map[string]*restclient.RestClient)
+	for _, node := range strings.Split(conf.GetQscConfig(from).NodeAddress, ",") {
+		add := GetAddressFromUrl(node)
+		f.rmap[add] = restclient.NewRestClient(node)
+
+	}
+	for _, node := range strings.Split(conf.GetQscConfig(to).NodeAddress, ",") {
+		add := GetAddressFromUrl(node)
+		f.rmap[add] = restclient.NewRestClient(node)
+
+	}
+	return f
 }
 
 // SetSequence 设置交易序列号
@@ -263,13 +281,30 @@ func (f *Ferry) getTxQcpFromNode(to, hash, node string, sequence int64) (qcp *tx
 
 func (f *Ferry) queryTxQcpFromNode(to, node string, sequence int64) (qcp *txs.TxQcp, err error) {
 
-	r := restclient.NewRestClient(node) //"tcp://127.0.0.1:26657"
+	//"tcp://127.0.0.1:26657"
+	//rmap := restclient.NewRestClient(node)
+	add := GetAddressFromUrl(node)
+	r := f.rmap[add]
 	qcp, err = r.GetTxQcp(to, sequence)
+	if err != nil && strings.Contains(err.Error(), restclient.ERR_emptyqcp) {
+		r := restclient.NewRestClient(node)
+		f.rmap[add] = r
+		qcp, err = r.GetTxQcp(to, sequence)
+	}
+
 	if err != nil || qcp == nil {
 		return nil, errors.New("get TxQcp from " + node + "failed.")
 	}
 
 	return qcp, nil
+}
+
+func GetAddressFromUrl(url string) string {
+	n := strings.Index(url, "://")
+	if n < 0 {
+		return url
+	}
+	return url[n+3:]
 }
 
 func (f *Ferry) postTxQcp(to string, qcp *txs.TxQcp) (err error) {
@@ -280,8 +315,10 @@ func (f *Ferry) postTxQcp(to string, qcp *txs.TxQcp) (err error) {
 EndPost:
 	for _, node := range strings.Split(toNodes, ",") {
 
-		r := restclient.NewRestClient(node)
-		err := r.PostTxQcp(to, qcp) //TODO 连接每个目标链node
+		add := GetAddressFromUrl(node)
+		r := f.rmap[add]
+
+		err := r.PostTxQcp(to, qcp) //TODO 出错 r := restclient.NewRestClient(node)
 		if err != nil {
 			continue
 		}
