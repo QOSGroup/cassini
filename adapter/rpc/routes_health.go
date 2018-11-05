@@ -1,4 +1,4 @@
-package adapter
+package rpc
 
 // copy from tendermint/rpc/core/health.go
 
@@ -7,8 +7,8 @@ import (
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
-// Health 健康检查。
-func Health() (*ctypes.ResultHealth, error) {
+// Health health check
+func (s RequestHandler) Health() (*ctypes.ResultHealth, error) {
 	log.Debug("RPC call Health")
 	return &ctypes.ResultHealth{}, nil
 }
