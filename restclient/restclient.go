@@ -95,7 +95,7 @@ func (r *RestClient) GetTxQcp(chainID string, sequence int64) (*txs.TxQcp, error
 			return nil, err
 		}
 
-		log.Debugf("remote [%s] Get TxQcp: %v", r.remote, adapter.StringTx(&tx))
+		log.Debugf("remote [%s] Get TxQcp: %v", r.remote, cmn.StringTx(&tx))
 		return &tx, nil
 	}
 	//log.Errorf("empty qcp transaction chainid [%s] sequence [#%d]", chainID, sequence)
