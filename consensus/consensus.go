@@ -290,7 +290,7 @@ func (f *Ferry) queryTxQcpFromNode(to, node string, sequence int64) (qcp *txs.Tx
 	add := GetAddressFromUrl(node)
 	r := f.rmap[add]
 	qcp, err = r.GetTxQcp(to, sequence)
-	if err != nil && strings.Contains(err.Error(), restclient.ERR_emptyqcp) {
+	if err != nil && !strings.Contains(err.Error(), restclient.ERR_emptyqcp) {
 		r := restclient.NewRestClient(node)
 		f.rmap[add] = r
 		qcp, err = r.GetTxQcp(to, sequence)
