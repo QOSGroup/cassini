@@ -14,6 +14,7 @@ import (
 	"github.com/QOSGroup/cassini/types"
 	"github.com/nats-io/go-nats"
 	"github.com/tendermint/go-amino"
+	"strings"
 )
 
 var wg sync.WaitGroup
@@ -84,8 +85,10 @@ func createConsensusEngine(from, to string, conf *config.Config, e chan<- error)
 	ce = consensus.NewConsEngine(from, to)
 
 	qsc := conf.GetQscConfig(to)
-	client := restclient.NewRestClient(qsc.NodeAddress)
-	seq, err := client.GetSequence(from, "in") // be  GetSequence(from, "in")
+
+	nodeto := strings.Split(qsc.NodeAddress, ",")
+	client := restclient.NewRestClient(nodeto[0]) //TODO 多node 取sequence
+	seq, err := client.GetSequence(from, "in")    // seq= toChain's in/fromchain/maxseq
 	if err != nil {
 		log.Errorf("Create consensus engine error: %v", err)
 	} else {
