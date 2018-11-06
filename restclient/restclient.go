@@ -82,7 +82,7 @@ func (r *RestClient) GetTxQcp(chainID string, sequence int64) (*txs.TxQcp, error
 	key := catypes.Key4OutChainTx(chainID, sequence)
 	result, err := r.ABCIQuery("/store/qcp/key", []byte(key))
 	if err != nil || result == nil {
-		log.Errorf("Get TxQcp error: %v", err)
+		log.Errorf("remote [%s] Get TxQcp error: %v", r.remote, err)
 		return nil, err
 	}
 
@@ -91,10 +91,11 @@ func (r *RestClient) GetTxQcp(chainID string, sequence int64) (*txs.TxQcp, error
 	if result.Response.GetValue() != nil {
 		err = r.cdc.UnmarshalBinaryBare(result.Response.GetValue(), &tx)
 		if err != nil {
-			log.Errorf("Get TxQcp error: %v", err)
+			log.Errorf("remote [%s] Get TxQcp error: %v", r.remote, err)
 			return nil, err
 		}
-		log.Debugf("Get TxQcp: %v", cmn.StringTx(&tx))
+
+		log.Debugf("remote [%s] Get TxQcp: %v", r.remote, cmn.StringTx(&tx))
 		return &tx, nil
 	}
 	//log.Errorf("empty qcp transaction chainid [%s] sequence [#%d]", chainID, sequence)
@@ -112,18 +113,18 @@ func (r *RestClient) GetSequence(chainID string, outin string) (int64, error) {
 	}
 	result, err := r.ABCIQuery(path, []byte(key))
 	if err != nil {
-		log.Errorf("Get sequence error: %v", err)
+		log.Errorf("remote [%s] Get sequence error: %v", r.remote, err)
 		return -1, err
 	}
 	var seq int64
 	if result.Response.GetValue() != nil {
 		err = r.cdc.UnmarshalBinaryBare(result.Response.GetValue(), &seq)
 		if err != nil {
-			log.Errorf("Get sequence error when parse: %v", err)
+			log.Errorf("remote [%s] Get sequence error when parse: %v", r.remote, err)
 			return -1, err
 		}
 	}
-	log.Debugf("Get sequence: %d", seq)
+	log.Debugf("remote [%s] get sequence: [#%d]", r.remote, seq)
 	return seq, nil
 }
 
@@ -132,7 +133,7 @@ func (r *RestClient) PostTxQcp(chainID string, qcp *txs.TxQcp) error {
 	log.Debugf("Post TxQcp chain: [%s], tx.from: [%s], tx.to: [%s]", chainID, qcp.From, qcp.To)
 	tx, err := r.cdc.MarshalBinaryBare(qcp)
 	if err != nil {
-		log.Errorf("Marshal TxQcp error: %v", err)
+		log.Errorf("remote [%s] Marshal TxQcp error: %v", r.remote, err)
 		return err
 	}
 	var result *ctypes.ResultBroadcastTx
@@ -142,10 +143,10 @@ func (r *RestClient) PostTxQcp(chainID string, qcp *txs.TxQcp) error {
 		err = errors.New(result.Log)
 	}
 	if err != nil {
-		log.Errorf("Post TxQcp error: %v", err)
-		log.Errorf("qcp:%v", qcp)
+		log.Errorf("remote [%s] Post TxQcp error: %v", r.remote, err)
+		log.Debugf("qcp:%v", qcp)
 		return err
 	}
-	log.Debugf("Post TxQcp successful - %v", qcp)
+	log.Debugf("remote [%s] Post TxQcp successful - %v", r.remote, qcp)
 	return nil
 }
