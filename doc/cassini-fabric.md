@@ -21,6 +21,24 @@ https://github.com/QOSGroup/cassini/blob/master/doc/cassini.md
 直接内嵌在中继中运行，中继适配模块与中继运行在同一个进程中，中继适配模块通过接入链技术体系的SDK和授权证书，访问接入
 链，通过接入链提供的接口或接入链自身的协议标准适配查询获取跨链交易数据，以完成跨链交易。
 
+### RESTFUL Interface
+#### Fabric provides 4 RESTFUL interfaces:
+//The Tx is the QCPTx define in QCP 协议：交易数据结构文档
+//the github.com/QOSChain/qbase has go language structure, you could directly use it
+```
+int GetOutSeq()
+int GetInSeq()
+Tx GetOutTx(int Sequence)
+  //Put the TX result of QOS to QStars
+int Publish(Tx)
+```
+#### Cassini provides 1 RESTFUL interfaces:
+```
+//The Tx is same to above
+Notify(Tx) 
+```
+具体内容见下
+
 ### 中继适配接入链的基本要求
 
 　　中继适配的目的是为了简化接入链的开发，因此中继适配定义标准化的RPC 接口实现适配。
