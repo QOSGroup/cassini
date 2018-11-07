@@ -136,13 +136,25 @@ func NewFerry(conf *config.Config, from, to string, sequence int64) *Ferry {
 }
 
 // SetSequence 设置交易序列号
-func (f *Ferry) SetSequence(s int64) {
+func (f *Ferry) SetSequence(from, to string, s int64) {
 
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
-	f.sequence = s
-	log.Infof("sequence set to [#%d]", s)
+	seq, _ := f.GetSequenceFromChain(from, to)
+
+	f.sequence = common.MaxInt64(s, seq) + 1
+	log.Infof("from [%s] to [%s] sequence set to [#%d]", from, to, f.sequence)
+}
+
+func (f *Ferry) GetSequenceFromChain(from, to string) (int64, error) {
+	qsc := f.conf.GetQscConfig(to)
+
+	nodeto := strings.Split(qsc.NodeAddress, ",")
+	client := restclient.NewRestClient(nodeto[0]) //TODO 多node 取sequence
+	seq, err := client.GetSequence(from, "in")
+
+	return seq, err
 }
 
 //ferryQCP get qcp transaction from source chain and post it to destnation chain
@@ -152,7 +164,7 @@ func (f *Ferry) SetSequence(s int64) {
 //nodes is consensus nodes of the source chain
 func (f *Ferry) ferryQCP(from, to, hash, nodes string, sequence int64) (err error) {
 
-	log.Debugf("Ferry qcp from [%s] to [%s], sequence=%d", from, to, sequence)
+	log.Debugf("ferry qcp from [%s] to [%s], sequence=%d", from, to, sequence)
 
 	qcp, err := f.getTxQcp(from, to, hash, nodes, sequence)
 
@@ -184,7 +196,7 @@ func (f *Ferry) ferryQCP(from, to, hash, nodes string, sequence int64) (err erro
 
 	log.Infof("success ferry qcp transaction from [%s] to [%s] sequence [#%d] \n", from, to, sequence)
 
-	f.SetSequence(f.sequence + 1)
+	f.SetSequence(from, to, f.sequence)
 
 	return nil
 

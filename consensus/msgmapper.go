@@ -59,14 +59,15 @@ func (m *MsgMapper) AddMsgToMap(f *Ferry, event types.Event, N int) (sequence in
 		hash := common.Bytes2HexStr(event.HashBytes)
 		log.Infof("consensus from [%s] to [%s] sequence [#%d] hash [%s]", event.From, event.To, event.Sequence, hash[:10])
 
-		go f.ferryQCP(event.From, event.To, hash, nodes, event.Sequence)
-
+		err = f.ferryQCP(event.From, event.To, hash, nodes, event.Sequence)
+		if err != nil {
+			return 0, err
+		}
 		delete(m.MsgMap, event.Sequence)
 		log.Debugf("msgmapper.AddMsgToMap ferryQCP")
 		return event.Sequence + 1, nil
 
 	}
 
-	log.Debugf("msgmapper.AddMsgToMap ?")
 	return 0, nil
 }
