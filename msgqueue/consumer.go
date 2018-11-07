@@ -95,7 +95,7 @@ func createConsensusEngine(from, to string, conf *config.Config, e chan<- error)
 		log.Debugf("Create consensus engine query chain %s in-sequence: %d", to, seq)
 		// abci_query接口查询的in sequence都是以执行完的交易序列号，
 		// 因此共识查询需要完成的快联交易序号需要加 1
-		ce.F.SetSequence(seq + 1)
+		ce.F.SetSequence(from, to, seq)
 		err = ce.StartEngine()
 		if err != nil {
 			log.Errorf("Start consensus engine error: %v", err)
@@ -126,7 +126,7 @@ func qcpConsume(ce *consensus.ConsEngine, from, to string, conf *config.Config, 
 
 		// 监听到交易事件后立即查询需要等待一段时间才能查询到交易数据；
 		//TODO 优化
-		// 需要监听下一个块的New Block 事件以确认交易数据入块，abco query 接口才能够查询出交易；
+		// 需要监听下一个块的New Block 事件以确认交易数据入块，abci query 接口才能够查询出交易；
 		// 同时提供定时出发机制，以保证共识模块在交易事件丢失或网络错误等问题出现时仍然能够正常运行。
 		if conf.EventWaitMillitime > 0 {
 			time.Sleep(time.Duration(conf.EventWaitMillitime) *
