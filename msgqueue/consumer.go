@@ -10,11 +10,9 @@ import (
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/consensus"
 	"github.com/QOSGroup/cassini/log"
-	"github.com/QOSGroup/cassini/restclient"
 	"github.com/QOSGroup/cassini/types"
 	"github.com/nats-io/go-nats"
 	"github.com/tendermint/go-amino"
-	"strings"
 )
 
 var wg sync.WaitGroup
@@ -84,11 +82,8 @@ func StartQcpConsume(conf *config.Config) (err error) {
 func createConsensusEngine(from, to string, conf *config.Config, e chan<- error) (ce *consensus.ConsEngine) {
 	ce = consensus.NewConsEngine(from, to)
 
-	qsc := conf.GetQscConfig(to)
-
-	nodeto := strings.Split(qsc.NodeAddress, ",")
-	client := restclient.NewRestClient(nodeto[0]) //TODO 多node 取sequence
-	seq, err := client.GetSequence(from, "in")    // seq= toChain's in/fromchain/maxseq
+	f := consensus.NewFerry(conf, from, to, 0)
+	seq, err := f.GetSequenceFromChain(from, to) // seq= toChain's in/fromchain/maxseq
 	if err != nil {
 		log.Errorf("Create consensus engine error: %v", err)
 	} else {
@@ -96,10 +91,10 @@ func createConsensusEngine(from, to string, conf *config.Config, e chan<- error)
 		// abci_query接口查询的in sequence都是以执行完的交易序列号，
 		// 因此共识查询需要完成的快联交易序号需要加 1
 		ce.F.SetSequence(from, to, seq)
-		err = ce.StartEngine()
-		if err != nil {
-			log.Errorf("Start consensus engine error: %v", err)
-		}
+		//err = ce.StartEngine()
+		//if err != nil {
+		//	log.Errorf("Start consensus engine error: %v", err)
+		//}
 	}
 	go qcpConsume(ce, from, to, conf, e)
 	return
