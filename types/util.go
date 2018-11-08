@@ -3,10 +3,11 @@ package types
 import (
 	"bytes"
 	"encoding/binary"
+	"strconv"
+	"strings"
 
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/qbase/qcp"
-	"strconv"
 )
 
 // BytesInt64 Int64 转换
@@ -47,4 +48,19 @@ func Key4InChainSequence(chain string) string {
 // Key4OutChainTx 输出队列交易查询接口key值组装方法
 func Key4OutChainTx(outChain string, sequence int64) string {
 	return string(qcp.BuildOutSequenceTxKey(outChain, sequence))
+}
+
+// ParseAddrs parse protocol and addrs
+func ParseAddrs(address string) (protocol string, addrs []string) {
+	addrs = strings.SplitN(address, "://", 2)
+	if len(addrs) == 2 {
+		protocol = addrs[0]
+		protocol = strings.TrimSpace(protocol)
+		a := addrs[1]
+		addrs = strings.Split(a, ",")
+	} else {
+		protocol, addrs = "", []string{}
+	}
+
+	return
 }
