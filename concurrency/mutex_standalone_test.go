@@ -25,7 +25,7 @@ func TestLock(t *testing.T) {
 	wg.Add(2)
 	for i := 0; i < 2; i++ {
 		go func() {
-			seq, err = m.Lock(1)
+			seq, err := m.Lock(1)
 			assert.Equal(t, int64(2), seq)
 			if err == nil {
 				m.Unlock(true)
@@ -39,7 +39,7 @@ func TestLock(t *testing.T) {
 
 	wg.Add(1)
 	go func() {
-		seq, err = m.Lock(5)
+		seq, err := m.Lock(5)
 		assert.NoError(t, err)
 		assert.Equal(t, int64(5), seq)
 		m.Unlock(true)
