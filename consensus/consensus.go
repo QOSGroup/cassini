@@ -15,6 +15,7 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 	"strings"
 	"sync"
+	"time"
 )
 
 // ConsEngine Consensus engine
@@ -64,11 +65,6 @@ func (c *ConsEngine) consensus32() (N int) {
 	n := len(strings.Split(nodes, ","))
 
 	N = (n*2 + 2) / 3
-	//if n%3 == 0 {
-	//	N = n * 2 / 3
-	//} else {
-	//	N = n*2/3 + 1
-	//}
 
 	log.Debugf("[consensus N #%d]", N)
 	return int(N)
@@ -76,6 +72,27 @@ func (c *ConsEngine) consensus32() (N int) {
 
 // StartEngine 触发共识引擎尝试处理下一个交易
 func (c *ConsEngine) StartEngine() error {
+
+	for {
+		seqDes, _ := c.F.GetSequenceFromChain(c.from, c.to, "in")
+		seqSou, _ := c.F.GetSequenceFromChain(c.to, c.from, "out")
+		if seqDes >= seqSou || c.F.sequence > seqSou {
+			time.Sleep(time.Duration(c.F.conf.EventWaitMillitime) * time.Millisecond)
+			continue
+		}
+
+		if seqDes >= c.F.sequence {
+			c.F.SetSequence(c.from, c.to, seqDes)
+		}
+		if !c.ConSequence() {
+			log.Errorf("consensusEngine from [%s] to [%s] sequence [#%d] failed. seqDes [%d] seqSou[%d] ", c.from, c.to, c.F.sequence, seqDes, seqSou)
+		}
+	}
+
+	return nil
+}
+
+func (c *ConsEngine) ConSequence() bool {
 
 	log.Debugf("Start consensus engine from: [%s] to: [%s] sequence: [%d]", c.from, c.to, c.F.sequence)
 
@@ -97,14 +114,16 @@ func (c *ConsEngine) StartEngine() error {
 
 		event := types.Event{NodeAddress: node, CassiniEventDataTx: ced}
 
-		_, err = c.M.AddMsgToMap(c.F, event, N)
+		seq, err := c.M.AddMsgToMap(c.F, event, N)
 		if err != nil {
-			return err
+			continue
 		}
-
+		if seq > 0 {
+			return true
+		}
 	}
 
-	return nil
+	return false
 }
 
 // Ferry Comsumer tx message and handle(consensus, broadcast...) it.
@@ -141,20 +160,27 @@ func (f *Ferry) SetSequence(from, to string, s int64) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
-	seq, _ := f.GetSequenceFromChain(from, to)
+	seq, _ := f.GetSequenceFromChain(from, to, "in")
+
+	//seq2, _ := f.GetSequenceFromChain(to, from, "out")
 
 	f.sequence = common.MaxInt64(s, seq) + 1
+	//if f.sequence > seq2 {
+	//	log.Errorf("invalid sequence [#%d]", f.sequence)
+	//}
 	log.Infof("from [%s] to [%s] sequence set to [#%d]", from, to, f.sequence)
 }
 
-func (f *Ferry) GetSequenceFromChain(from, to string) (int64, error) {
+//在to chain上查询 来自/要去 from chain 的 sequence
+func (f *Ferry) GetSequenceFromChain(from, to, inout string) (int64, error) {
 	qsc := f.conf.GetQscConfig(to)
 
 	nodeto := strings.Split(qsc.NodeAddress, ",")
-	client := restclient.NewRestClient(nodeto[0]) //TODO 多node 取sequence
-	seq, err := client.GetSequence(from, "in")
 
-	return seq, err
+	add := GetAddressFromUrl(nodeto[0]) //TODO 多node 取sequence
+	r := f.rmap[add]
+
+	return r.GetSequence(from, inout)
 }
 
 //ferryQCP get qcp transaction from source chain and post it to destnation chain

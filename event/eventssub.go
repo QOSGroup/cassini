@@ -79,7 +79,7 @@ func EventsSubscribe(conf *config.Config, remote string, e chan<- error) context
 			_, err := route.Event2queue(conf, &event)
 
 			if err != nil {
-				log.Error("failed route event to message queue")
+				log.Errorf("failed route event to message queue,%s", err.Error())
 			}
 		}
 	}()

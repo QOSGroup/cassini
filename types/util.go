@@ -3,8 +3,8 @@ package types
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 
+	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/qbase/qcp"
 )
 
@@ -20,7 +20,7 @@ func Int64Bytes(in int64) []byte {
 	var ret = bytes.NewBuffer([]byte{})
 	err := binary.Write(ret, binary.BigEndian, in)
 	if err != nil {
-		fmt.Printf("Int2Byte error:%s", err.Error())
+		log.Infof("Int2Byte error:%s", err.Error())
 		return nil
 	}
 
