@@ -64,6 +64,8 @@ type QscConfig struct {
 
 	// NodeAddress 区块链节点地址，多个之间用“，”分割
 	NodeAddress string `json:"nodes,omitempty"`
+
+	Lock string `json:"lock,omitempty"`
 }
 
 var conf = &Config{}
