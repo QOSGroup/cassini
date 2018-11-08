@@ -10,11 +10,9 @@ import (
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/consensus"
 	"github.com/QOSGroup/cassini/log"
-	"github.com/QOSGroup/cassini/restclient"
 	"github.com/QOSGroup/cassini/types"
 	"github.com/nats-io/go-nats"
 	"github.com/tendermint/go-amino"
-	"strings"
 )
 
 var wg sync.WaitGroup
@@ -40,13 +38,10 @@ func StartQcpConsume(conf *config.Config) (err error) {
 		for j := i + 1; j < len(qsconfigs); j++ {
 			wg.Add(2)
 
-			ce = createConsensusEngine(qsconfigs[j].Name, qsconfig.Name, conf, es)
+			ce = createConsEngine(qsconfigs[j].Name, qsconfig.Name, conf, es)
 			engines = append(engines, ce)
-			ce = createConsensusEngine(qsconfig.Name, qsconfigs[j].Name, conf, es)
+			ce = createConsEngine(qsconfig.Name, qsconfigs[j].Name, conf, es)
 			engines = append(engines, ce)
-
-			//go qcpConsume(ce, qsconfigs[j].Name, qsconfig.Name, conf, es)
-			//go qcpConsume(ce, qsconfig.Name, qsconfigs[j].Name, conf, es)
 
 			subjects += fmt.Sprintf("[%s] [%s]", qsconfigs[j].Name+"2"+qsconfig.Name, qsconfig.Name+"2"+qsconfigs[j].Name)
 
@@ -62,50 +57,31 @@ func StartQcpConsume(conf *config.Config) (err error) {
 		return errors.New("couldn't start qcp consumer")
 	}
 
-	log.Infof("Listening on subjects %s", subjects)
+	log.Infof("listening on subjects %s", subjects)
 
-	ticker := func(engines []*consensus.ConsEngine) {
-		log.Debugf("Start consensus engine ticker...%d", len(engines))
-		// 定时触发共识引擎
-		tick := time.NewTicker(time.Millisecond * 1000)
-		for range tick.C {
-			log.Debug("Consensus engine ticker...")
-			for _, ce := range engines {
-				ce.StartEngine()
-			}
-		}
+	for _, ce := range engines {
+		go ce.StartEngine()
 	}
-
-	go ticker(engines)
 
 	return
 }
 
-func createConsensusEngine(from, to string, conf *config.Config, e chan<- error) (ce *consensus.ConsEngine) {
+func createConsEngine(from, to string, conf *config.Config, e chan<- error) (ce *consensus.ConsEngine) {
 	ce = consensus.NewConsEngine(from, to)
 
-	qsc := conf.GetQscConfig(to)
-
-	nodeto := strings.Split(qsc.NodeAddress, ",")
-	client := restclient.NewRestClient(nodeto[0]) //TODO 多node 取sequence
-	seq, err := client.GetSequence(from, "in")    // seq= toChain's in/fromchain/maxseq
+	seq, err := ce.F.GetSequenceFromChain(from, to, "in") // seq= toChain's in/fromchain/maxseq
 	if err != nil {
 		log.Errorf("Create consensus engine error: %v", err)
 	} else {
 		log.Debugf("Create consensus engine query chain %s in-sequence: %d", to, seq)
-		// abci_query接口查询的in sequence都是以执行完的交易序列号，
-		// 因此共识查询需要完成的快联交易序号需要加 1
 		ce.F.SetSequence(from, to, seq)
-		err = ce.StartEngine()
-		if err != nil {
-			log.Errorf("Start consensus engine error: %v", err)
-		}
 	}
+
 	go qcpConsume(ce, from, to, conf, e)
 	return
 }
 
-//QcpConsumer concume the message from nats server
+//QcpConsumer consume the message from nats server
 //
 // from ,to is chain name for example "QOS"
 func qcpConsume(ce *consensus.ConsEngine, from, to string, conf *config.Config, e chan<- error) {
@@ -113,7 +89,7 @@ func qcpConsume(ce *consensus.ConsEngine, from, to string, conf *config.Config, 
 
 	var i int64
 
-	defer wg.Add(-1)
+	defer wg.Done()
 
 	cb := func(m *nats.Msg) {
 
