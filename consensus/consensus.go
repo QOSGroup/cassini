@@ -66,11 +66,11 @@ func (c *ConsEngine) consensus32() (N int) {
 
 	N = (n*2 + 2) / 3
 
-	log.Debugf("[consensus N #%d]", N)
+	log.Debugf("from [%s] to [%s] [consensus N #%d]", c.from, c.to, N)
 	return int(N)
 }
 
-// StartEngine 触发共识引擎尝试处理下一个交易
+// StartEngine 启动共识引擎尝试处理下一个交易
 func (c *ConsEngine) StartEngine() error {
 
 	for {

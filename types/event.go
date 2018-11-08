@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/tendermint/tendermint/libs/common"
-	"strconv"
 )
 
 type CassiniEventDataTx struct {
@@ -37,7 +36,8 @@ func (c *CassiniEventDataTx) ConstructFromTags(tags []common.KVPair) (err error)
 		}
 		if string(tag.Key) == "qcp.sequence" {
 			//c.Sequence, err = BytesInt64(tag.Value)
-			c.Sequence, err = strconv.ParseInt(string(tag.Value), 10, 64)
+			//c.Sequence, err = strconv.ParseInt(string(tag.Value), 10, 64)
+			c.Sequence, err = ParseSequence(tag.Value)
 			if err != nil {
 				return err
 			}

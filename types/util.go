@@ -6,6 +6,7 @@ import (
 
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/qbase/qcp"
+	"strconv"
 )
 
 // BytesInt64 Int64 转换
@@ -25,6 +26,12 @@ func Int64Bytes(in int64) []byte {
 	}
 
 	return ret.Bytes()
+}
+
+// ParseSequence parse sequence in []byte to int64
+func ParseSequence(seq []byte) (int64, error) {
+
+	return strconv.ParseInt(string(seq), 10, 64)
 }
 
 // Key4OutChainSequence 输出队列交易序号查询接口key值组装方法
