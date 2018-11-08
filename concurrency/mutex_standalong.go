@@ -23,10 +23,6 @@ type StandaloneMutex struct {
 
 // Lock get lock
 func (s *StandaloneMutex) Lock(sequence int64) (int64, error) {
-	if sequence < s.sequence {
-		return s.sequence, fmt.Errorf("Wrong sequence(%d): lock sequence(%d)",
-			sequence, s.sequence)
-	}
 	s.mux.Lock()
 	if sequence < s.sequence {
 		s.mux.Unlock()
