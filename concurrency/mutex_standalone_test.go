@@ -13,16 +13,20 @@ func TestLock(t *testing.T) {
 	var m Mutex
 	m = NewStandaloneMutex(c)
 	seq, err := m.Lock(0)
+	assert.Error(t, err)
+	assert.Equal(t, int64(1), seq)
+
+	seq, err = m.Lock(1)
 	assert.NoError(t, err)
-	assert.Equal(t, int64(0), seq)
+	assert.Equal(t, int64(1), seq)
 
 	var wg sync.WaitGroup
 
 	wg.Add(2)
 	for i := 0; i < 2; i++ {
 		go func() {
-			seq, err = m.Lock(0)
-			assert.Equal(t, int64(1), seq)
+			seq, err = m.Lock(1)
+			assert.Equal(t, int64(2), seq)
 			if err == nil {
 				m.Unlock(true)
 			}

@@ -9,7 +9,9 @@ import (
 
 // NewStandaloneMutex new a mutex for a standalone implementation.
 func NewStandaloneMutex(conf *config.QscConfig) *StandaloneMutex {
-	return &StandaloneMutex{chainID: conf.Name}
+	return &StandaloneMutex{
+		chainID:  conf.Name,
+		sequence: 1}
 }
 
 // StandaloneMutex implements a standalone version for single process.
