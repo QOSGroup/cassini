@@ -20,6 +20,45 @@ $ cd cassini/cmd/cassini
 $ go build
 ```
 
+### Install & start gnatsd
+
+$ go get github.com/nats-io/gnatsd
+
+$ gnatsd & 
+
+### Config
+
+$ vi src/github.com/QOSGroup/cassini/config/config.conf
+
+\# 配置nats为gnatsd服务器地址，集群内多个地址用","号分割;  
+
+\# prikey为cassini的私钥; 
+
+\# consensus默认为"yes",如果设为"no" cassini将关闭共识功能;  
+
+\# eventWaitMillitime 单位为ms,建议与链的建块周期保持一致; 
+ 
+\# 在qscs段配置公链和联盟链，name为链名称，nodes为链节点地址，多个地址用“,”号分割,公链signature设为true。 
+```
+{
+    "nats":      "nats://127.0.0.1:4222",
+    "prikey":    "", 
+    "consensus": "yes",
+    "eventWaitMillitime": 2000,
+    "qscs": [
+        {
+            "name":   "qstars-test",
+            "nodes": "ip:26657,ip:26657"
+        },
+        {
+            "name":      "qos-test",
+            "signature": true,
+            "nodes":     "ip:26657,ip:26657"
+        }
+    ]
+}
+```
+
 ### Commands
 
 \# 帮助信息
