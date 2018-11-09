@@ -35,12 +35,12 @@ func (s RequestHandler) ABCIQuery(path string, data cmn.HexBytes, height int64, 
 		var bytes []byte
 		bytes, err = cdc.MarshalBinaryBare(seq)
 		if err != nil {
-			log.Errorf("Query sequence error: ", err)
+			log.Errorf("Query sequence error: %s", err)
 			return nil, err
 		}
 
 		if err != nil {
-			log.Errorf("Query sequence error: ", err)
+			log.Errorf("Query sequence error: %s", err)
 			return nil, err
 		}
 
@@ -57,7 +57,7 @@ func (s RequestHandler) ABCIQuery(path string, data cmn.HexBytes, height int64, 
 	// tx/out/%s/%d
 	from, sequence, err := parseTxQueryKey(key)
 	if err != nil {
-		log.Errorf("Parse tx query key error: ", err)
+		log.Errorf("Parse tx query key error: %s", err)
 		return nil, err
 	}
 	log.Debugf("from: %s, height: %d, sequence: %d", from, height, sequence)
@@ -66,12 +66,12 @@ func (s RequestHandler) ABCIQuery(path string, data cmn.HexBytes, height int64, 
 	var bytes []byte
 	bytes, err = cdc.MarshalBinaryBare(tx)
 	if err != nil {
-		log.Errorf("Query TxQcp error: ", err)
+		log.Errorf("Query TxQcp error: %s", err)
 		return nil, err
 	}
 
 	if err != nil {
-		log.Errorf("Query TxQcp error: ", err)
+		log.Errorf("Query TxQcp error: %s", err)
 		return nil, err
 	}
 
