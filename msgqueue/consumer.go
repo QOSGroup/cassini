@@ -61,6 +61,7 @@ func StartQcpConsume(conf *config.Config) (err error) {
 
 	for _, ce := range engines {
 		go ce.StartEngine()
+		go ce.F.StartFerry()
 	}
 
 	return
@@ -209,7 +210,7 @@ func connect2Nats(serverUrls string) (nc *nats.Conn, err error) {
 	//if !strings.Contains(serverUrls, ",") {
 	//	log.Debug("serverUrls not contains ','")
 	//}
-	log.Infof("connectting to nats :[%s]", serverUrls)
+	log.Debugf("connectting to nats [%s]", serverUrls)
 
 	nc, err = nats.Connect(serverUrls)
 	if err != nil {

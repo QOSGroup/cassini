@@ -2,16 +2,15 @@ package consensus
 
 import (
 	"errors"
-	cmn "github.com/QOSGroup/cassini/common"
+
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/log"
-	"github.com/QOSGroup/cassini/restclient"
+
 	"github.com/QOSGroup/cassini/types"
-	"github.com/QOSGroup/qbase/example/basecoin/app"
-	"github.com/QOSGroup/qbase/txs"
 	"github.com/nats-io/go-nats"
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto"
+
 	"github.com/tendermint/tendermint/libs/common"
 	"strings"
 	"sync"
@@ -20,19 +19,21 @@ import (
 
 // ConsEngine Consensus engine
 type ConsEngine struct {
-	M *MsgMapper
-	F *Ferry
-	//sequence int64
-	from string
-	to   string
+	M        *EngineMap
+	F        *Ferry
+	sequence int64
+	from     string
+	to       string
+	mtx      sync.RWMutex
 	//conf     *config.Config
 }
 
 // NewConsEngine New a consensus engine
 func NewConsEngine(from, to string) *ConsEngine {
 	ce := new(ConsEngine)
-	ce.M = &MsgMapper{MsgMap: make(map[int64]map[string]string)}
+	ce.M = &EngineMap{MsgMap: make(map[int64]map[string]string)}
 	ce.F = NewFerry(config.GetConfig(), from, to, 0)
+
 	ce.from = from
 	ce.to = to
 	return ce
@@ -47,7 +48,7 @@ func (c *ConsEngine) Add2Engine(msg *nats.Msg) error {
 		return errors.New("the event Unmarshal error")
 	}
 
-	if event.Sequence < c.F.sequence {
+	if event.Sequence < c.sequence {
 		return errors.New("msg sequence is small then the sequence in consensus engine")
 	}
 
@@ -66,7 +67,7 @@ func (c *ConsEngine) consensus32() (N int) {
 
 	N = (n*2 + 2) / 3
 
-	log.Debugf("from [%s] to [%s] [consensus N #%d]", c.from, c.to, N)
+	log.Infof("from [%s] to [%s] [consensus N #%d]", c.from, c.to, N)
 	return int(N)
 }
 
@@ -76,16 +77,24 @@ func (c *ConsEngine) StartEngine() error {
 	for {
 		seqDes, _ := c.F.GetSequenceFromChain(c.from, c.to, "in")
 		seqSou, _ := c.F.GetSequenceFromChain(c.to, c.from, "out")
-		if seqDes >= seqSou || c.F.sequence > seqSou {
+
+		if seqDes >= seqSou || c.sequence > seqSou {
 			time.Sleep(time.Duration(c.F.conf.EventWaitMillitime) * time.Millisecond)
 			continue
 		}
 
-		if seqDes >= c.F.sequence {
-			c.F.SetSequence(c.from, c.to, seqDes)
+		if seqDes >= c.sequence {
+			c.SetSequence(c.from, c.to, seqDes)
 		}
-		if !c.ConSequence() {
-			log.Errorf("consensusEngine from [%s] to [%s] sequence [#%d] failed. seqDes [%d] seqSou[%d] ", c.from, c.to, c.F.sequence, seqDes, seqSou)
+
+		_, err := c.F.ConsMap.GetConsFromMap(c.sequence)
+		if err == nil { //已有共识
+			c.SetSequence(c.from, c.to, c.sequence)
+		}
+		if c.ConSequence() {
+			c.SetSequence(c.from, c.to, c.sequence)
+		} else {
+			log.Errorf("consensusEngine from [%s] to [%s] sequence [#%d] failed. seqDes [%d] seqSou[%d] ", c.from, c.to, c.sequence, seqDes, seqSou)
 		}
 	}
 
@@ -94,7 +103,7 @@ func (c *ConsEngine) StartEngine() error {
 
 func (c *ConsEngine) ConSequence() bool {
 
-	log.Debugf("Start consensus engine from: [%s] to: [%s] sequence: [%d]", c.from, c.to, c.F.sequence)
+	log.Debugf("Start consensus engine from: [%s] to: [%s] sequence: [%d]", c.from, c.to, c.sequence)
 
 	nodes := c.F.conf.GetQscConfig(c.from).NodeAddress
 
@@ -102,13 +111,13 @@ func (c *ConsEngine) ConSequence() bool {
 
 	for _, node := range strings.Split(nodes, ",") {
 
-		qcp, err := c.F.queryTxQcpFromNode(c.to, node, c.F.sequence) // be (c.to, node, c.F.sequence)
+		qcp, err := c.F.queryTxQcpFromNode(c.to, node, c.sequence) // be (c.to, node, c.sequence)
 
 		if err != nil || qcp == nil {
 			continue
 		}
 		hash := crypto.Sha256(qcp.GetSigData())
-		ced := types.CassiniEventDataTx{From: c.from, To: c.to, Height: qcp.BlockHeight, Sequence: c.F.sequence}
+		ced := types.CassiniEventDataTx{From: c.from, To: c.to, Height: qcp.BlockHeight, Sequence: c.sequence}
 
 		ced.HashBytes = hash
 
@@ -126,219 +135,28 @@ func (c *ConsEngine) ConSequence() bool {
 	return false
 }
 
-// Ferry Comsumer tx message and handle(consensus, broadcast...) it.
-type Ferry struct {
-	mtx sync.RWMutex
-
-	sequence int64 //already ferry max sequence
-
-	rmap map[string]*restclient.RestClient //node -> restclient
-
-	conf *config.Config
-}
-
-func NewFerry(conf *config.Config, from, to string, sequence int64) *Ferry {
-
-	f := &Ferry{sequence: 0, conf: conf}
-	f.rmap = make(map[string]*restclient.RestClient)
-	for _, node := range strings.Split(conf.GetQscConfig(from).NodeAddress, ",") {
-		add := GetAddressFromUrl(node)
-		f.rmap[add] = restclient.NewRestClient(node)
-
-	}
-	for _, node := range strings.Split(conf.GetQscConfig(to).NodeAddress, ",") {
-		add := GetAddressFromUrl(node)
-		f.rmap[add] = restclient.NewRestClient(node)
-
-	}
-	return f
-}
-
 // SetSequence 设置交易序列号
-func (f *Ferry) SetSequence(from, to string, s int64) {
+func (c *ConsEngine) SetSequence(from, to string, s int64) {
 
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
 
-	seq, _ := f.GetSequenceFromChain(from, to, "in")
+	seq, _ := c.GetSequenceFromChain(from, to, "in")
 
-	//seq2, _ := f.GetSequenceFromChain(to, from, "out")
-
-	f.sequence = common.MaxInt64(s, seq) + 1
-	//if f.sequence > seq2 {
-	//	log.Errorf("invalid sequence [#%d]", f.sequence)
-	//}
-	log.Infof("from [%s] to [%s] sequence set to [#%d]", from, to, f.sequence)
+	c.sequence = common.MaxInt64(s, seq) + 1
+	log.Infof("from [%s] to [%s] ConsEngine sequence set to [#%d]", from, to, c.sequence)
 }
 
 //在to chain上查询 来自/要去 from chain 的 sequence
-func (f *Ferry) GetSequenceFromChain(from, to, inout string) (int64, error) {
-	qsc := f.conf.GetQscConfig(to)
+func (c *ConsEngine) GetSequenceFromChain(from, to, inout string) (int64, error) {
+	qsc := c.F.conf.GetQscConfig(to)
 
 	nodeto := strings.Split(qsc.NodeAddress, ",")
 
 	add := GetAddressFromUrl(nodeto[0]) //TODO 多node 取sequence
-	r := f.rmap[add]
+	r := c.F.rmap[add]
 
 	return r.GetSequence(from, inout)
-}
-
-//ferryQCP get qcp transaction from source chain and post it to destnation chain
-//
-//from is chain name of the source chain
-//to is the chain name of destnation chain
-//nodes is consensus nodes of the source chain
-func (f *Ferry) ferryQCP(from, to, hash, nodes string, sequence int64) (err error) {
-
-	log.Debugf("ferry qcp from [%s] to [%s], sequence=%d", from, to, sequence)
-
-	qcp, err := f.getTxQcp(from, to, hash, nodes, sequence)
-
-	if err != nil {
-		log.Errorf("%v", err)
-		return errors.New("get qcp transaction failed")
-	}
-
-	qscConf := f.conf.GetQscConfig(from)
-
-	// Sign data for public chain
-	// Config in QscConfig.Signature
-	// true - required
-	// false/default - not required
-	if qscConf.Signature {
-		cdc := app.MakeCodec()
-		err = cmn.SignTxQcp(qcp, f.conf.Prikey, cdc)
-		if err != nil {
-			log.Errorf("Sign Tx Qcp error: %v", err)
-		}
-		log.Debugf("Sign Tx Qcp for chain: %s", from)
-	}
-
-	err = f.postTxQcp(to, qcp)
-
-	if err != nil {
-		return errors.New("post qcp transaction failed")
-	}
-
-	log.Infof("success ferry qcp transaction from [%s] to [%s] sequence [#%d] \n", from, to, sequence)
-
-	f.SetSequence(from, to, f.sequence)
-
-	return nil
-
-}
-
-//getTxQcp get QCP transactions from sorce chain
-func (f *Ferry) getTxQcp(from, to, hash, nodes string, sequence int64) (qcp *txs.TxQcp, err error) {
-
-	success := false
-
-EndGet:
-
-	for _, node := range strings.Split(nodes, ",") {
-
-		qcp, err = f.getTxQcpFromNode(to, hash, node, sequence)
-
-		if err != nil || qcp == nil {
-			continue
-		}
-
-		success = true
-		break EndGet
-
-	}
-
-	if !success {
-		return nil, errors.New("get qcp transaction from chain " + from + " failed")
-	}
-
-	return
-}
-
-func (f *Ferry) getTxQcpParalle(from, to, hash, nodes string, sequence int64) (qcps []txs.TxQcp, err error) {
-
-	nodeList := strings.Split(nodes, ",")
-	var tasks = make([]common.Task, len(nodeList))
-
-	for i := 0; i < len(tasks); i++ {
-		tasks[i] = func(i int) (res interface{}, err error, abort bool) {
-			qcp, err := f.getTxQcpFromNode(to, hash, nodeList[i], sequence)
-			return qcp, err, false //TODO
-		}
-	}
-
-	var tResults, ok = common.Parallel(tasks...)
-	if !ok {
-		log.Error("parallel failed")
-	}
-
-	var failTasks int
-	for i := 0; i < len(tasks); i++ {
-		tResult, ok := tResults.LatestResult(i)
-		if !ok {
-			failTasks++
-		} else if tResult.Error != nil {
-			failTasks++
-		} else {
-			qcps = append(qcps, *(tResult.Value).(*txs.TxQcp))
-		}
-
-	}
-
-	if len(qcps)*2 > failTasks { //TODO 加入共识逻辑
-		return qcps, nil
-	}
-
-	return nil, errors.New("parallel get qcp transaction from chain " + from + " failed")
-}
-
-//getTxQcpFromNode get QCP transactions from single chain node
-func (f *Ferry) getTxQcpFromNode(to, hash, node string, sequence int64) (qcp *txs.TxQcp, err error) {
-
-	qcp, err = f.queryTxQcpFromNode(to, node, sequence)
-
-	if err != nil || qcp == nil {
-		return nil, errors.New("get TxQcp from " + node + "failed.")
-	}
-
-	//TODO 取本地联盟链公钥验签
-	//pubkey := qcp.Sig.Pubkey  //mock pubkey 为 nil pnic
-	//if !pubkey.VerifyBytes(qcp.GetSigData(), qcp.Sig.Signature) {
-	//	return nil, errors.New("get TxQcp from " + node + " data verify failed.")
-	//}
-
-	// qcp hash 与 hash值比对
-	//if string(tmhash.Sum(qcp.GetSigData())) != hash { //算法保持 tmhash.hash 一致 sha256 前 20byte
-	hash2 := cmn.Bytes2HexStr(crypto.Sha256(qcp.GetSigData()))
-	if hash2 != hash {
-		return nil, errors.New("get TxQcp from " + node + "failed")
-	}
-
-	return qcp, nil
-
-}
-
-//queryTxQcpFromNode get TxQcp from node
-//
-//to destnation chain id
-func (f *Ferry) queryTxQcpFromNode(to, node string, sequence int64) (qcp *txs.TxQcp, err error) {
-
-	//"tcp://127.0.0.1:26657"
-	//rmap := restclient.NewRestClient(node)
-	add := GetAddressFromUrl(node)
-	r := f.rmap[add]
-	qcp, err = r.GetTxQcp(to, sequence)
-	if err != nil && !strings.Contains(err.Error(), restclient.ERR_emptyqcp) {
-		r := restclient.NewRestClient(node)
-		f.rmap[add] = r
-		qcp, err = r.GetTxQcp(to, sequence)
-	}
-
-	if err != nil || qcp == nil {
-		return nil, errors.New("get TxQcp from " + node + "failed.")
-	}
-
-	return qcp, nil
 }
 
 func GetAddressFromUrl(url string) string {
@@ -347,32 +165,4 @@ func GetAddressFromUrl(url string) string {
 		return url
 	}
 	return url[n+3:]
-}
-
-func (f *Ferry) postTxQcp(to string, qcp *txs.TxQcp) (err error) {
-
-	success := false
-	qscConfig := f.conf.GetQscConfig(to)
-	toNodes := qscConfig.NodeAddress
-EndPost:
-	for _, node := range strings.Split(toNodes, ",") {
-
-		add := GetAddressFromUrl(node)
-		r := f.rmap[add]
-
-		err := r.PostTxQcp(to, qcp) //TODO 出错 r := restclient.NewRestClient(node)
-		if err != nil {
-			continue
-		}
-
-		success = true
-		break EndPost
-	}
-
-	if !success {
-		return errors.New("post qcp transaction failed")
-	}
-
-	return
-
 }

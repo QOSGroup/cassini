@@ -46,7 +46,7 @@ func SignTxQcp(tx *txs.TxQcp, prikey string, cdc *amino.Codec) error {
 
 	tx.Sig.Pubkey = signer.PubKey()
 	tx.Sig.Signature, err = tx.SignTx(signer)
-	log.Infof("tx.sig %v", tx.Sig)
+	log.Debugf("tx.sig %v", tx.Sig)
 	return err
 }
 
