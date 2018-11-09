@@ -51,4 +51,9 @@ func TestParseAddrs(t *testing.T) {
 
 	assert.Equal(t, p, "")
 	assert.Equal(t, len(as), 0)
+
+	p, as = ParseAddrs("redis://192.168.1.111:8888,111.1.11.11:1111,222.2.222.222:2222")
+
+	assert.Equal(t, p, "redis")
+	assert.Equal(t, len(as), 3)
 }
