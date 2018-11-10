@@ -4,14 +4,12 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/QOSGroup/cassini/config"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestLock(t *testing.T) {
-	c := &config.QscConfig{Name: "abc"}
 	var m Mutex
-	m = NewStandaloneMutex(c)
+	m = NewStandaloneMutex("abc")
 	seq, err := m.Lock(0)
 	assert.Error(t, err)
 	assert.Equal(t, int64(1), seq)

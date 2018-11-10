@@ -3,14 +3,12 @@ package concurrency
 import (
 	"fmt"
 	"sync"
-
-	"github.com/QOSGroup/cassini/config"
 )
 
 // NewStandaloneMutex new a mutex for a standalone implementation.
-func NewStandaloneMutex(conf *config.QscConfig) *StandaloneMutex {
+func NewStandaloneMutex(name string) *StandaloneMutex {
 	return &StandaloneMutex{
-		chainID:  conf.Name,
+		chainID:  name,
 		sequence: 1}
 }
 
@@ -39,5 +37,10 @@ func (s *StandaloneMutex) Unlock(success bool) error {
 		s.sequence++
 	}
 	s.mux.Unlock()
+	return nil
+}
+
+// Close close the lock
+func (s *StandaloneMutex) Close() error {
 	return nil
 }
