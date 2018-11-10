@@ -63,31 +63,50 @@ func (e *EtcdMutex) Lock(sequence int64) (int64, error) {
 	}
 	e.locked = true
 
-	if sequence < seq {
+	if sequence != seq {
 		defer func() {
 			err := e.Unlock(false)
 			if err != nil {
 				log.Error("Unlock error: ", err)
 			}
-			log.Errorf("Wrong sequence(%d), sequence(%d) in lock",
-				sequence, seq)
 		}()
+		err = fmt.Errorf("Wrong sequence(%d), current sequence(%d) in lock",
+			sequence, seq)
+		log.Error(err)
 		return seq, err
-	}
-	if sequence > seq {
-		err = e.put(sequence)
-		if err != nil {
-			defer func() {
-				err := e.Unlock(false)
-				log.Error("Unlock error: ", err)
-			}()
-			log.Error("Put key value error when lock: ", err)
-			return seq, err
-		}
 	}
 	e.sequence = sequence
 
 	return e.sequence, err
+}
+
+// Update update the lock
+func (e *EtcdMutex) Update(sequence int64) error {
+	mux := v3c.NewMutex(e.session, e.chainID)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second) //设置2s超时
+	defer cancel()
+
+	var err error
+	err = mux.Lock(ctx)
+	if err != nil {
+		log.Errorf("Update lock sequence(%d) error: %s", sequence, err)
+		return err
+	}
+	defer func() {
+		mux.Unlock(ctx)
+	}()
+	seq := e.get()
+	if sequence > seq {
+		err = e.put(sequence)
+		if err != nil {
+			log.Errorf("Update sequence(%d), current sequence(%d) in lock, error: %s",
+				sequence, seq, err)
+			return err
+		}
+	}
+	e.sequence = sequence
+
+	return nil
 }
 
 // Unlock unlock the lock

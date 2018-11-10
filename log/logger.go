@@ -21,6 +21,12 @@ func init() {
 	Replace(logger)
 }
 
+// ReplaceConfig replace logger from new config string
+func ReplaceConfig(config string) {
+	logger, _ := seelog.LoggerFromConfigAsBytes([]byte(config))
+	Replace(logger)
+}
+
 // LoadLogger 通过配置文件初始化日志模块
 func LoadLogger(conf string) (seelog.LoggerInterface, error) {
 	return seelog.LoggerFromConfigAsFile(conf)

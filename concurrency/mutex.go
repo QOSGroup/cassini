@@ -17,6 +17,9 @@ type Mutex interface {
 	// Negative sequence(<0) are returned unless there are some unknown exceptions.
 	Lock(sequence int64) (int64, error)
 
+	// Update update the sequence saved in the distributed lock.
+	Update(sequence int64) error
+
 	// Unlock after successfully acquiring the lock, the lock needs to be unlocked.
 	//
 	// If it returned an error, indicates that the call failed.

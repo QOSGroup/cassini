@@ -38,14 +38,32 @@ func TestLock(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		seq, err := m.Lock(5)
+		assert.Error(t, err)
+		assert.Equal(t, int64(2), seq)
+		wg.Done()
+	}()
+	wg.Wait()
+
+	wg.Add(1)
+	go func() {
+		seq, err := m.Lock(2)
 		assert.NoError(t, err)
-		assert.Equal(t, int64(5), seq)
+		assert.Equal(t, int64(2), seq)
 		m.Unlock(true)
 		wg.Done()
 	}()
 	wg.Wait()
 
-	seq, err = m.Lock(3)
-	assert.Error(t, err)
-	assert.Equal(t, int64(6), seq)
+	err = m.Update(15)
+	assert.NoError(t, err)
+
+	wg.Add(1)
+	go func() {
+		seq, err := m.Lock(15)
+		assert.NoError(t, err)
+		assert.Equal(t, int64(15), seq)
+		m.Unlock(true)
+		wg.Done()
+	}()
+	wg.Wait()
 }
