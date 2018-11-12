@@ -22,6 +22,9 @@ var logConfig = `
 
 var mykey = "mykey"
 
+// var addrs = []string{"192.168.1.195:2379", "192.168.1.195:22379", "192.168.1.195:32379"}
+var addrs = []string{"192.168.1.35:2379"}
+
 func main() {
 
 	log.ReplaceConfig(logConfig)
@@ -62,10 +65,7 @@ func main() {
 func testEtcdMutexUpdate(sequence int64) (err error) {
 	fmt.Printf("Request lock sequence: %d\n", sequence)
 	var etcd *concurrency.EtcdMutex
-	etcd, err = concurrency.NewEtcdMutex(mykey,
-		[]string{"192.168.1.195:2379",
-			"192.168.1.195:22379",
-			"192.168.1.195:32379"})
+	etcd, err = concurrency.NewEtcdMutex(mykey, addrs)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -90,10 +90,7 @@ func testEtcdMutex(sequence int64) (seq int64, err error) {
 	seq = -1
 	log.Debugf("Request lock sequence: %d\n", sequence)
 	var etcd *concurrency.EtcdMutex
-	etcd, err = concurrency.NewEtcdMutex(mykey,
-		[]string{"192.168.1.195:2379",
-			"192.168.1.195:22379",
-			"192.168.1.195:32379"})
+	etcd, err = concurrency.NewEtcdMutex(mykey, addrs)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -128,10 +125,7 @@ func testEtcdMutexLoop(c int) {
 
 	for i := 0; i < c; i++ {
 		go func() {
-			etcd, err := concurrency.NewEtcdMutex(mykey,
-				[]string{"192.168.1.195:2379",
-					"192.168.1.195:22379",
-					"192.168.1.195:32379"})
+			etcd, err := concurrency.NewEtcdMutex(mykey, addrs)
 			if err != nil {
 				log.Warn(err)
 				return

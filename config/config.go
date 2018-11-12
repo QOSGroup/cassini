@@ -44,6 +44,9 @@ type Config struct {
 
 	// Qscs 与relay连接的区块链相关配置
 	Qscs []*QscConfig `json:"qscs,omitempty"`
+
+	// Etcd Embed-etcd config
+	Etcd *EtcdConfig `json:"etcd,omitempty"`
 }
 
 // QscConfig qsc 配置封装
