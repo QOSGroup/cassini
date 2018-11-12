@@ -70,12 +70,14 @@ func startEtcd(conf *config.EtcdConfig, w *sync.WaitGroup) (err error) {
 	cfg.Dir = fmt.Sprintf("%s.%s", conf.Name, "etcd")
 	cfg.InitialCluster = conf.Cluster
 	cfg.InitialClusterToken = conf.ClusterToken
+	cfg.Name = conf.Name
 
 	e, err := embed.StartEtcd(cfg)
+	w.Done()
 	if err != nil {
 		log.Error("Etcd server start error: ", err)
+		return
 	}
-	w.Done()
 
 	defer e.Close()
 	select {
