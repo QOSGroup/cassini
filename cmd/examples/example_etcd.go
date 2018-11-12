@@ -34,6 +34,9 @@ func main() {
 	}
 	fmt.Println("Update sequence: ", seq)
 
+	testEtcdMutexLoop(3)
+	fmt.Println("Started loop test")
+
 	go func() {
 		var c int64
 		for {
@@ -59,7 +62,7 @@ func main() {
 func testEtcdMutexUpdate(sequence int64) (err error) {
 	fmt.Printf("Request lock sequence: %d\n", sequence)
 	var etcd *concurrency.EtcdMutex
-	etcd, err = concurrency.NewEtcdMutex("mykey",
+	etcd, err = concurrency.NewEtcdMutex(mykey,
 		[]string{"192.168.1.195:2379",
 			"192.168.1.195:22379",
 			"192.168.1.195:32379"})
@@ -69,15 +72,15 @@ func testEtcdMutexUpdate(sequence int64) (err error) {
 	}
 	err = etcd.Update(sequence)
 	if err != nil {
-		fmt.Println("Update error: ", err)
+		log.Warn("Update error: ", err)
 		return
 	}
 	defer func() {
 		err = etcd.Close()
 		if err != nil {
-			fmt.Println("Close error: ", err)
+			log.Warn("Close error: ", err)
 		}
-		fmt.Println("close done")
+		log.Debug("close done")
 	}()
 	return
 
@@ -85,9 +88,9 @@ func testEtcdMutexUpdate(sequence int64) (err error) {
 
 func testEtcdMutex(sequence int64) (seq int64, err error) {
 	seq = -1
-	fmt.Printf("Request lock sequence: %d\n", sequence)
+	log.Debugf("Request lock sequence: %d\n", sequence)
 	var etcd *concurrency.EtcdMutex
-	etcd, err = concurrency.NewEtcdMutex("mykey",
+	etcd, err = concurrency.NewEtcdMutex(mykey,
 		[]string{"192.168.1.195:2379",
 			"192.168.1.195:22379",
 			"192.168.1.195:32379"})
@@ -99,24 +102,64 @@ func testEtcdMutex(sequence int64) (seq int64, err error) {
 	defer func() {
 		err = etcd.Close()
 		if err != nil {
-			fmt.Println("Close error: ", err)
+			log.Warn("Close error: ", err)
 		}
-		fmt.Println("close done")
+		log.Debug("close done")
 	}()
 	if err != nil {
-		fmt.Println(err)
+		log.Warn(err)
 		return
 	}
 	defer func() {
 		err = etcd.Unlock(true)
 		if err != nil {
-			fmt.Println("Unlock error: ", err)
+			log.Warn("Unlock error: ", err)
 		}
-		fmt.Println("unlock done")
+		log.Debug("unlock done")
 	}()
 
 	fmt.Printf("Get lock sequence(%d), current sequence(%d) in lock\n", sequence, seq)
 	time.Sleep(1 * time.Second)
 	return 0, nil
+
+}
+
+func testEtcdMutexLoop(c int) {
+
+	for i := 0; i < c; i++ {
+		go func() {
+			etcd, err := concurrency.NewEtcdMutex(mykey,
+				[]string{"192.168.1.195:2379",
+					"192.168.1.195:22379",
+					"192.168.1.195:32379"})
+			if err != nil {
+				log.Warn(err)
+				return
+			}
+
+			var sequence int64
+			for {
+				log.Debugf("Loop request lock sequence: %d\n", sequence)
+				sequence, err = etcd.Lock(sequence)
+				if err != nil {
+					log.Warn("Loop error: ", err)
+					continue
+				}
+
+				fmt.Printf("Loop get lock sequence(%d)!!!!!!!!!!!!!!!!\n", sequence)
+				time.Sleep(1 * time.Second)
+				err = etcd.Unlock(true)
+				if err != nil {
+					log.Warn("Loop unlock error: ", err)
+				}
+				log.Debug("Loop unlock done")
+			}
+			// err = etcd.Close()
+			// if err != nil {
+			// 	fmt.Println("Close error: ", err)
+			// }
+			// fmt.Println("Loop close done")
+		}()
+	}
 
 }
