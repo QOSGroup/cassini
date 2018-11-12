@@ -4,7 +4,6 @@
 package concurrency
 
 import (
-	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/types"
 )
 
@@ -18,23 +17,27 @@ type Mutex interface {
 	// Negative sequence(<0) are returned unless there are some unknown exceptions.
 	Lock(sequence int64) (int64, error)
 
+	// Update update the sequence saved in the distributed lock.
+	Update(sequence int64) error
+
 	// Unlock after successfully acquiring the lock, the lock needs to be unlocked.
 	//
 	// If it returned an error, indicates that the call failed.
 	Unlock(success bool) error
+
+	// Close close the lock
+	Close() error
 }
 
 // NewMutex new mutex based on configuration.
-func NewMutex(conf *config.QscConfig) Mutex {
+func NewMutex(name, address string) (m Mutex, err error) {
+	protocol, addrs := types.ParseAddrs(address)
 
-	protocol, addrs := types.ParseAddrs(conf.Lock)
-
-	var m Mutex
 	switch protocol {
 	case "etcd":
-		m = NewEtcdMutex(protocol, addrs, conf)
+		m, err = NewEtcdMutex(name, addrs)
 	default:
-		m = NewStandaloneMutex(conf)
+		m = NewStandaloneMutex(name)
 	}
-	return m
+	return
 }

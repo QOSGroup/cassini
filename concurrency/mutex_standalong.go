@@ -3,14 +3,12 @@ package concurrency
 import (
 	"fmt"
 	"sync"
-
-	"github.com/QOSGroup/cassini/config"
 )
 
 // NewStandaloneMutex new a mutex for a standalone implementation.
-func NewStandaloneMutex(conf *config.QscConfig) *StandaloneMutex {
+func NewStandaloneMutex(name string) *StandaloneMutex {
 	return &StandaloneMutex{
-		chainID:  conf.Name,
+		chainID:  name,
 		sequence: 1}
 }
 
@@ -24,12 +22,11 @@ type StandaloneMutex struct {
 // Lock get lock
 func (s *StandaloneMutex) Lock(sequence int64) (int64, error) {
 	s.mux.Lock()
-	if sequence < s.sequence {
+	if sequence != s.sequence {
 		s.mux.Unlock()
 		return s.sequence, fmt.Errorf("Wrong sequence(%d): lock sequence(%d)",
 			sequence, s.sequence)
 	}
-	s.sequence = sequence
 	return s.sequence, nil
 }
 
@@ -39,5 +36,18 @@ func (s *StandaloneMutex) Unlock(success bool) error {
 		s.sequence++
 	}
 	s.mux.Unlock()
+	return nil
+}
+
+// Update update the sequence in lock
+func (s *StandaloneMutex) Update(sequence int64) error {
+	s.mux.Lock()
+	defer s.mux.Unlock()
+	s.sequence = sequence
+	return nil
+}
+
+// Close close the lock
+func (s *StandaloneMutex) Close() error {
 	return nil
 }

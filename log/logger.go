@@ -21,6 +21,12 @@ func init() {
 	Replace(logger)
 }
 
+// ReplaceConfig replace logger from new config string
+func ReplaceConfig(config string) {
+	logger, _ := seelog.LoggerFromConfigAsBytes([]byte(config))
+	Replace(logger)
+}
+
 // LoadLogger 通过配置文件初始化日志模块
 func LoadLogger(conf string) (seelog.LoggerInterface, error) {
 	return seelog.LoggerFromConfigAsFile(conf)
@@ -58,7 +64,7 @@ func Warn(v ...interface{}) {
 
 // Error logs
 func Error(v ...interface{}) {
-	seelog.Error(fmt.Sprint(v...), "\nStack:\n", string(debug.Stack()))
+	seelog.Error(fmt.Sprint(v...), "\nError stack:\n", string(debug.Stack()))
 }
 
 // Tracef logs 详细运行跟踪日志，可能影响程序性能，所以生产环境不配置输出，仅在开发测试环境使用
@@ -83,6 +89,7 @@ func Warnf(format string, params ...interface{}) {
 
 // Errorf formats logs
 func Errorf(format string, params ...interface{}) {
-	seelog.Error(fmt.Sprintf(format, params...), "\nStack:\n", string(debug.Stack()))
-
+	// seelog.Error(fmt.Sprintf(format, params...), "\nStack:\n", string(debug.Stack()))
+	params = append(params, string(debug.Stack()))
+	seelog.Errorf(format+"\nError stack:\n%s", params...)
 }
