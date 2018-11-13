@@ -26,9 +26,11 @@ var starter = func(conf *config.Config) (cancel context.CancelFunc, err error) {
 	w.Add(1)
 	go func() {
 		var etcd *embed.Etcd
+		fmt.Println("asdasdasd")
 		etcd, err = startEtcd(conf)
 		if err != nil {
 			log.Error("Etcd server start error: ", err)
+			log.Flush()
 			os.Exit(1)
 		}
 		w.Done()
@@ -59,6 +61,7 @@ var starter = func(conf *config.Config) (cancel context.CancelFunc, err error) {
 		_, err = event.StartEventSubscibe(conf)
 		if err != nil {
 			log.Errorf("Start event subscribe error: %s", err)
+			log.Flush()
 			os.Exit(1)
 		}
 		w.Done()
@@ -71,6 +74,7 @@ var starter = func(conf *config.Config) (cancel context.CancelFunc, err error) {
 		err = msgqueue.StartQcpConsume(conf)
 		if err != nil {
 			log.Errorf("Start qcp consume error: %s", err)
+			log.Flush()
 			os.Exit(1)
 		}
 		w.Done()
