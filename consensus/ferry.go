@@ -50,16 +50,21 @@ func NewFerry(conf *config.Config, from, to string, sequence int64) *Ferry {
 
 	}
 
+	seq, _ := f.GetSequenceFromChain(from, to, "in")
+	if seq > 1 {
+		f.sequence = seq + 1
+	} else {
+		f.sequence = 1
+	}
 	if f.conf.UseEtcd {
-		f.mutex, _ = concurrency.NewMutex(from+"_"+to, f.conf.Lock)
-		seq, _ := f.GetSequenceFromChain(from, to, "in")
-		if seq > 1 {
-			f.sequence = seq + 1
-			f.mutex.Update(seq)
-		} else {
-			f.mutex.Update(1)
-			f.sequence = 1
+		var err error
+		f.mutex, err = concurrency.NewMutex(from+"_"+to, f.conf.Lock)
+		if err != nil {
+			log.Errorf("create mutex failed. %v", err)
+			f.conf.UseEtcd = false
+			return f
 		}
+		f.mutex.Update(f.sequence)
 	}
 
 	return f
