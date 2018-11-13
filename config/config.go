@@ -47,6 +47,9 @@ type Config struct {
 
 	// Etcd Embed-etcd config
 	Etcd *EtcdConfig `json:"etcd,omitempty"`
+
+	// UseEtcd Whether to use etcd or not
+	UseEtcd bool `json:"useEtcd,omitempty"`
 }
 
 // QscConfig qsc 配置封装
