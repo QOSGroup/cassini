@@ -54,9 +54,11 @@ func NewFerry(conf *config.Config, from, to string, sequence int64) *Ferry {
 		f.mutex, _ = concurrency.NewMutex(from+"_"+to, f.conf.Lock)
 		seq, _ := f.GetSequenceFromChain(from, to, "in")
 		if seq > 1 {
+			f.sequence = seq + 1
 			f.mutex.Update(seq)
 		} else {
 			f.mutex.Update(1)
+			f.sequence = 1
 		}
 	}
 
@@ -72,6 +74,13 @@ func (f *Ferry) StartFerry() error {
 		cons, err := f.ConsMap.GetConsFromMap(f.sequence)
 
 		if seqDes >= seqSou || f.sequence > seqSou || err != nil {
+
+			//for k, _ := range f.ConsMap.ConsMap {
+			//	//fmt.Sprintf("%d ", k)
+			//	//fmt.Println("")
+			//}
+			//fmt.Println("StartFerry f.sequence:[#%d]", f.sequence)
+
 			time.Sleep(time.Duration(f.conf.EventWaitMillitime) * time.Millisecond)
 			continue
 		}
@@ -102,9 +111,12 @@ func (f *Ferry) SetSequence(from, to string, s int64) {
 	//seq2, _ := f.GetSequenceFromChain(to, from, "out")
 
 	f.sequence = common.MaxInt64(s, seq) + 1
-	//if f.sequence > seq2 {
-	//	log.Errorf("invalid sequence [#%d]", f.sequence)
+
+	//for k, _ := range f.ConsMap.ConsMap {
+	//	fmt.Println(k)
 	//}
+	//fmt.Println("f.sequence:[#%d]", f.sequence)
+
 	log.Infof("from [%s] to [%s] ferry sequence set to [#%d]", from, to, f.sequence)
 }
 
@@ -153,15 +165,16 @@ func (f *Ferry) ferryQCP(hash, nodes string, sequence int64) (err error) {
 
 	if f.conf.UseEtcd {
 		if lockseq, err := f.mutex.Lock(f.sequence); err != nil {
+			log.Warnf("get lock failed. sequence [%d] / [%d]", f.sequence, lockseq)
 			if lockseq > 0 {
 				if f.sequence < lockseq {
 					log.Warnf("update sequence [#%d] to etcd sequence [#%d]", f.sequence, lockseq)
 					f.SetSequence(f.from, f.to, lockseq-1)
 				}
-			} else {
-				return fmt.Errorf("get lock fail %v", err)
 			}
+			return fmt.Errorf("get lock fail %v", err)
 		}
+		log.Infof("get lock success ,sequence [%d]", f.sequence)
 		err = f.postTxQcp(f.to, qcp)
 
 		if err != nil {
