@@ -84,7 +84,7 @@ var starter = func(conf *config.Config) (cancel context.CancelFunc, err error) {
 }
 
 func startEtcd(config *config.Config) (etcd *embed.Etcd, err error) {
-	if config.UseEtcd || config.Etcd == nil {
+	if !config.UseEtcd || config.Etcd == nil {
 		return
 	}
 	log.Info("Starting etcd...")
