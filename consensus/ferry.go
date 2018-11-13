@@ -10,7 +10,9 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 
 	"errors"
+	"fmt"
 	cmn "github.com/QOSGroup/cassini/common"
+	"github.com/QOSGroup/cassini/concurrency"
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/restclient"
@@ -21,6 +23,7 @@ import (
 type Ferry struct {
 	mtx sync.RWMutex
 
+	mutex    concurrency.Mutex
 	from, to string
 	sequence int64 //already ferry max sequence
 
@@ -46,6 +49,9 @@ func NewFerry(conf *config.Config, from, to string, sequence int64) *Ferry {
 		f.rmap[add] = restclient.NewRestClient(node)
 
 	}
+
+	f.mutex, _ = concurrency.NewMutex(from+"_"+to, "etcd://192.168.1.195:2379,192.168.1.195:22379,192.168.1.195:32379")
+	f.mutex.Update(0)
 	return f
 }
 
@@ -56,6 +62,7 @@ func (f *Ferry) StartFerry() error {
 		seqDes, _ := f.GetSequenceFromChain(f.from, f.to, "in")
 		seqSou, _ := f.GetSequenceFromChain(f.to, f.from, "out")
 		cons, err := f.ConsMap.GetConsFromMap(f.sequence)
+
 		if seqDes >= seqSou || f.sequence > seqSou || err != nil {
 			time.Sleep(time.Duration(f.conf.EventWaitMillitime) * time.Millisecond)
 			continue
@@ -66,6 +73,7 @@ func (f *Ferry) StartFerry() error {
 		}
 
 		//TODO get etcd
+		//f.mutex.Update(f.sequence)
 
 		if err == nil && cons != nil { //已有该sequence 共识
 			//hash, nodes string, sequence int64
@@ -139,11 +147,20 @@ func (f *Ferry) ferryQCP(hash, nodes string, sequence int64) (err error) {
 		log.Debugf("Sign Tx Qcp for chain: %s", f.from)
 	}
 
+	err = f.mutex.Update(f.sequence)
+	if err != nil {
+		fmt.Errorf("update lock fail %v", err)
+	}
+	if _, err = f.mutex.Lock(f.sequence); err != nil {
+		return fmt.Errorf("get lock fail %v", err)
+	}
 	err = f.postTxQcp(f.to, qcp)
 
 	if err != nil {
+		f.mutex.Unlock(false)
 		return errors.New("post qcp transaction failed")
 	}
+	f.mutex.Unlock(true)
 
 	log.Infof("success ferry qcp transaction from [%s] to [%s] sequence [#%d] \n", f.from, f.to, sequence)
 
