@@ -61,6 +61,7 @@ func StartQcpConsume(conf *config.Config) (err error) {
 
 	for _, ce := range engines {
 		go ce.StartEngine()
+		go ce.F.StartFerry()
 	}
 
 	return
@@ -74,11 +75,11 @@ func createConsEngine(from, to string, conf *config.Config, e chan<- error) (ce 
 		log.Errorf("Create consensus engine error: %v", err)
 	} else {
 		log.Debugf("Create consensus engine query chain %s in-sequence: %d", to, seq)
-		ce.F.SetSequence(from, to, seq)
+		ce.SetSequence(from, to, seq)
 	}
 
 	go qcpConsume(ce, from, to, conf, e)
-	return
+	return ce
 }
 
 //QcpConsumer consume the message from nats server
@@ -209,7 +210,7 @@ func connect2Nats(serverUrls string) (nc *nats.Conn, err error) {
 	//if !strings.Contains(serverUrls, ",") {
 	//	log.Debug("serverUrls not contains ','")
 	//}
-	log.Infof("connectting to nats :[%s]", serverUrls)
+	log.Debugf("connectting to nats [%s]", serverUrls)
 
 	nc, err = nats.Connect(serverUrls)
 	if err != nil {

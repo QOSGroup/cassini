@@ -7,33 +7,33 @@ import (
 	"github.com/QOSGroup/cassini/common"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/types"
+	"github.com/pkg/errors"
 )
 
-type MsgMapper struct {
-	mtx    sync.RWMutex
+type EngineMap struct {
+	mtxMsg sync.RWMutex
 	MsgMap map[int64]map[string]string
 }
 
-func (m *MsgMapper) AddMsgToMap(f *Ferry, event types.Event, N int) (sequence int64, err error) {
+func (m *EngineMap) AddMsgToMap(f *Ferry, event types.Event, N int) (sequence int64, err error) {
 
-	m.mtx.Lock()
-	defer m.mtx.Unlock()
+	m.mtxMsg.Lock()
+	defer m.mtxMsg.Unlock()
 
 	// 仅为测试，临时添加
 	if strings.EqualFold("no", f.conf.Consensus) {
 		h := common.Bytes2HexStr(event.HashBytes)
 		n := f.conf.GetQscConfig(event.From).NodeAddress
-		err = f.ferryQCP(event.From, event.To, h, n, event.Sequence)
+		err = f.ConsMap.AddConsToMap(event.Sequence, h, n)
 		if err != nil {
-			return 0, err
+			log.Errorf("duplicate AddConsToMap. from [%s] to [%s] sequence [%d] hash [%s]", event.From, event.To, event.Sequence, h[:10])
 		}
+		delete(m.MsgMap, event.Sequence)
 		return event.Sequence + 1, nil
 	}
 	//----------------
 
 	hashNode, ok := m.MsgMap[event.Sequence]
-
-	//log.Infof("%v", m.MsgMap)l
 
 	//还没有sequence对应记录
 	if !ok || hashNode == nil {
@@ -59,15 +59,68 @@ func (m *MsgMapper) AddMsgToMap(f *Ferry, event types.Event, N int) (sequence in
 		hash := common.Bytes2HexStr(event.HashBytes)
 		log.Infof("consensus from [%s] to [%s] sequence [#%d] hash [%s]", event.From, event.To, event.Sequence, hash[:10])
 
-		err = f.ferryQCP(event.From, event.To, hash, nodes, event.Sequence)
+		//err = f.ferryQCP(event.From, event.To, hash, nodes, event.Sequence)
+		err = f.ConsMap.AddConsToMap(event.Sequence, hash, nodes)
 		if err != nil {
-			return 0, err
+			log.Errorf("duplicate AddConsToMap. from [%s] to [%s] sequence [%d] hash [%s]", event.From, event.To, event.Sequence, hash[:10])
 		}
 		delete(m.MsgMap, event.Sequence)
-		log.Debugf("msgmapper.AddMsgToMap ferryQCP")
+		log.Infof("add Consensus To Map. from [%s] to [%s] sequence [%d] hash [%s]", event.From, event.To, event.Sequence, hash[:10])
+
 		return event.Sequence + 1, nil
 
 	}
 
 	return 0, nil
+}
+
+type ConsensusMap struct {
+	mtxCon  sync.RWMutex
+	ConsMap map[int64]map[string]string
+}
+
+func (c *ConsensusMap) AddConsToMap(sequence int64, hash, nodes string) error {
+
+	c.mtxCon.Lock()
+	defer c.mtxCon.Unlock()
+
+	hashNode, ok := c.ConsMap[sequence]
+
+	if !ok || hashNode == nil {
+
+		hashNode = make(map[string]string)
+
+		hashNode[hash] = nodes
+
+		c.ConsMap[sequence] = hashNode
+
+	} else {
+		return errors.New("duplicate AddConsToMap")
+	}
+	return nil
+}
+
+type Consensus struct {
+	Sequence int64
+	Hash     string
+	Nodes    string
+}
+
+func (c *ConsensusMap) GetConsFromMap(sequence int64) (*Consensus, error) {
+	c.mtxCon.Lock()
+	defer c.mtxCon.Unlock()
+
+	cons := Consensus{}
+	cons.Sequence = sequence
+
+	hashNode, ok := c.ConsMap[sequence]
+
+	if !ok || hashNode == nil {
+		return nil, errors.New("not found consensus")
+	}
+	for k, v := range hashNode {
+		cons.Hash = k
+		cons.Nodes = v
+	}
+	return &cons, nil
 }

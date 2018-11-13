@@ -63,7 +63,7 @@ func EventsSubscribe(conf *config.Config, remote string, e chan<- error) context
 		for ed := range txs {
 
 			eventData := ed.(ttypes.EventDataTx)
-			log.Infof("Received event from %s - '%s'", remote, eventData)
+			log.Infof("Received event from [%s] - '%s'", remote, eventData)
 
 			cassiniEventDataTx := ctypes.CassiniEventDataTx{}
 			cassiniEventDataTx.Height = eventData.Height

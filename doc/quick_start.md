@@ -3,11 +3,9 @@
 ### Build
 
 ```
-$ cd $GOPATH
+$ cd ~
 
-$ mkdir -p src/github.com/QOSGroup/
-
-$ cd src/github.com/QOSGroup/
+$ mkdir QOSGroup && cd QOSGroup
 
 $ git clone https://github.com/QOSGroup/cassini.git
 
