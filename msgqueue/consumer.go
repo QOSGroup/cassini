@@ -75,11 +75,11 @@ func createConsEngine(from, to string, conf *config.Config, e chan<- error) (ce 
 		log.Errorf("Create consensus engine error: %v", err)
 	} else {
 		log.Debugf("Create consensus engine query chain %s in-sequence: %d", to, seq)
-		ce.F.SetSequence(from, to, seq)
+		ce.SetSequence(from, to, seq)
 	}
 
 	go qcpConsume(ce, from, to, conf, e)
-	return
+	return ce
 }
 
 //QcpConsumer consume the message from nats server
