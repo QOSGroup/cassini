@@ -3,12 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
+	cmn "github.com/QOSGroup/cassini/common"
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/event"
 	"github.com/QOSGroup/cassini/log"
@@ -26,7 +25,6 @@ var starter = func(conf *config.Config) (cancel context.CancelFunc, err error) {
 	w.Add(1)
 	go func() {
 		var etcd *embed.Etcd
-		fmt.Println("asdasdasd")
 		etcd, err = startEtcd(conf)
 		if err != nil {
 			log.Error("Etcd server start error: ", err)
@@ -95,11 +93,11 @@ func startEtcd(config *config.Config) (etcd *embed.Etcd, err error) {
 
 	conf := config.Etcd
 	cfg := embed.NewConfig()
-	cfg.ACUrls, cfg.LCUrls, err = ParseUrls(conf.Advertise, conf.Listen)
+	cfg.ACUrls, cfg.LCUrls, err = cmn.ParseUrls(conf.Advertise, conf.Listen)
 	if err != nil {
 		return
 	}
-	cfg.APUrls, cfg.LPUrls, err = ParseUrls(conf.AdvertisePeer, conf.ListenPeer)
+	cfg.APUrls, cfg.LPUrls, err = cmn.ParseUrls(conf.AdvertisePeer, conf.ListenPeer)
 	if err != nil {
 		return
 	}
@@ -110,24 +108,4 @@ func startEtcd(config *config.Config) (etcd *embed.Etcd, err error) {
 	cfg.Debug = false
 
 	return embed.StartEtcd(cfg)
-}
-
-// ParseUrls parse URLs
-func ParseUrls(firstURL, secondURL string) (fus, sus []url.URL, err error) {
-	var u *url.URL
-	u, err = url.Parse(firstURL)
-	if err != nil {
-		log.Error("Etcd server start error: ", err)
-	}
-	fus = []url.URL{*u}
-	if strings.EqualFold(secondURL, "") {
-		sus = []url.URL{*u}
-	} else {
-		u, err = url.Parse(secondURL)
-		if err != nil {
-			log.Error("Etcd server start error: ", err)
-		}
-		sus = []url.URL{*u}
-	}
-	return
 }
