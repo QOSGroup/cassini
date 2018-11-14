@@ -82,7 +82,7 @@ func (f *Ferry) StartFerry() error {
 		if seqDes >= seqSou || f.sequence > seqSou || err != nil {
 			consseqs := ""
 			for k, _ := range f.ConsMap.ConsMap {
-				consseqs += strconv.FormatInt(k, 10) + ""
+				consseqs += strconv.FormatInt(k, 10) + " "
 			}
 			log.Infof("consensused sequence [%s] f.sequence:[#%d]", consseqs, f.sequence)
 
@@ -184,12 +184,14 @@ func (f *Ferry) ferryQCP(hash, nodes string, sequence int64) (err error) {
 
 		if err != nil {
 			f.mutex.Unlock(false)
+			log.Errorf("post qcp transaction failed. %v", err)
 			return errors.New("post qcp transaction failed")
 		}
 		f.mutex.Unlock(true)
 	} else {
 		err = f.postTxQcp(f.to, qcp)
 		if err != nil {
+			log.Errorf("post qcp transaction failed. %v", err)
 			return errors.New("post qcp transaction failed")
 		}
 	}
