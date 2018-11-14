@@ -50,6 +50,7 @@ func TestEtcdMutex(t *testing.T) {
 	errs := []error{}
 	var sequence int64
 	var w sync.WaitGroup
+	var mux sync.Mutex
 
 	w.Add(3)
 	sequence++
@@ -71,7 +72,9 @@ func TestEtcdMutex(t *testing.T) {
 		go func() {
 			_, e := ms[c].Lock(sequence)
 			if e != nil {
+				mux.Lock()
 				errs = append(errs, e)
+				mux.Unlock()
 			} else {
 				time.Sleep(1000)
 				ms[c].Unlock(true)
@@ -92,7 +95,9 @@ func TestEtcdMutex(t *testing.T) {
 		go func() {
 			_, e := ms[c].Lock(sequence)
 			if e != nil {
+				mux.Lock()
 				errs = append(errs, e)
+				mux.Unlock()
 			} else {
 				time.Sleep(1000)
 				ms[c].Unlock(true)
