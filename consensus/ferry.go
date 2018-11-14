@@ -144,12 +144,12 @@ func (f *Ferry) GetSequenceFromChain(from, to, inout string) (int64, error) {
 //nodes is consensus nodes of the source chain
 func (f *Ferry) ferryQCP(hash, nodes string, sequence int64) (err error) {
 
-	log.Debugf("ferry qcp from [%s] to [%s], sequence=%d", f.from, f.to, sequence)
+	log.Debugf("ferry qcp transaction from [%s] to [%s], sequence=%d", f.from, f.to, sequence)
 
 	qcp, err := f.getTxQcp(f.from, f.to, hash, nodes, sequence)
 
 	if err != nil {
-		log.Errorf("ferry QCP from [%s] to [%s] sequence [%d],", f.from, f.to, sequence, err.Error())
+		log.Errorf("ferry qcp transaction from [%s] to [%s] sequence [%d]. %s", f.from, f.to, sequence, err.Error())
 		return errors.New("get qcp transaction failed")
 	}
 

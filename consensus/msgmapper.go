@@ -20,7 +20,7 @@ func (m *EngineMap) AddMsgToMap(f *Ferry, event types.Event, N int) (sequence in
 	m.mtxMsg.Lock()
 	defer m.mtxMsg.Unlock()
 
-	// 仅为测试，临时添加
+	// 关闭共识，收到第一份即共识
 	if strings.EqualFold("no", f.conf.Consensus) {
 		h := common.Bytes2HexStr(event.HashBytes)
 		n := f.conf.GetQscConfig(event.From).NodeAddress
@@ -48,19 +48,20 @@ func (m *EngineMap) AddMsgToMap(f *Ferry, event types.Event, N int) (sequence in
 
 		nodes, _ := hashNode[string(event.HashBytes)]
 		if !strings.Contains(nodes, event.NodeAddress) {
-			hashNode[string(event.HashBytes)] += "," + event.NodeAddress
+			hashNode[string(event.HashBytes)] += "\000" + event.NodeAddress
 		}
 	}
 
 	nodes := hashNode[string(event.HashBytes)]
 
-	if strings.Count(nodes, ",") >= N-1 {
+	if strings.Count(nodes, "\000") >= N-1 {
 
 		hash := common.Bytes2HexStr(event.HashBytes)
 		log.Infof("consensus from [%s] to [%s] sequence [#%d] hash [%s]", event.From, event.To, event.Sequence, hash[:10])
 
 		//err = f.ferryQCP(event.From, event.To, hash, nodes, event.Sequence)
-		err = f.ConsMap.AddConsToMap(event.Sequence, hash, nodes)
+		nodess := strings.Replace(nodes, "\000", ",", -1)
+		err = f.ConsMap.AddConsToMap(event.Sequence, hash, nodess)
 		if err != nil {
 			log.Errorf("duplicate AddConsToMap. from [%s] to [%s] sequence [%d] hash [%s]", event.From, event.To, event.Sequence, hash[:10])
 		}
@@ -68,7 +69,6 @@ func (m *EngineMap) AddMsgToMap(f *Ferry, event types.Event, N int) (sequence in
 		log.Infof("add Consensus To Map. from [%s] to [%s] sequence [%d] hash [%s]", event.From, event.To, event.Sequence, hash[:10])
 
 		return event.Sequence + 1, nil
-
 	}
 
 	return 0, nil

@@ -52,6 +52,7 @@ type Config struct {
 	UseEtcd bool `json:"useEtcd,omitempty"`
 
 	Lock string `json:"lock,omitempty"`
+	//Test string `json:"test,omitempty"`
 }
 
 // QscConfig qsc 配置封装
