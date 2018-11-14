@@ -20,7 +20,7 @@ type Config struct {
 	// Consensus 中继共识配置，为了以后支持更多共识算法，添加次配置
 	//    "no" - 不启用共识
 	//    默认 - 2/3共识
-	Consensus string `json:"consensus,omitempty"`
+	Consensus bool `json:"consensus,omitempty"`
 
 	// EventWaitMillitime 交易事件被监听到后需要等待的事件，
 	// <=0 不等待

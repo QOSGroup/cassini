@@ -21,7 +21,7 @@ func (m *EngineMap) AddMsgToMap(f *Ferry, event types.Event, N int) (sequence in
 	defer m.mtxMsg.Unlock()
 
 	// 关闭共识，收到第一份即共识
-	if strings.EqualFold("no", f.conf.Consensus) {
+	if !f.conf.Consensus {
 		h := common.Bytes2HexStr(event.HashBytes)
 		n := f.conf.GetQscConfig(event.From).NodeAddress
 		err = f.ConsMap.AddConsToMap(event.Sequence, h, n)
