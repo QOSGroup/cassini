@@ -2,18 +2,15 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"sync"
 	"time"
 
-	cmn "github.com/QOSGroup/cassini/common"
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/event"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/msgqueue"
-
-	"github.com/etcd-io/etcd/embed"
+	"github.com/QOSGroup/cassini/concurrency"
 )
 
 // 命令行 start 命令执行方法
@@ -24,10 +21,9 @@ var starter = func(conf *config.Config) (cancel context.CancelFunc, err error) {
 	var w sync.WaitGroup
 	w.Add(1)
 	go func() {
-		var etcd *embed.Etcd
-		etcd, err = startEtcd(conf)
-		if err != nil {
-			log.Error("Etcd server start error: ", err)
+		etcd, e := concurrency.StartEmbedEtcd(conf)
+		if e != nil {
+			log.Error("Etcd server start error: ", e)
 			log.Flush()
 			os.Exit(1)
 		}
@@ -43,8 +39,8 @@ var starter = func(conf *config.Config) (cancel context.CancelFunc, err error) {
 			etcd.Server.Stop() // trigger a shutdown
 			log.Info("Etcd server took too long to start!")
 		}
-		err = <-etcd.Err()
-		log.Error("Etcd running error: ", err)
+		e = <-etcd.Err()
+		log.Error("Etcd running error: ", e)
 	}()
 
 	log.Tracef("Qscs: %d", len(conf.Qscs))
@@ -83,29 +79,4 @@ var starter = func(conf *config.Config) (cancel context.CancelFunc, err error) {
 		log.Info("Cassini started ")
 	}()
 	return
-}
-
-func startEtcd(config *config.Config) (etcd *embed.Etcd, err error) {
-	if !config.UseEtcd || config.Etcd == nil {
-		return
-	}
-	log.Info("Starting etcd...")
-
-	conf := config.Etcd
-	cfg := embed.NewConfig()
-	cfg.ACUrls, cfg.LCUrls, err = cmn.ParseUrls(conf.Advertise, conf.Listen)
-	if err != nil {
-		return
-	}
-	cfg.APUrls, cfg.LPUrls, err = cmn.ParseUrls(conf.AdvertisePeer, conf.ListenPeer)
-	if err != nil {
-		return
-	}
-	cfg.Dir = fmt.Sprintf("%s.%s", conf.Name, "etcd")
-	cfg.InitialCluster = conf.Cluster
-	cfg.InitialClusterToken = conf.ClusterToken
-	cfg.Name = conf.Name
-	cfg.Debug = false
-
-	return embed.StartEtcd(cfg)
 }
