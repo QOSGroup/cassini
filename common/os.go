@@ -1,10 +1,11 @@
 package common
 
 import (
-	"github.com/QOSGroup/cassini/log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/QOSGroup/cassini/log"
 )
 
 // KeepRunning 保持程序运行，监听系统信号，触发回调函数
@@ -21,6 +22,7 @@ func KeepRunning(callback func(sig os.Signal)) {
 		if callback != nil {
 			callback(s)
 		}
+		log.Flush()
 		os.Exit(1)
 	}
 }
