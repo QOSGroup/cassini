@@ -16,6 +16,7 @@ import (
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/restclient"
+	"strconv"
 	"time"
 )
 
@@ -79,12 +80,11 @@ func (f *Ferry) StartFerry() error {
 		cons, err := f.ConsMap.GetConsFromMap(f.sequence)
 
 		if seqDes >= seqSou || f.sequence > seqSou || err != nil {
-
-			//for k, _ := range f.ConsMap.ConsMap {
-			//	//fmt.Sprintf("%d ", k)
-			//	//fmt.Println("")
-			//}
-			//fmt.Println("StartFerry f.sequence:[#%d]", f.sequence)
+			consseqs := ""
+			for k, _ := range f.ConsMap.ConsMap {
+				consseqs += strconv.FormatInt(k, 10) + ""
+			}
+			log.Infof("consensused sequence [%s] f.sequence:[#%d]", consseqs, f.sequence)
 
 			time.Sleep(time.Duration(f.conf.EventWaitMillitime) * time.Millisecond)
 			continue
@@ -193,7 +193,7 @@ func (f *Ferry) ferryQCP(hash, nodes string, sequence int64) (err error) {
 			return errors.New("post qcp transaction failed")
 		}
 	}
-
+	delete(f.ConsMap.ConsMap, f.sequence)
 	log.Infof("success ferry qcp transaction from [%s] to [%s] sequence [#%d] \n", f.from, f.to, sequence)
 
 	f.SetSequence(f.from, f.to, f.sequence)

@@ -54,6 +54,9 @@ vagrant
 .vscode/
 *.iml
 
+# Etcd
+*.etcd
+
 # Graphviz
 dependency-graph.png
 
