@@ -16,6 +16,7 @@ import (
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/restclient"
+	"strconv"
 	"time"
 )
 
@@ -79,12 +80,11 @@ func (f *Ferry) StartFerry() error {
 		cons, err := f.ConsMap.GetConsFromMap(f.sequence)
 
 		if seqDes >= seqSou || f.sequence > seqSou || err != nil {
-
-			//for k, _ := range f.ConsMap.ConsMap {
-			//	//fmt.Sprintf("%d ", k)
-			//	//fmt.Println("")
-			//}
-			//fmt.Println("StartFerry f.sequence:[#%d]", f.sequence)
+			consseqs := ""
+			for k, _ := range f.ConsMap.ConsMap {
+				consseqs += strconv.FormatInt(k, 10) + " "
+			}
+			log.Infof("consensused sequence [%s] f.sequence:[#%d]", consseqs, f.sequence)
 
 			time.Sleep(time.Duration(f.conf.EventWaitMillitime) * time.Millisecond)
 			continue
@@ -144,12 +144,12 @@ func (f *Ferry) GetSequenceFromChain(from, to, inout string) (int64, error) {
 //nodes is consensus nodes of the source chain
 func (f *Ferry) ferryQCP(hash, nodes string, sequence int64) (err error) {
 
-	log.Debugf("ferry qcp from [%s] to [%s], sequence=%d", f.from, f.to, sequence)
+	log.Debugf("ferry qcp transaction from [%s] to [%s], sequence=%d", f.from, f.to, sequence)
 
 	qcp, err := f.getTxQcp(f.from, f.to, hash, nodes, sequence)
 
 	if err != nil {
-		log.Errorf("ferry QCP from [%s] to [%s] sequence [%d],", f.from, f.to, sequence, err.Error())
+		log.Errorf("ferry qcp transaction from [%s] to [%s] sequence [%d]. %s", f.from, f.to, sequence, err.Error())
 		return errors.New("get qcp transaction failed")
 	}
 
@@ -184,16 +184,18 @@ func (f *Ferry) ferryQCP(hash, nodes string, sequence int64) (err error) {
 
 		if err != nil {
 			f.mutex.Unlock(false)
+			log.Errorf("post qcp transaction failed. %v", err)
 			return errors.New("post qcp transaction failed")
 		}
 		f.mutex.Unlock(true)
 	} else {
 		err = f.postTxQcp(f.to, qcp)
 		if err != nil {
+			log.Errorf("post qcp transaction failed. %v", err)
 			return errors.New("post qcp transaction failed")
 		}
 	}
-
+	delete(f.ConsMap.ConsMap, f.sequence)
 	log.Infof("success ferry qcp transaction from [%s] to [%s] sequence [#%d] \n", f.from, f.to, sequence)
 
 	f.SetSequence(f.from, f.to, f.sequence)

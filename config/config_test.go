@@ -34,7 +34,7 @@ func TestLoadConfig(t *testing.T) {
 	conf, err := LoadConfig("./config.conf")
 	assert.NoError(t, err)
 
-	assert.Equal(t, "no", conf.Consensus)
+	assert.Equal(t, true, conf.Consensus)
 	assert.Equal(t, "nats://127.0.0.1:4222", conf.Nats)
 	assert.Equal(t, int(2), len(conf.Qscs))
 	assert.Equal(t, "qqs", conf.Qscs[1].Name)
@@ -51,3 +51,18 @@ func TestTransfrom(t *testing.T) {
 	t.Logf("a: %v", a)
 	assert.Equal(t, true, true)
 }
+
+//func TestNon(t *testing.T) {
+//	conf, err := LoadConfig("./dev_config.conf")
+//	fmt.Println(err)
+//	s := conf.Test
+//	//var s string
+//	//s = "c1\000"
+//	//s += "c2\000"
+//	//s += "c3\000"
+//	fmt.Println(s)
+//	ss := strings.Split(s, "\000")
+//	fmt.Println(len(ss))
+//	assert.Equal(t, 3, strings.Count(s, "\000"))
+//
+//}
