@@ -24,7 +24,7 @@ func NewEtcdMutex(chainID string, addrs []string) (*EtcdMutex, error) {
 	}
 
 	var sess *v3c.Session
-	sess, err = v3c.NewSession(cli)
+	sess, err = v3c.NewSession(cli, v3c.WithTTL(5))
 	if err != nil {
 		cli.Close()
 		log.Errorf("New session error: %s", err)
