@@ -77,7 +77,8 @@ func (e *EtcdMutex) Lock(sequence int64) (int64, error) {
 	}
 	e.sequence = sequence
 
-	return e.sequence, err
+	log.Debugf("Get lock success, %s: %d", e.chainID, e.sequence)
+	return e.sequence, nil
 }
 
 // Update update the lock
@@ -105,7 +106,7 @@ func (e *EtcdMutex) Update(sequence int64) error {
 		}
 	}
 	e.sequence = sequence
-
+	log.Debugf("Upadte lock success, %s: %d", e.chainID, e.sequence)
 	return nil
 }
 
@@ -115,7 +116,8 @@ func (e *EtcdMutex) Unlock(success bool) (err error) {
 		return nil
 	}
 	if success {
-		err = e.put(e.sequence + 1)
+		e.sequence++
+		err = e.put(e.sequence)
 		if err != nil {
 			log.Errorf("Put key value error when unlock: ", err)
 		}
@@ -125,9 +127,10 @@ func (e *EtcdMutex) Unlock(success bool) (err error) {
 	err = e.mutex.Unlock(ctx)
 	if err != nil {
 		log.Errorf("Unlock error: ", err)
-	} else {
-		e.locked = false
+		return
 	}
+	e.locked = false
+	log.Debugf("Unlock success, %s: %d", e.chainID, e.sequence)
 	return
 }
 
