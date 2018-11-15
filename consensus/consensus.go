@@ -110,7 +110,7 @@ func (c *ConsEngine) StartEngine() error {
 			time.Sleep(time.Duration(c.F.conf.EventWaitMillitime) * time.Millisecond)
 			continue
 		}
-		if cresult == fail { //TODO 不能达成共识 继续下一笔交易？
+		if cresult == fail { //TODO 不能达成共识 继续下一sequence？
 			log.Errorf("MsgMap%v", c.M.MsgMap[c.sequence])
 			s := fmt.Sprintf("consensusEngine from [%s] to [%s] sequence [#%d] failed. seqDes [%d] seqSou[%d] ", c.from, c.to, c.sequence, seqDes, seqSou)
 			panic(s)
