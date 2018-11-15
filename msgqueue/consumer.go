@@ -106,8 +106,7 @@ func qcpConsume(ce *consensus.ConsEngine, from, to string, conf *config.Config, 
 		// 需要监听下一个块的New Block 事件以确认交易数据入块，abci query 接口才能够查询出交易；
 		// 同时提供定时出发机制，以保证共识模块在交易事件丢失或网络错误等问题出现时仍然能够正常运行。
 		if conf.EventWaitMillitime > 0 {
-			time.Sleep(time.Duration(conf.EventWaitMillitime) *
-				time.Millisecond)
+			time.Sleep(time.Duration(conf.EventWaitMillitime) * time.Millisecond)
 		}
 
 		ce.Add2Engine(m)

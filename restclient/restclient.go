@@ -124,7 +124,7 @@ func (r *RestClient) GetSequence(chainID string, outin string) (int64, error) {
 			return -1, err
 		}
 	}
-	log.Debugf("remote [%s] get sequence: [#%d]", r.remote, seq)
+	//log.Debugf("remote [%s] get sequence: [#%d]", r.remote, seq)
 	return seq, nil
 }
 

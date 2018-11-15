@@ -35,6 +35,13 @@ func (m *EngineMap) AddMsgToMap(f *Ferry, event types.Event, N int) (sequence in
 
 	hashNode, ok := m.MsgMap[event.Sequence]
 
+	////人造拜占庭
+	//if strings.Contains(event.NodeAddress, "22") {
+	//	log.Infof("add a bai zhan ting sequence #%d", event.Sequence)
+	//	event.HashBytes = []byte("baizhanting")
+	//}
+
+	log.Debugf("from[%s] seq[%d] ip[%s] hash[%s]", f.from, event.Sequence, event.NodeAddress, event.HashBytes[:10])
 	//还没有sequence对应记录
 	if !ok || hashNode == nil {
 
@@ -42,15 +49,19 @@ func (m *EngineMap) AddMsgToMap(f *Ferry, event types.Event, N int) (sequence in
 
 		hashNode[string(event.HashBytes)] = event.NodeAddress
 
-		m.MsgMap[event.Sequence] = hashNode
 		log.Debugf("msgmapper.AddMsgToMap has no sequence map yet!")
 	} else {
 
 		nodes, _ := hashNode[string(event.HashBytes)]
 		if !strings.Contains(nodes, event.NodeAddress) {
-			hashNode[string(event.HashBytes)] += "\000" + event.NodeAddress
+			if nodes == "" {
+				hashNode[string(event.HashBytes)] = event.NodeAddress
+			} else {
+				hashNode[string(event.HashBytes)] = hashNode[string(event.HashBytes)] + "\000" + event.NodeAddress
+			}
 		}
 	}
+	m.MsgMap[event.Sequence] = hashNode
 
 	nodes := hashNode[string(event.HashBytes)]
 

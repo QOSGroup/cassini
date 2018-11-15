@@ -96,7 +96,7 @@ func (f *Ferry) StartFerry() error {
 
 		if err == nil && cons != nil { //已有该sequence 共识
 			if err := f.ferryQCP(cons.Hash, cons.Nodes, f.sequence); err != nil {
-				log.Errorf("ferry qcp transaction from [%s] to [%s] sequence [#%d] failed.", f.from, f.to, f.sequence)
+				log.Errorf("ferry qcp transaction from[%s] to[%s] sequence[#%d] hash[%s] failed. %v", f.from, f.to, f.sequence, cons.Hash, err)
 			}
 		}
 
@@ -148,8 +148,8 @@ func (f *Ferry) ferryQCP(hash, nodes string, sequence int64) (err error) {
 
 	qcp, err := f.getTxQcp(f.from, f.to, hash, nodes, sequence)
 
-	if err != nil {
-		log.Errorf("ferry qcp transaction from [%s] to [%s] sequence [%d]. %s", f.from, f.to, sequence, err.Error())
+	if err != nil { //TODO 拜占庭共识失败后 循环至此
+		//log.Errorf("ferry qcp transaction from [%s] to [%s] sequence [%d]. %s", f.from, f.to, sequence, err.Error())
 		return errors.New("get qcp transaction failed")
 	}
 
@@ -312,7 +312,7 @@ func (f *Ferry) queryTxQcpFromNode(to, node string, sequence int64) (qcp *txs.Tx
 	}
 
 	if err != nil || qcp == nil {
-		return nil, errors.New("get TxQcp from " + node + "failed.")
+		return nil, err
 	}
 
 	return qcp, nil

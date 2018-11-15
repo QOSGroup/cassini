@@ -11,10 +11,20 @@ import (
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto"
 
+	"fmt"
+	"github.com/QOSGroup/cassini/restclient"
 	"github.com/tendermint/tendermint/libs/common"
 	"strings"
 	"sync"
 	"time"
+)
+
+type consResult int
+
+const (
+	fail consResult = iota
+	success
+	empty //交易还没产生 共识失败
 )
 
 // ConsEngine Consensus engine
@@ -37,6 +47,22 @@ func NewConsEngine(from, to string) *ConsEngine {
 	ce.from = from
 	ce.to = to
 	return ce
+}
+
+func (c *ConsEngine) Setfrom(from string) {
+	c.from = from
+}
+
+func (c *ConsEngine) Setto(to string) {
+	c.to = to
+}
+
+func (c *ConsEngine) Getfrom() string {
+	return c.from
+}
+
+func (c *ConsEngine) Getto() string {
+	return c.to
 }
 
 // Add2Engine Add a message to consensus engine
@@ -91,17 +117,26 @@ func (c *ConsEngine) StartEngine() error {
 		if err == nil { //已有共识
 			c.SetSequence(c.from, c.to, c.sequence)
 		}
-		if c.ConSequence() {
+
+		cresult := c.ConSequence()
+		if cresult == success {
 			c.SetSequence(c.from, c.to, c.sequence)
-		} else {
-			log.Errorf("consensusEngine from [%s] to [%s] sequence [#%d] failed. seqDes [%d] seqSou[%d] ", c.from, c.to, c.sequence, seqDes, seqSou)
+		}
+		if cresult == empty {
+			time.Sleep(time.Duration(c.F.conf.EventWaitMillitime) * time.Millisecond)
+			continue
+		}
+		if cresult == fail { //TODO 不能达成共识 继续下一sequence？
+			log.Errorf("MsgMap%v", c.M.MsgMap[c.sequence])
+			s := fmt.Sprintf("consensusEngine from [%s] to [%s] sequence [#%d] failed. seqDes [%d] seqSou[%d] ", c.from, c.to, c.sequence, seqDes, seqSou)
+			panic(s)
 		}
 	}
 
 	return nil
 }
 
-func (c *ConsEngine) ConSequence() bool {
+func (c *ConsEngine) ConSequence() consResult { //交易还没产生和共识出错区别开
 
 	log.Debugf("Start consensus engine from: [%s] to: [%s] sequence: [%d]", c.from, c.to, c.sequence)
 
@@ -109,11 +144,15 @@ func (c *ConsEngine) ConSequence() bool {
 
 	N := c.consensus32()
 
+	var bempty bool
 	for _, node := range strings.Split(nodes, ",") {
 
 		qcp, err := c.F.queryTxQcpFromNode(c.to, node, c.sequence) // be (c.to, node, c.sequence)
 
 		if err != nil || qcp == nil {
+			if strings.Contains(err.Error(), restclient.ERR_emptyqcp) {
+				bempty = true //交易还没产生
+			}
 			continue
 		}
 		hash := crypto.Sha256(qcp.GetSigData())
@@ -128,11 +167,14 @@ func (c *ConsEngine) ConSequence() bool {
 			continue
 		}
 		if seq > 0 {
-			return true
+			return success
 		}
 	}
 
-	return false
+	if bempty {
+		return empty
+	}
+	return fail
 }
 
 // SetSequence 设置交易序列号
