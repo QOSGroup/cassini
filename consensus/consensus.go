@@ -49,6 +49,22 @@ func NewConsEngine(from, to string) *ConsEngine {
 	return ce
 }
 
+func (c *ConsEngine) Setfrom(from string) {
+	c.from = from
+}
+
+func (c *ConsEngine) Setto(to string) {
+	c.to = to
+}
+
+func (c *ConsEngine) Getfrom() string {
+	return c.from
+}
+
+func (c *ConsEngine) Getto() string {
+	return c.to
+}
+
 // Add2Engine Add a message to consensus engine
 func (c *ConsEngine) Add2Engine(msg *nats.Msg) error {
 	event := types.Event{}
