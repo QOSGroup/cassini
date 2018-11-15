@@ -45,14 +45,24 @@ type Config struct {
 	// Qscs 与relay连接的区块链相关配置
 	Qscs []*QscConfig `json:"qscs,omitempty"`
 
-	// Etcd Embed-etcd config
-	Etcd *EtcdConfig `json:"etcd,omitempty"`
-
 	// UseEtcd Whether to use etcd or not
 	UseEtcd bool `json:"useEtcd,omitempty"`
 
+	// Lock config the lock
+	//
+	// "etcd://192.168.1.100:2379,192.168.1.101:2379,192.168.1.102:2379"
 	Lock string `json:"lock,omitempty"`
-	//Test string `json:"test,omitempty"`
+
+	// LockTTL timeout for lock
+	//
+	// 5 - the lock will be auto-unlock with 5s when lose session
+	LockTTL int `json:"lockTTL,omitempty"`
+
+	// EmbedEtcd Whether to start embed etcd or not
+	EmbedEtcd bool `json:"embedEtcd,omitempty"`
+
+	// Etcd Embed-etcd config
+	Etcd *EtcdConfig `json:"etcd,omitempty"`
 }
 
 // QscConfig qsc 配置封装
@@ -73,8 +83,6 @@ type QscConfig struct {
 
 	// NodeAddress 区块链节点地址，多个之间用“，”分割
 	NodeAddress string `json:"nodes,omitempty"`
-
-	Lock string `json:"lock,omitempty"`
 }
 
 var conf = &Config{}

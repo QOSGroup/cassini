@@ -12,7 +12,7 @@ import (
 
 // StartEmbedEtcd start embed etcd
 func StartEmbedEtcd(config *config.Config) (etcd *embed.Etcd, err error) {
-	if !config.UseEtcd || config.Etcd == nil {
+	if !config.EmbedEtcd || config.Etcd == nil {
 		return
 	}
 	log.Info("Starting etcd...")
