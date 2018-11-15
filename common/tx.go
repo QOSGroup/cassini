@@ -35,7 +35,7 @@ func Transform(tx *txs.TxQcp) (*tmtypes.EventDataTx, error) {
 
 // SignTxQcp Sign Tx data for chain
 func SignTxQcp(tx *txs.TxQcp, prikey string, cdc *amino.Codec) error {
-	//如果密钥是15进制串
+	//如果密钥是16进制串
 	//hex, err := hex.DecodeString(prikey)
 	//if err != nil {
 	//	return err
