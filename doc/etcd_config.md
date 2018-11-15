@@ -7,17 +7,17 @@ Config sample:
 ```
 {
     ......
-    
-    "useEtcd":true,
-    "lock":"etcd://192.168.1.100:2379,192.168.1.101:2379,192.168.1.102:2379",
+
     "embedEtcd":true,
     "etcd":{
-        "name": "devA",
-        "advertise": "http://192.168.1.100:2379",
-        "advertisePeer": "http://192.168.1.100:2380",
-        "clusterToken": "dev-cassini-cluster",
-        "cluster": "devA=http://192.168.1.100:2380,devB=http://192.168.1.101:2380,devC=http://192.168.1.102:2380"
+        "name": "testA",
+        "advertise":"http://127.0.0.1:2379",
+        "advertisePeer":"http://127.0.0.1:2380",
+        "clusterToken":"test-cassini-cluster",
+        "cluster":"testA=http://127.0.0.1:2380"
     },
+    "useEtcd":true,
+    "lock":"etcd://127.0.0.1:2379"
     
     ......
 }
@@ -94,7 +94,7 @@ advertisePeer:
 	
 listenPeer：
 
-> List of URLs to listen on for peer traffic.
+> List of URLs to listen on for peer traffic.  
 > Default: Using advertisePeer's setting  
 > Example: "http://192.168.1.100:2380"  
 > \- Embedded etcd server will listen on the address for the other peer's connections.  
@@ -111,8 +111,8 @@ clusterToken:
 
 cluster:
 
-> Initial cluster configuration for bootstrapping.
-> Default: ""
+> Initial cluster configuration for bootstrapping.  
+> Default: ""  
 > \- cluster must be set.  
 > Example: "devA=http://192.168.1.100:2380,devB=http://192.168.1.101:2380,devC=http://192.168.1.102:2380"  
 > \- "devA" is setting in name.  
