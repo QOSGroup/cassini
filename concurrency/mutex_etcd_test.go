@@ -14,6 +14,7 @@ import (
 func TestEtcdMutex(t *testing.T) {
 	confStr := `
 {
+    "embedEtcd":true,
     "etcd":{
         "name": "test-cassini",
         "advertise":"http://127.0.0.1:2379",
