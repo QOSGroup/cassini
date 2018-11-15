@@ -112,7 +112,7 @@ clusterToken:
 cluster:
 
 > Initial cluster configuration for bootstrapping.  
-> Default: ""
+> Default: ""  
 > \- cluster must be set.  
 > Example: "devA=http://192.168.1.100:2380,devB=http://192.168.1.101:2380,devC=http://192.168.1.102:2380"  
 > \- "devA" is setting in name.  
