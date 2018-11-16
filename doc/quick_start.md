@@ -26,13 +26,13 @@ $ gnatsd &
 
 ### Config
 
-$ vi src/github.com/QOSGroup/cassini/config/config.conf
+$ vi ../../config/config.conf
 
 \# 配置nats为gnatsd服务器地址，集群内多个地址用","号分割;  
 
 \# prikey为cassini的私钥; 
 
-\# consensus默认为"yes",如果设为"no" cassini将关闭共识功能;  
+\# consensus默认为true,如果设为false cassini将关闭共识功能;
 
 \# eventWaitMillitime 单位为ms,建议与链的建块周期保持一致; 
 
@@ -70,6 +70,12 @@ $ vi src/github.com/QOSGroup/cassini/config/config.conf
 
 ### Commands
 
+\# 启动cassini，按照QCP跨链协议规范，向远端订阅跨链交易事件和查询、广播跨链交易。
+
+```
+$ ./cassini start  --config ../../config/config.conf
+```
+
 \# 帮助信息
 
 ```
@@ -100,8 +106,3 @@ $ ./cassini events [flag]
 $ ./cassini tx [flag]
 ```
 
-\# 启动中继服务，按照QCP跨链协议规范，向远端订阅跨链交易事件和查询、广播跨链交易。
-
-```
-$ ./cassini start [flag]
-```
