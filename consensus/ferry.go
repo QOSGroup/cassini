@@ -77,6 +77,11 @@ func (f *Ferry) StartFerry() error {
 	for {
 		seqDes, _ := f.GetSequenceFromChain(f.from, f.to, "in")
 		seqSou, _ := f.GetSequenceFromChain(f.to, f.from, "out")
+
+		if seqDes >= f.sequence {
+			f.SetSequence(f.from, f.to, seqDes)
+		}
+
 		cons, err := f.ConsMap.GetConsFromMap(f.sequence)
 
 		if seqDes >= seqSou || f.sequence > seqSou || err != nil {
@@ -88,10 +93,6 @@ func (f *Ferry) StartFerry() error {
 
 			time.Sleep(time.Duration(f.conf.EventWaitMillitime) * time.Millisecond)
 			continue
-		}
-
-		if seqDes >= f.sequence {
-			f.SetSequence(f.from, f.to, seqDes)
 		}
 
 		if err == nil && cons != nil { //已有该sequence 共识
