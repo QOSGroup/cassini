@@ -26,19 +26,21 @@ $ gnatsd &
 
 ### Config
 
-$ vi src/github.com/QOSGroup/cassini/config/config.conf
+$ vi ../../config/config.conf
 
 \# 配置nats为gnatsd服务器地址，集群内多个地址用","号分割;  
 
 \# prikey为cassini的私钥; 
 
-\# consensus默认为"yes",如果设为"no" cassini将关闭共识功能;  
+\# consensus默认为true,如果设为false cassini将关闭共识功能;
 
 \# eventWaitMillitime 单位为ms,建议与链的建块周期保持一致; 
 
 \# useEtcd 是否启用Etcd(分布式锁) true启用/false不启用,如果不启用可以跳过 lock,etcd的配置,否则lock配为etcd服务器地址,etcd为内置etcd服务器的配置，可以按默认;
 
-\# 在qscs段配置公链和联盟链，name为链名称，nodes为链节点地址，多个地址用“,”号分割,公链signature设为true。 
+\# 在qscs段配置公链和联盟链，name为链名称，nodes为链节点地址，多个地址用“,”号分割,公链signature设为true。
+
+\# [更多etcd配置信息](./etcd_config.md)
 ```
 {
     "nats":      "nats://127.0.0.1:4222",
@@ -70,6 +72,12 @@ $ vi src/github.com/QOSGroup/cassini/config/config.conf
 
 ### Commands
 
+\# 启动cassini，按照QCP跨链协议规范，向远端订阅跨链交易事件和查询、广播跨链交易。
+
+```
+$ ./cassini start  --config ../../config/config.conf
+```
+
 \# 帮助信息
 
 ```
@@ -100,8 +108,3 @@ $ ./cassini events [flag]
 $ ./cassini tx [flag]
 ```
 
-\# 启动中继服务，按照QCP跨链协议规范，向远端订阅跨链交易事件和查询、广播跨链交易。
-
-```
-$ ./cassini start [flag]
-```
