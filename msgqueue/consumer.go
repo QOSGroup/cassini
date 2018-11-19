@@ -4,15 +4,14 @@ package msgqueue
 import (
 	"errors"
 	"fmt"
-	"sync"
-	"time"
-
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/consensus"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/types"
 	"github.com/nats-io/go-nats"
 	"github.com/tendermint/go-amino"
+	"sync"
+	"time"
 )
 
 var wg sync.WaitGroup
@@ -64,6 +63,19 @@ func StartQcpConsume(conf *config.Config) (err error) {
 		go ce.F.StartFerry()
 	}
 
+	ticker := func(engines []*consensus.ConsEngine) {
+		log.Debugf("run roomkeeper...%d", len(engines))
+		// 定时触发共识引擎
+		tick := time.NewTicker(time.Duration(conf.EventWaitMillitime*10) * time.Millisecond)
+		for range tick.C {
+			log.Debug("run roomkeeper...")
+			for _, ce := range engines {
+				ce.RoomKeeper()
+			}
+		}
+	}
+	go ticker(engines)
+
 	return
 }
 
@@ -86,7 +98,7 @@ func createConsEngine(from, to string, conf *config.Config, e chan<- error) (ce 
 //
 // from ,to is chain name for example "QOS"
 func qcpConsume(ce *consensus.ConsEngine, from, to string, conf *config.Config, e chan<- error) {
-	log.Debugf("Consume qcp from [%s] to [%s]", from, to)
+	log.Debugf("Consume qcp f.t[%s %s]", from, to)
 
 	var i int64
 
@@ -105,9 +117,9 @@ func qcpConsume(ce *consensus.ConsEngine, from, to string, conf *config.Config, 
 		//TODO 优化
 		// 需要监听下一个块的New Block 事件以确认交易数据入块，abci query 接口才能够查询出交易；
 		// 同时提供定时出发机制，以保证共识模块在交易事件丢失或网络错误等问题出现时仍然能够正常运行。
-		if conf.EventWaitMillitime > 0 {
-			time.Sleep(time.Duration(conf.EventWaitMillitime) * time.Millisecond)
-		}
+		//if conf.EventWaitMillitime > 0 {
+		//	time.Sleep(time.Duration(conf.EventWaitMillitime) * time.Millisecond)
+		//}
 
 		ce.Add2Engine(m)
 	}

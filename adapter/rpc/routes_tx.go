@@ -60,7 +60,7 @@ func (s RequestHandler) ABCIQuery(path string, data cmn.HexBytes, height int64, 
 		log.Errorf("Parse tx query key error: %s", err)
 		return nil, err
 	}
-	log.Debugf("from: %s, height: %d, sequence: %d", from, height, sequence)
+	log.Debugf("from[%s] height[#%d] sequence[#%d]", from, height, sequence)
 	tx := motxs.NewTxQcpMock(from, "qos", height, sequence)
 
 	var bytes []byte

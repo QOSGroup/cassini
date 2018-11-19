@@ -48,7 +48,7 @@ $ vi ../../config/config.conf
     "consensus": true,
     "eventWaitMillitime": 2000,
     "useEtcd":true,
-    "lock":"etcd://127.0.0.1:2379,127.0.0.1:22379,127.0.0.1:32379",
+    "lock":"etcd://127.0.0.1:2379",
     "etcd":{
         "name": "dev-cassini",
         "advertise":"http://127.0.0.1:2379",

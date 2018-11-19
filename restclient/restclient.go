@@ -113,14 +113,14 @@ func (r *RestClient) GetSequence(chainID string, outin string) (int64, error) {
 	}
 	result, err := r.ABCIQuery(path, []byte(key))
 	if err != nil {
-		log.Errorf("remote [%s] Get sequence error: %v", r.remote, err)
+		//log.Warnf("remote [%s] Get sequence error: %v", r.remote, err)
 		return -1, err
 	}
 	var seq int64
 	if result.Response.GetValue() != nil {
 		err = r.cdc.UnmarshalBinaryBare(result.Response.GetValue(), &seq)
 		if err != nil {
-			log.Errorf("remote [%s] Get sequence error when parse: %v", r.remote, err)
+			//log.Warnf("remote [%s] Get sequence error when parse: %v", r.remote, err)
 			return -1, err
 		}
 	}
@@ -130,10 +130,9 @@ func (r *RestClient) GetSequence(chainID string, outin string) (int64, error) {
 
 //PostTxQcp 广播交易
 func (r *RestClient) PostTxQcp(chainID string, qcp *txs.TxQcp) error {
-	log.Debugf("Post TxQcp chain: [%s], tx.from: [%s], tx.to: [%s]", chainID, qcp.From, qcp.To)
 	tx, err := r.cdc.MarshalBinaryBare(qcp)
 	if err != nil {
-		log.Errorf("remote [%s] Marshal TxQcp error: %v", r.remote, err)
+		log.Errorf("remote[%s] Marshal TxQcp error: %v", r.remote, err)
 		return err
 	}
 	var result *ctypes.ResultBroadcastTx
@@ -143,10 +142,10 @@ func (r *RestClient) PostTxQcp(chainID string, qcp *txs.TxQcp) error {
 		err = errors.New(result.Log)
 	}
 	if err != nil {
-		log.Errorf("remote [%s] Post TxQcp error: %v", r.remote, err)
+		log.Errorf("remote[%s] Post TxQcp error: %v", r.remote, err)
 		log.Debugf("qcp:%v", qcp)
 		return err
 	}
-	log.Debugf("remote [%s] Post TxQcp successful - %v", r.remote, qcp)
+	log.Debugf("remote[%s] Post TxQcp successful. %v", r.remote, qcp)
 	return nil
 }
