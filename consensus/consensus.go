@@ -76,7 +76,7 @@ func (c *ConsEngine) consensus32() (N int) {
 
 	N = (n*2 + 2) / 3
 
-	log.Debugf("from [%s] to [%s] [consensus N #%d]", c.from, c.to, N)
+	log.Debugf("f.t[%s %s] [consensus N #%d]", c.from, c.to, N)
 	return int(N)
 }
 
@@ -111,7 +111,7 @@ func (c *ConsEngine) StartEngine() error {
 		}
 		if cresult == fail { //TODO 不能达成共识 继续下一sequence？
 			log.Errorf("MsgMap%v", c.M.MsgMap[c.sequence])
-			s := fmt.Sprintf("consensusEngine from [%s] to [%s] sequence [#%d] failed.", c.from, c.to, c.sequence)
+			s := fmt.Sprintf("consensusEngine f.t.s[%s %s #%d] failed.", c.from, c.to, c.sequence)
 			panic(s)
 		}
 	}
@@ -121,7 +121,7 @@ func (c *ConsEngine) StartEngine() error {
 
 func (c *ConsEngine) ConSequence() consResult { //交易还没产生和共识出错区别开
 
-	log.Debugf("Start consensus engine from: [%s] to: [%s] sequence: [%d]", c.from, c.to, c.sequence)
+	log.Debugf("Start consensus engine f.t.s[%s %s #%d]", c.from, c.to, c.sequence)
 
 	nodes := c.F.conf.GetQscConfig(c.from).NodeAddress
 
@@ -169,7 +169,7 @@ func (c *ConsEngine) SetSequence(from, to string, s int64) {
 	seq, _ := c.GetSequenceFromChain(from, to, "in")
 
 	c.sequence = common.MaxInt64(s, seq) + 1
-	log.Infof("from [%s] to [%s] ConsEngine sequence set to [#%d]", from, to, c.sequence)
+	log.Infof("f.t[%s %s] ConsEngine sequence set to [#%d]", from, to, c.sequence)
 }
 
 //在to chain上查询 来自/要去 from chain 的 sequence

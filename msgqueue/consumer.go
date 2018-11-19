@@ -98,7 +98,7 @@ func createConsEngine(from, to string, conf *config.Config, e chan<- error) (ce 
 //
 // from ,to is chain name for example "QOS"
 func qcpConsume(ce *consensus.ConsEngine, from, to string, conf *config.Config, e chan<- error) {
-	log.Debugf("Consume qcp from [%s] to [%s]", from, to)
+	log.Debugf("Consume qcp f.t[%s %s]", from, to)
 
 	var i int64
 

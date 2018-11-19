@@ -37,7 +37,7 @@ func Event2queue(conf *config.Config, event *types.Event) (subject string, err e
 		return "", err
 	}
 
-	log.Infof("routed event from [%s] sequence [#%d] to subject [%s] ", event.NodeAddress, event.Sequence, subject)
+	log.Infof("routed event from[%s] sequence[#%d] to subject [%s] ", event.NodeAddress, event.Sequence, subject)
 
 	return subject, nil
 }

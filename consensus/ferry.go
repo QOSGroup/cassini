@@ -16,7 +16,6 @@ import (
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/restclient"
-	"strconv"
 	"time"
 )
 
@@ -78,11 +77,11 @@ func (f *Ferry) StartFerry() error {
 		cons, err := f.ConsMap.GetConsFromMap(f.sequence)
 
 		if err != nil {
-			consseqs := ""
-			for k, _ := range f.ConsMap.ConsMap {
-				consseqs += strconv.FormatInt(k, 10) + " "
-			}
-			log.Infof("consensused sequence [%s] f.sequence:[#%d]", consseqs, f.sequence)
+			//consseqs := ""
+			//for k, _ := range f.ConsMap.ConsMap {
+			//	consseqs += strconv.FormatInt(k, 10) + " "
+			//}
+			//log.Debugf("consensused sequence [%s] f.sequence:[#%d]", consseqs, f.sequence)
 
 			time.Sleep(time.Duration(f.conf.EventWaitMillitime) * time.Millisecond)
 			continue
@@ -113,19 +112,28 @@ func (f *Ferry) SetSequence(from, to string, s int64) {
 
 	f.sequence = common.MaxInt64(s, seq) + 1
 
-	log.Infof("f.t [%s %s] ferry sequence set to [#%d]", from, to, f.sequence)
+	log.Infof("f.t[%s %s] ferry sequence set to [#%d]", from, to, f.sequence)
 }
 
 //在to chain上查询 来自/要去 from chain 的 sequence
 func (f *Ferry) GetSequenceFromChain(from, to, inout string) (int64, error) {
+
 	qsc := f.conf.GetQscConfig(to)
 
 	nodeto := strings.Split(qsc.NodeAddress, ",")
 
-	add := GetAddressFromUrl(nodeto[0]) //TODO 多node 取sequence
-	r := f.rmap[add]
+	var seq int64
+	var err error
+	for _, n := range nodeto {
+		add := GetAddressFromUrl(n)
+		r := f.rmap[add]
+		seq, err = r.GetSequence(from, inout)
+		if err == nil {
+			return seq, nil
+		}
+	}
 
-	return r.GetSequence(from, inout)
+	return -1, err
 }
 
 //ferryQCP get qcp transaction from source chain and post it to destnation chain
@@ -171,7 +179,7 @@ func (f *Ferry) ferryQCP(hash, nodes string, sequence int64) (err error) {
 			}
 			return fmt.Errorf("get lock fail %v", err)
 		}
-		log.Infof("get lock success ,sequence [%d]", f.sequence)
+		log.Debugf("get lock success ,sequence [%d]", f.sequence)
 		err = f.postTxQcp(f.to, qcp)
 
 		if err != nil {
@@ -188,7 +196,7 @@ func (f *Ferry) ferryQCP(hash, nodes string, sequence int64) (err error) {
 		}
 	}
 	delete(f.ConsMap.ConsMap, f.sequence)
-	log.Infof("success ferry qcp transaction from [%s] to [%s] sequence [#%d] \n", f.from, f.to, sequence)
+	log.Infof("success ferry qcp transaction f.t.s[%s %s #%d] \n", f.from, f.to, sequence)
 
 	f.SetSequence(f.from, f.to, f.sequence)
 

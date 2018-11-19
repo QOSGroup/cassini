@@ -58,12 +58,12 @@ func EventsSubscribe(conf *config.Config, remote string, e chan<- error) context
 		log.Errorf("Remote [%s] : '%s'", remote, err)
 	}
 	//defer cancel() //TODO  panic
-	log.Debug("wwww ", remote)
+
 	go func() {
 		for ed := range txs {
 
 			eventData := ed.(ttypes.EventDataTx)
-			log.Infof("Received event from [%s] - '%s'", remote, eventData)
+			log.Debugf("Received event from[%s],'%s'", remote, eventData)
 
 			cassiniEventDataTx := ctypes.CassiniEventDataTx{}
 			cassiniEventDataTx.Height = eventData.Height
