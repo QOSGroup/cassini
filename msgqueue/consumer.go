@@ -11,6 +11,7 @@ import (
 	"github.com/nats-io/go-nats"
 	"github.com/tendermint/go-amino"
 	"sync"
+	"time"
 )
 
 var wg sync.WaitGroup
@@ -61,6 +62,19 @@ func StartQcpConsume(conf *config.Config) (err error) {
 		go ce.StartEngine()
 		go ce.F.StartFerry()
 	}
+
+	ticker := func(engines []*consensus.ConsEngine) {
+		log.Debugf("run roomkeeper...%d", len(engines))
+		// 定时触发共识引擎
+		tick := time.NewTicker(time.Duration(conf.EventWaitMillitime*10) * time.Millisecond)
+		for range tick.C {
+			log.Debug("run roomkeeper...")
+			for _, ce := range engines {
+				ce.RoomKeeper()
+			}
+		}
+	}
+	go ticker(engines)
 
 	return
 }

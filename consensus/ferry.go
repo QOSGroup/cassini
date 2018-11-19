@@ -75,16 +75,9 @@ func NewFerry(conf *config.Config, from, to string, sequence int64) *Ferry {
 func (f *Ferry) StartFerry() error {
 
 	for {
-		seqDes, _ := f.GetSequenceFromChain(f.from, f.to, "in")
-		seqSou, _ := f.GetSequenceFromChain(f.to, f.from, "out")
-
-		if seqDes >= f.sequence {
-			f.SetSequence(f.from, f.to, seqDes)
-		}
-
 		cons, err := f.ConsMap.GetConsFromMap(f.sequence)
 
-		if seqDes >= seqSou || f.sequence > seqSou || err != nil {
+		if err != nil {
 			consseqs := ""
 			for k, _ := range f.ConsMap.ConsMap {
 				consseqs += strconv.FormatInt(k, 10) + " "
@@ -97,7 +90,11 @@ func (f *Ferry) StartFerry() error {
 
 		if err == nil && cons != nil { //已有该sequence 共识
 			if err := f.ferryQCP(cons.Hash, cons.Nodes, f.sequence); err != nil {
-				log.Errorf("ferry qcp transaction from[%s] to[%s] sequence[#%d] hash[%s] failed. %v", f.from, f.to, f.sequence, cons.Hash, err)
+				if strings.Contains(err.Error(), restclient.ERR_emptyqcp) { //qcp transaction may be lags behind event
+					time.Sleep(time.Duration(f.conf.EventWaitMillitime) * time.Millisecond)
+					continue
+				}
+				log.Errorf("ferry qcp transaction f.t.s[%s %s #%d] hash[%s] failed. %v", f.from, f.to, f.sequence, cons.Hash[:10], err)
 			}
 		}
 
@@ -114,16 +111,9 @@ func (f *Ferry) SetSequence(from, to string, s int64) {
 
 	seq, _ := f.GetSequenceFromChain(from, to, "in")
 
-	//seq2, _ := f.GetSequenceFromChain(to, from, "out")
-
 	f.sequence = common.MaxInt64(s, seq) + 1
 
-	//for k, _ := range f.ConsMap.ConsMap {
-	//	fmt.Println(k)
-	//}
-	//fmt.Println("f.sequence:[#%d]", f.sequence)
-
-	log.Infof("from [%s] to [%s] ferry sequence set to [#%d]", from, to, f.sequence)
+	log.Infof("f.t [%s %s] ferry sequence set to [#%d]", from, to, f.sequence)
 }
 
 //在to chain上查询 来自/要去 from chain 的 sequence
@@ -145,13 +135,14 @@ func (f *Ferry) GetSequenceFromChain(from, to, inout string) (int64, error) {
 //nodes is consensus nodes of the source chain
 func (f *Ferry) ferryQCP(hash, nodes string, sequence int64) (err error) {
 
-	log.Debugf("ferry qcp transaction from [%s] to [%s], sequence=%d", f.from, f.to, sequence)
+	log.Debugf("ferry qcp transaction f.t.s[%s %s %d]", f.from, f.to, sequence)
 
 	qcp, err := f.getTxQcp(f.from, f.to, hash, nodes, sequence)
 
 	if err != nil { //TODO 拜占庭共识失败后 循环至此
+
 		//log.Errorf("ferry qcp transaction from [%s] to [%s] sequence [%d]. %s", f.from, f.to, sequence, err.Error())
-		return errors.New("get qcp transaction failed")
+		return errors.New("get qcp transaction failed," + err.Error())
 	}
 
 	qscConf := f.conf.GetQscConfig(f.from)
@@ -209,6 +200,7 @@ func (f *Ferry) ferryQCP(hash, nodes string, sequence int64) (err error) {
 func (f *Ferry) getTxQcp(from, to, hash, nodes string, sequence int64) (qcp *txs.TxQcp, err error) {
 
 	success := false
+	bempty := false
 
 EndGet:
 
@@ -217,7 +209,12 @@ EndGet:
 		qcp, err = f.getTxQcpFromNode(to, hash, node, sequence)
 
 		if err != nil || qcp == nil {
-			log.Error(err.Error())
+			if !strings.Contains(err.Error(), restclient.ERR_emptyqcp) {
+				log.Warnf("get transaction from %s failed,%s", node, err.Error())
+			} else {
+				bempty = true
+			}
+
 			continue
 		}
 
@@ -227,6 +224,9 @@ EndGet:
 	}
 
 	if !success {
+		if bempty {
+			return nil, errors.New(restclient.ERR_emptyqcp)
+		}
 		return nil, errors.New("getTxQcp failed")
 	}
 
@@ -276,7 +276,7 @@ func (f *Ferry) getTxQcpFromNode(to, hash, node string, sequence int64) (qcp *tx
 	qcp, err = f.queryTxQcpFromNode(to, node, sequence)
 
 	if err != nil || qcp == nil {
-		return nil, errors.New("get TxQcp from " + node + "failed.")
+		return nil, err
 	}
 
 	//TODO 取本地联盟链公钥验签
@@ -289,7 +289,7 @@ func (f *Ferry) getTxQcpFromNode(to, hash, node string, sequence int64) (qcp *tx
 	//if string(tmhash.Sum(qcp.GetSigData())) != hash { //算法保持 tmhash.hash 一致 sha256 前 20byte
 	hash2 := cmn.Bytes2HexStr(crypto.Sha256(qcp.GetSigData()))
 	if hash2 != hash {
-		return nil, errors.New("get TxQcp from " + node + "failed")
+		return nil, errors.New("get TxQcp from " + node + "failed,transaction hash not correct ")
 	}
 
 	return qcp, nil
@@ -301,8 +301,6 @@ func (f *Ferry) getTxQcpFromNode(to, hash, node string, sequence int64) (qcp *tx
 //to destnation chain id
 func (f *Ferry) queryTxQcpFromNode(to, node string, sequence int64) (qcp *txs.TxQcp, err error) {
 
-	//"tcp://127.0.0.1:26657"
-	//rmap := restclient.NewRestClient(node)
 	add := GetAddressFromUrl(node)
 	r := f.rmap[add]
 	qcp, err = r.GetTxQcp(to, sequence)

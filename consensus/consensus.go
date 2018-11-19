@@ -35,7 +35,6 @@ type ConsEngine struct {
 	from     string
 	to       string
 	mtx      sync.RWMutex
-	//conf     *config.Config
 }
 
 // NewConsEngine New a consensus engine
@@ -47,22 +46,6 @@ func NewConsEngine(from, to string) *ConsEngine {
 	ce.from = from
 	ce.to = to
 	return ce
-}
-
-func (c *ConsEngine) Setfrom(from string) {
-	c.from = from
-}
-
-func (c *ConsEngine) Setto(to string) {
-	c.to = to
-}
-
-func (c *ConsEngine) Getfrom() string {
-	return c.from
-}
-
-func (c *ConsEngine) Getto() string {
-	return c.to
 }
 
 // Add2Engine Add a message to consensus engine
@@ -93,7 +76,7 @@ func (c *ConsEngine) consensus32() (N int) {
 
 	N = (n*2 + 2) / 3
 
-	log.Infof("from [%s] to [%s] [consensus N #%d]", c.from, c.to, N)
+	log.Debugf("from [%s] to [%s] [consensus N #%d]", c.from, c.to, N)
 	return int(N)
 }
 
@@ -101,17 +84,17 @@ func (c *ConsEngine) consensus32() (N int) {
 func (c *ConsEngine) StartEngine() error {
 
 	for {
-		seqDes, _ := c.F.GetSequenceFromChain(c.from, c.to, "in")
-		seqSou, _ := c.F.GetSequenceFromChain(c.to, c.from, "out")
-
-		if seqDes >= seqSou || c.sequence > seqSou {
-			time.Sleep(time.Duration(c.F.conf.EventWaitMillitime) * time.Millisecond)
-			continue
-		}
-
-		if seqDes >= c.sequence {
-			c.SetSequence(c.from, c.to, seqDes)
-		}
+		//seqDes, _ := c.F.GetSequenceFromChain(c.from, c.to, "in")
+		//seqSou, _ := c.F.GetSequenceFromChain(c.to, c.from, "out")
+		//
+		//if seqDes >= seqSou || c.sequence > seqSou {
+		//	time.Sleep(time.Duration(c.F.conf.EventWaitMillitime) * time.Millisecond)
+		//	continue
+		//}
+		//
+		//if seqDes >= c.sequence {
+		//	c.SetSequence(c.from, c.to, seqDes)
+		//}
 
 		_, err := c.F.ConsMap.GetConsFromMap(c.sequence)
 		if err == nil { //已有共识
@@ -128,7 +111,7 @@ func (c *ConsEngine) StartEngine() error {
 		}
 		if cresult == fail { //TODO 不能达成共识 继续下一sequence？
 			log.Errorf("MsgMap%v", c.M.MsgMap[c.sequence])
-			s := fmt.Sprintf("consensusEngine from [%s] to [%s] sequence [#%d] failed. seqDes [%d] seqSou[%d] ", c.from, c.to, c.sequence, seqDes, seqSou)
+			s := fmt.Sprintf("consensusEngine from [%s] to [%s] sequence [#%d] failed.", c.from, c.to, c.sequence)
 			panic(s)
 		}
 	}
@@ -207,4 +190,70 @@ func GetAddressFromUrl(url string) string {
 		return url
 	}
 	return url[n+3:]
+}
+
+func (c *ConsEngine) Setfrom(from string) {
+	c.from = from
+}
+
+func (c *ConsEngine) Setto(to string) {
+	c.to = to
+}
+
+func (c *ConsEngine) Getfrom() string {
+	return c.from
+}
+
+func (c *ConsEngine) Getto() string {
+	return c.to
+}
+
+//roomKeeper 清理 EngineMap,ConsensusMap过时k-v;校正sequence
+func (c *ConsEngine) RoomKeeper() {
+	c.cleanMap()
+	c.ajustSequence()
+}
+
+func (c *ConsEngine) cleanMap() {
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
+	c.F.mtx.Lock()
+	defer c.F.mtx.Unlock()
+
+	for k, _ := range c.M.MsgMap {
+		if k < c.F.sequence {
+			delete(c.M.MsgMap, k)
+			log.Debugf("delete c.sequence[#%d]", k)
+		}
+	}
+	for k, _ := range c.F.ConsMap.ConsMap {
+		if k < c.F.sequence {
+			delete(c.F.ConsMap.ConsMap, k)
+			log.Debugf("delete f.sequence[#%d]", k)
+		}
+	}
+
+}
+
+func (c *ConsEngine) ajustSequence() {
+
+	seqDes, _ := c.F.GetSequenceFromChain(c.from, c.to, "in")
+	seqSou, _ := c.F.GetSequenceFromChain(c.to, c.from, "out")
+
+	//if seqDes >= seqSou || c.sequence > seqSou {
+	//	time.Sleep(time.Duration(c.F.conf.EventWaitMillitime) * time.Millisecond)
+	//	continue
+	//}
+
+	if seqSou < seqDes {
+		panic("the destnation sequence bigger than source sequence")
+	}
+	if seqDes >= c.sequence {
+		c.SetSequence(c.from, c.to, seqDes)
+	}
+
+	if seqDes >= c.F.sequence {
+		c.F.SetSequence(c.F.from, c.F.to, seqDes)
+	}
+
 }
