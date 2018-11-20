@@ -82,7 +82,7 @@ func (r *RestClient) GetTxQcp(chainID string, sequence int64) (*txs.TxQcp, error
 	key := catypes.Key4OutChainTx(chainID, sequence)
 	result, err := r.ABCIQuery("/store/qcp/key", []byte(key))
 	if err != nil || result == nil {
-		log.Errorf("remote [%s] Get TxQcp error: %v", r.remote, err)
+		log.Errorf("remote [%s] Get TxQcp error: %v", r.remote, err) //TODO 节点0 down 在此报错
 		return nil, err
 	}
 
