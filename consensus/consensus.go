@@ -174,14 +174,15 @@ func (c *ConsEngine) SetSequence(from, to string, s int64) {
 
 //在to chain上查询 来自/要去 from chain 的 sequence
 func (c *ConsEngine) GetSequenceFromChain(from, to, inout string) (int64, error) {
-	qsc := c.F.conf.GetQscConfig(to)
-
-	nodeto := strings.Split(qsc.NodeAddress, ",")
-
-	add := GetAddressFromUrl(nodeto[0]) //TODO 多node 取sequence
-	r := c.F.rmap[add]
-
-	return r.GetSequence(from, inout)
+	//qsc := c.F.conf.GetQscConfig(to)
+	//
+	//nodeto := strings.Split(qsc.NodeAddress, ",")
+	//
+	//add := GetAddressFromUrl(nodeto[0]) //TODO 多node 取sequence
+	//r := c.F.rmap[add]
+	//
+	//return r.GetSequence(from, inout)
+	return c.F.GetSequenceFromChain(from, to, inout)
 }
 
 func GetAddressFromUrl(url string) string {
