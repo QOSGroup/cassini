@@ -138,7 +138,7 @@ func (c *ConsEngine) ConSequence() consResult { //交易还没产生和共识出
 			}
 			continue
 		}
-		hash := crypto.Sha256(qcp.GetSigData())
+		hash := crypto.Sha256(qcp.BuildSignatureBytes())
 		ced := types.CassiniEventDataTx{From: c.from, To: c.to, Height: qcp.BlockHeight, Sequence: c.sequence}
 
 		ced.HashBytes = hash

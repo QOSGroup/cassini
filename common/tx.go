@@ -28,7 +28,7 @@ func Transform(tx *txs.TxQcp) (*tmtypes.EventDataTx, error) {
 	return &tmtypes.EventDataTx{TxResult: tmtypes.TxResult{
 		Height: tx.BlockHeight,
 		Index:  uint32(tx.TxIndex),
-		Tx:     tx.GetSigData(),
+		Tx:     tx.BuildSignatureBytes(),
 		Result: result,
 	}}, nil
 }

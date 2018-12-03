@@ -106,7 +106,7 @@ func genQcpTx(cdc *amino.Codec, sender types.Address, receiver types.Address,
 	priHex, _ := hex.DecodeString(senderPriHex[2:])
 	var priKey ed25519.PrivKeyEd25519
 	cdc.MustUnmarshalBinaryBare(priHex, &priKey)
-	signData := append(std.GetSignData(), types.Int2Byte(int64(nonce))...)
+	signData := std.BuildSignatureBytes(nonce, chainID)
 	signature, _ := priKey.Sign(signData)
 	std.Signature = []txs.Signature{txs.Signature{
 		Pubkey:    priKey.PubKey(),
@@ -117,7 +117,7 @@ func genQcpTx(cdc *amino.Codec, sender types.Address, receiver types.Address,
 	caHex, _ := hex.DecodeString(caPriHex[2:])
 	var caPriKey ed25519.PrivKeyEd25519
 	cdc.MustUnmarshalBinaryBare(caHex, &caPriKey)
-	sig, _ := caPriKey.Sign(tx.GetSigData())
+	sig, _ := caPriKey.Sign(tx.BuildSignatureBytes())
 	tx.Sig.Nonce = qcpseq
 	tx.Sig.Signature = sig
 	tx.Sig.Pubkey = caPriKey.PubKey()
