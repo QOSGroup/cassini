@@ -16,7 +16,7 @@ func Bytes2HexStr(bytes []byte) string {
 
 // HashTx 交易哈希算法，用以验证交易
 func HashTx(tx *txs.TxQcp) []byte {
-	return crypto.Sha256(tx.GetSigData())
+	return crypto.Sha256(tx.BuildSignatureBytes())
 }
 
 func UnmarshalKey(base64key string) (*ed25519.PrivKeyEd25519, error) {
