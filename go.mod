@@ -2,7 +2,7 @@ module github.com/QOSGroup/cassini
 
 require (
 	github.com/QOSGroup/qbase v0.0.7
-	github.com/QOSGroup/qos v0.0.2-0.20181105092243-6ec5680d4ed7
+	github.com/QOSGroup/qos v0.0.2
 	github.com/cihub/seelog v0.0.0-20170130134532-f561c5e57575
 	github.com/coreos/bbolt v0.0.0-20180912205654-7ee3ded59d48
 	github.com/coreos/etcd v3.3.10+incompatible
