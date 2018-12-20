@@ -20,15 +20,15 @@ cassini 是跨链交易的中继服务，遵循[QOSGroup/qbase](https://github.c
 
 ## Cassini Principle
 
-[Cassini Principle](./doc/cassini.md)
+[Cassini Principle](./docs/cassini.md)
 
 ## Cassini Deployment
 
-[Cassini Deployment](./doc/cassini-deployment.md)
+[Cassini Deployment](./docs/cassini-deployment.md)
 
 ## Quick Start
 
-[Quick Start](./doc/quick_start.md)
+[Quick Start](./docs/quick_start.md)
 
 
 
