@@ -20,7 +20,7 @@ func NewHandlerService(name, id, listenAddr string) (HandlerService, error) {
 		id:            id,
 		listenAddress: listenAddr,
 		eventHub:      tmtypes.NewEventBus(),
-		txPool:        pool.NewTxPool(1000)}
+		txPool:        pool.NewTxPool(1000, nil)}
 	err := s.init()
 
 	if err != nil {
@@ -107,7 +107,7 @@ func (s DefaultHandlerService) GetCodec() *amino.Codec {
 //
 // 因为按照 QCP 协议规范定义，中继都是在接收到交易事件后查询交易数据，因此应保证先调用发布交易接口，然后再调用发布事件接口。
 func (s DefaultHandlerService) PublishTx(tx *txs.TxQcp) error {
-	return s.txPool.Publish(tx)
+	return s.txPool.Put(tx)
 }
 
 // PublishEvent 发布交易事件，提供给事件订阅
