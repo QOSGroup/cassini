@@ -3,6 +3,8 @@ package common
 import (
 	"fmt"
 
+	"strconv"
+
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/qbase/qcp"
 	"github.com/QOSGroup/qbase/txs"
@@ -10,7 +12,6 @@ import (
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	tmtypes "github.com/tendermint/tendermint/types"
-	"strconv"
 )
 
 // Transform 将交易转换为交易事件
@@ -57,5 +58,5 @@ func StringTx(tx *txs.TxQcp) string {
 	if tx == nil {
 		return ""
 	}
-	return fmt.Sprintf("[%v, %v, %v, %v, %v]", tx.From, tx.To, tx.BlockHeight, tx.TxIndex, tx.Sequence)
+	return fmt.Sprintf("[%s, %s, %d, %d, %d]", tx.From, tx.To, tx.BlockHeight, tx.TxIndex, tx.Sequence)
 }
