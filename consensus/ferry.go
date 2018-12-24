@@ -89,7 +89,8 @@ func (f *Ferry) StartFerry() error {
 
 		if err == nil && cons != nil { //已有该sequence 共识
 			if err := f.ferryQCP(cons.Hash, cons.Nodes, f.sequence); err != nil {
-				if strings.Contains(err.Error(), restclient.ERR_emptyqcp) { //qcp transaction may be lags behind event
+				//if strings.Contains(err.Error(), restclient.ERR_emptyqcp) { //qcp transaction may be lags behind event
+				if err != nil {
 					time.Sleep(time.Duration(f.conf.EventWaitMillitime) * time.Millisecond)
 					continue
 				}
@@ -184,14 +185,14 @@ func (f *Ferry) ferryQCP(hash, nodes string, sequence int64) (err error) {
 
 		if err != nil {
 			f.mutex.Unlock(false)
-			log.Errorf("post qcp transaction failed. %v", err)
+			//log.Errorf("post qcp transaction failed. %v", err)
 			return errors.New("post qcp transaction failed")
 		}
 		f.mutex.Unlock(true)
 	} else {
 		err = f.postTxQcp(f.to, qcp)
 		if err != nil {
-			log.Errorf("post qcp transaction failed. %v", err)
+			//log.Errorf("post qcp transaction failed. %v", err)
 			return errors.New("post qcp transaction failed")
 		}
 	}

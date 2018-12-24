@@ -1,4 +1,4 @@
-# 中继约定
+### appointments
 
 版本:
 v0.1
@@ -9,11 +9,11 @@ v0.1
 目录
 [TOC]
 
-## 简介：
+### 简介：
 
 QCP跨链协议中中继（Cassini）作为链之间连接的纽带，使跨链交易能够完成。前提是中继和链需要符合本文的约定。
 
-## 体系结构：
+### 体系结构：
 
 ![framework](https://github.com/QOSGroup/static/blob/master/cassini.jpg?raw=true)
 
@@ -25,7 +25,7 @@ QCP跨链协议中中继（Cassini）作为链之间连接的纽带，使跨链�
 - Cassini对交易进行验签，2/3共识等处理后路由到目标链；
 - Cassini具有多实例协同并行处理的能力。
 
-## Event 事件发布订阅以及Tx 交易查询与处理：
+### 事件发布订阅,交易查询与处理：
 
 - 1、	Cassini通过websocket 订阅链上跨链event。过滤条件为 “tm.event = 'Tx' AND qcp.to = 'xxx'”；
 - 2、	链将跨链的交易在结构体 ResponseDeliverTx成员变量Tags中增加值对 “qcp.to = 'xxx'“ 。XXX表示目标链的名称；
@@ -34,7 +34,7 @@ QCP跨链协议中中继（Cassini）作为链之间连接的纽带，使跨链�
 - 5、	Cassini查询到交易数据，会通过调用restful API（ABCI BroadcastTxAsync 或ABCI BroadcastTxSync）向目标链提交交易，完成交易的处理；
 - 6、	跨链交易结果返回过程同1,2,3,4,5步。
 
-### Event数据结构
+### Event数据结构：
 
 ```
 EventDataTx{
@@ -52,7 +52,7 @@ EventDataTx{
 
 ```
 
-## Rest Service API需求：
+### Rest Service API需求：
 
 - get       取 outbox 最大sequence
 - get       取 inbox 最大sequence
@@ -61,7 +61,7 @@ EventDataTx{
 - get	    批量取 outbox 中给定sequence编号之后的交易（TxQcp）
 - post	    批量接收交易（TxQcp）
 
-### Rest Service 数据结构
+### Rest Service 数据结构：
 
 ```
 type TxQcp struct {

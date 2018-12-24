@@ -1,7 +1,7 @@
 package version
 
 var (
-	Version = "0.0.1"
+	Version = "0.0.4"
 	// GitCommit is the current HEAD set using ldflags.
 	GitCommit string
 )
