@@ -11,7 +11,6 @@ import (
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto"
 
-	"fmt"
 	"github.com/QOSGroup/cassini/restclient"
 	"github.com/tendermint/tendermint/libs/common"
 	"strings"
@@ -111,8 +110,9 @@ func (c *ConsEngine) StartEngine() error {
 		}
 		if cresult == fail { //TODO 不能达成共识 继续下一sequence？
 			log.Errorf("MsgMap%v", c.M.MsgMap[c.sequence])
-			s := fmt.Sprintf("consensusEngine f.t.s[%s %s #%d] failed.", c.from, c.to, c.sequence)
-			panic(s)
+			time.Sleep(time.Duration(c.F.conf.EventWaitMillitime) * time.Millisecond * 10)
+			//s := fmt.Sprintf("consensusEngine f.t.s[%s %s #%d] failed.", c.from, c.to, c.sequence)
+			//panic(s)
 		}
 	}
 

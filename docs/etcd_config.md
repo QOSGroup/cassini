@@ -1,6 +1,4 @@
-# ETCD config
-
-## Config file about ETCD
+### Config file about ETCD
 
 Config sample:
 

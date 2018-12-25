@@ -2,13 +2,14 @@ module.exports = {
     title: "Cassini Network",
     description: "Documentation for the Cassini Network.",
     dest: "./dist/docs",
-    base: "/docs/",
+    base: "/cassini/",
     markdown: {
         lineNumbers: true
     },
     themeConfig: {
         lastUpdated: "Last Updated",
-        nav: [{ text: "Back to Cassini", link: "https://cassini.network" }],
+        nav: [{ text: "Back to Cassini", link: "http://docs.qoschain.info/cassini/" }],
+        sidebarDepth:2,
         sidebar: [
             {
                 title: "Introduction",
@@ -33,6 +34,7 @@ module.exports = {
                 ]
             }
             ,
+
             {
                 title: "Etcd Config",
                 collapsable: false,

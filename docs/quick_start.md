@@ -1,6 +1,5 @@
-## Quick Start
 
-### Build
+### quick start
 
 ```
 $ cd ~
