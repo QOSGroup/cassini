@@ -17,11 +17,11 @@ QCP跨链协议中中继（Cassini）作为链之间连接的纽带，使跨链�
 
 ![framework](https://github.com/QOSGroup/static/blob/master/cassini.jpg?raw=true)
 
-- BlockchainA和BlockchainB连接共同的中继Cassini；
+- QOS和任意遵循QCP协议的Blockchain连接共同的中继Cassini；
 - Cassini订阅链上跨链交易事件，获取交易摘要，进行2/3共识，随机找一个诚实节点获取跨链交易；
-- 当BlockchainA新块内有跨链交易，将跨链交易放入outbox,并按顺序递增编号，当前最大编号叫sequcnce。区块链保证该编号的连续性；
-- BlockchainB将通过Cassini收到的交易存入inbox；
-- Cassini查询BlockchainB inbox 的sequence 记作seq1,中继顺序取BlockchainA 的 outbox 的编号大于seq1的交易，一次可以取一条或多条；
+- 当QOS新块内有跨链交易，将跨链交易放入outbox,并按顺序递增编号，当前最大编号叫sequcnce。区块链保证该编号的连续性；
+- Blockchain将通过Cassini收到的交易存入inbox；
+- Cassini查询Blockchain inbox 的sequence 记作seq1,中继顺序取QOS 的 outbox 的编号大于seq1的交易，一次可以取一条或多条；
 - Cassini对交易进行验签，2/3共识等处理后路由到目标链；
 - Cassini具有多实例协同并行处理的能力。
 
