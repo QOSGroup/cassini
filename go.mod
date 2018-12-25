@@ -2,7 +2,7 @@ module github.com/QOSGroup/cassini
 
 require (
 	github.com/QOSGroup/qbase v0.0.9
-	github.com/QOSGroup/qos v0.0.2
+	github.com/QOSGroup/qos v0.0.3
 	github.com/cihub/seelog v0.0.0-20170130134532-f561c5e57575
 	github.com/coreos/bbolt v0.0.0-20180912205654-7ee3ded59d48 // indirect
 	github.com/coreos/etcd v3.3.10+incompatible
@@ -35,6 +35,6 @@ require (
 	go.uber.org/atomic v1.3.2 // indirect
 	go.uber.org/multierr v1.1.0 // indirect
 	go.uber.org/zap v1.9.1 // indirect
-	golang.org/x/net v0.0.0-20181005035420-146acd28ed58
+	golang.org/x/net v0.0.0-20181107093936-a544f70c90f1
 	golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2 // indirect
 )
