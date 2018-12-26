@@ -4,6 +4,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// NewVersionCommand create version command
 func NewVersionCommand(run Runner, isKeepRunning bool) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "version",

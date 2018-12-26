@@ -24,6 +24,7 @@ func main() {
 		commands.NewMockCommand(mocker, true),
 		commands.NewEventsCommand(events, true),
 		commands.NewTxCommand(txHandler, false),
+		commands.NewResetCommand(resetHandler, false),
 		commands.NewVersionCommand(versioner, false))
 
 	if err := root.Execute(); err != nil {
