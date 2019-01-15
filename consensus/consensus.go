@@ -247,7 +247,8 @@ func (c *ConsEngine) ajustSequence() {
 	//}
 
 	if seqSou < seqDes {
-		panic("the destnation sequence bigger than source sequence")
+		log.Warn("the destnation sequence bigger than source sequence")
+		//panic("the destnation sequence bigger than source sequence")
 	}
 	if seqDes >= c.sequence {
 		c.SetSequence(c.from, c.to, seqDes)
