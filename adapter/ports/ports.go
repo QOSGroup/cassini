@@ -8,6 +8,9 @@ import (
 	"github.com/QOSGroup/cassini/log"
 )
 
+// Builder Create an AdapterController for the specified chain
+type Builder func(ip string, port int, chain string) (AdapterController, error)
+
 // Ports Chain adapter pool interface
 type Ports interface {
 	Init()
@@ -44,9 +47,6 @@ func GetPortsIncetance() Ports {
 	})
 	return ports
 }
-
-// Builder Create an Adapter
-type Builder func(ip string, port int, chain string) (AdapterController, error)
 
 // Init Init the defaultPorts
 func (p *defaultPorts) Init() {
