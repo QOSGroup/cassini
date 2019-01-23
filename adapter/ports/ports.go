@@ -1,14 +1,20 @@
 package ports
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"os"
 	"sync"
 
+	"github.com/QOSGroup/cassini/config"
+	"github.com/QOSGroup/cassini/event"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/restclient"
+	"github.com/QOSGroup/cassini/route"
 	"github.com/QOSGroup/cassini/types"
 	"github.com/QOSGroup/qbase/txs"
+	tmttypes "github.com/tendermint/tendermint/types"
 )
 
 // Adapter Chain adapter interface for consensus engine ( consensus.ConsEngine )
@@ -25,7 +31,7 @@ type Adapter interface {
 }
 
 // EventsListener Listen Tx events from target chain
-type EventsListener func(event types.Event, adapter Adapter)
+type EventsListener func(event *types.Event, adapter Adapter)
 
 // AdapterService Chain adapter service interface for adapter pool manager ( adapter.Ports )
 type AdapterService interface {
@@ -105,6 +111,12 @@ func (p *defaultPorts) Init() {
 	p.adapters = make(map[string]map[string]AdapterController, 0)
 	p.builders = make(map[string]Builder, 0)
 
+	listener := func(event *types.Event, adapter Adapter) {
+		_, err := route.Event2queue(config.GetConfig().Nats, event)
+		if err != nil {
+			log.Errorf("failed route event to message queue,%s", err.Error())
+		}
+	}
 	builder := func(ip string, port int, chain string) (AdapterController, error) {
 		a := &qosAdapter{
 			chain: chain,
@@ -112,6 +124,7 @@ func (p *defaultPorts) Init() {
 			port:  port}
 		a.Start()
 		a.Sync()
+		a.Subcribe(listener)
 		return a, nil
 	}
 	p.RegisterBuilder("qos", builder)
@@ -132,6 +145,7 @@ func (p *defaultPorts) RegisterBuilder(chain string, builder Builder) error {
 // otherwise create one and cache it.
 func (p *defaultPorts) Register(ip string, port int, chain string) (err error) {
 	var a AdapterController
+	chain = "qos"
 	if builder, ok := p.builders[chain]; ok {
 		a, err = builder(ip, port, chain)
 	} else {
@@ -171,10 +185,12 @@ type qosAdapter struct {
 	port     int
 	sequence int64
 	client   *restclient.RestClient
+	cancels  []context.CancelFunc
 }
 
 func (a *qosAdapter) Start() error {
 	a.client = restclient.NewRestClient(GetNodeAddress(a))
+	a.cancels = make([]context.CancelFunc, 0)
 	return nil
 }
 
@@ -198,7 +214,38 @@ func (a *qosAdapter) Stop() error {
 }
 
 func (a *qosAdapter) Subcribe(listener EventsListener) {
+	log.Infof("Starting event subcribe: %s", GetAdapterKey(a))
+	remote := "tcp://" + GetNodeAddress(a)
+	// go event.EventsSubscribe(remote)
+	txs := make(chan interface{})
+	go func() {
+		log.Debug("Event subscribe remote: ", remote)
 
+		//TODO query 条件?? "tm.event = 'Tx' AND qcp.to != '' AND qcp.sequence > 0"
+		cancel, err := event.SubscribeRemote(remote,
+			"cassini", "tm.event = 'Tx'  AND qcp.sequence > 0", txs)
+		if err != nil {
+			log.Errorf("Subscibe events failed - remote [%s] : '%s'", remote, err)
+			log.Flush()
+			os.Exit(1)
+		}
+		a.cancels = append(a.cancels, cancel)
+	}()
+	go func() {
+		for ed := range txs {
+
+			edt := ed.(tmttypes.EventDataTx)
+			log.Debugf("Received event from[%s],'%s'", remote, edt)
+
+			cassiniEventDataTx := types.CassiniEventDataTx{}
+			cassiniEventDataTx.Height = edt.Height
+			cassiniEventDataTx.ConstructFromTags(edt.Result.Tags)
+
+			event := types.Event{NodeAddress: remote, CassiniEventDataTx: cassiniEventDataTx}
+
+			listener(&event, a)
+		}
+	}()
 }
 
 func (a *qosAdapter) SubmitTx(tx *txs.TxQcp) error {

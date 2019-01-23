@@ -4,9 +4,9 @@ package event
 
 import (
 	"context"
+	"os"
 	"time"
 
-	"errors"
 	"fmt"
 	"strings"
 
@@ -24,19 +24,14 @@ import (
 func StartEventSubscibe(conf *config.Config) (cancel context.CancelFunc, err error) {
 
 	var subEventFrom string
-	es := make(chan error, 1024) //TODO 1024根据节点数需要修改
 
 	// for _, qsconfig := range config.DefaultQscConfig() {
 	for _, qsconfig := range conf.Qscs {
 		for _, nodeAddr := range strings.Split(qsconfig.NodeAddress, ",") {
-			go EventsSubscribe(conf, "tcp://"+nodeAddr, es)
+			go EventsSubscribe("tcp://" + nodeAddr)
 			subEventFrom += fmt.Sprintf("[%s] ", nodeAddr)
 
 		}
-	}
-
-	if len(es) > 0 {
-		return nil, errors.New("subscibe events failed")
 	}
 
 	log.Infof("subscibed events from %s", subEventFrom)
@@ -46,7 +41,7 @@ func StartEventSubscibe(conf *config.Config) (cancel context.CancelFunc, err err
 
 // EventsSubscribe 从websocket服务端订阅event
 //remote 服务端地址 example  "tcp://192.168.168.27:26657"
-func EventsSubscribe(conf *config.Config, remote string, e chan<- error) context.CancelFunc {
+func EventsSubscribe(remote string) context.CancelFunc {
 	log.Debug("Event subscribe remote: ", remote)
 
 	txs := make(chan interface{})
@@ -54,12 +49,14 @@ func EventsSubscribe(conf *config.Config, remote string, e chan<- error) context
 	cancel, err := SubscribeRemote(remote,
 		"cassini", "tm.event = 'Tx'  AND qcp.sequence > 0", txs)
 	if err != nil {
-		e <- err
-		log.Errorf("Remote [%s] : '%s'", remote, err)
+		log.Errorf("subscibe events failed - remote [%s] : '%s'", remote, err)
+		log.Flush()
+		os.Exit(1)
 	}
 	//defer cancel() //TODO  panic
 
 	go func() {
+		nats := config.GetConfig().Nats
 		for ed := range txs {
 
 			eventData := ed.(ttypes.EventDataTx)
@@ -71,7 +68,7 @@ func EventsSubscribe(conf *config.Config, remote string, e chan<- error) context
 
 			event := ctypes.Event{NodeAddress: remote, CassiniEventDataTx: cassiniEventDataTx}
 
-			_, err := route.Event2queue(conf, &event)
+			_, err := route.Event2queue(nats, &event)
 
 			if err != nil {
 				log.Errorf("failed route event to message queue,%s", err.Error())

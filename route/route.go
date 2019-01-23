@@ -2,7 +2,7 @@ package route
 
 import (
 	"errors"
-	"github.com/QOSGroup/cassini/config"
+
 	"github.com/QOSGroup/cassini/log"
 	mq "github.com/QOSGroup/cassini/msgqueue"
 	"github.com/QOSGroup/cassini/types"
@@ -11,7 +11,8 @@ import (
 
 //type route struct{}
 
-func Event2queue(conf *config.Config, event *types.Event) (subject string, err error) {
+// Event2queue produce event to message queue (Nats)
+func Event2queue(nats string, event *types.Event) (subject string, err error) {
 
 	if event == nil || event.HashBytes == nil || event.From == "" || event.To == "" || event.NodeAddress == "" {
 
@@ -22,7 +23,7 @@ func Event2queue(conf *config.Config, event *types.Event) (subject string, err e
 
 	subject = event.From + "2" + event.To
 
-	producer := mq.NATSProducer{ServerUrls: conf.Nats, Subject: subject}
+	producer := mq.NATSProducer{ServerUrls: nats, Subject: subject}
 
 	np, err := producer.Connect() //TODO don't connect every time
 
