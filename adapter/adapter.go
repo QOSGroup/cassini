@@ -30,23 +30,23 @@ type HandlerService interface {
 	PublishEvent(e *tmtypes.EventDataTx) error
 }
 
-// Adapter 适配接口封装，封装交易广播接口和交易接收接口。
+// RemoteAdapter 适配接口封装，封装交易广播接口和交易接收接口。
 //
 // 交易广播接口（ Broadcaster ）为调用端检测到交易事件时，由调用端调用;
 // 交易接收接口（ Receiver ）为中继适配服务接收到远端中继广播的交易后，由适配服务回调通知调用方接收到远端跨链交易。
-type Adapter struct {
+type RemoteAdapter struct {
 	HandlerService
 	Broadcaster
 	Receiver
 }
 
-// NewAdapter 创建新的交易广播器
-func NewAdapter(name, id, listenAddr string, r Receiver, b Broadcaster) (*Adapter, error) {
+// NewRemoteAdapter 创建新的交易广播器
+func NewRemoteAdapter(name, id, listenAddr string, r Receiver, b Broadcaster) (*RemoteAdapter, error) {
 	s, err := NewHandlerService(name, id, listenAddr)
 	if err != nil {
 		return nil, err
 	}
-	a := &Adapter{
+	a := &RemoteAdapter{
 		HandlerService: s,
 		Receiver:       r}
 	if b == nil {
@@ -61,7 +61,7 @@ func NewAdapter(name, id, listenAddr string, r Receiver, b Broadcaster) (*Adapte
 // 作为接入链跨链交易的缓存以提高查询的相关功能的执行效率。
 // 交易在广播器中不会缓存，而是直接转发给中继适配服务。
 type DefaultBroadcaster struct {
-	adapter *Adapter
+	adapter *RemoteAdapter
 }
 
 // BroadcastTx 实现交易广播接口，调用响应的交易及交易事件发布接口，以通过中继跨链提交交易以最终完成交易。
