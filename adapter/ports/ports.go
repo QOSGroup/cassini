@@ -38,7 +38,7 @@ type AdapterService interface {
 	Start() error
 	Sync() error
 	Stop() error
-	Subcribe(listener EventsListener)
+	Subscribe(listener EventsListener)
 }
 
 /*
@@ -124,7 +124,7 @@ func (p *defaultPorts) Init() {
 			port:  port}
 		a.Start()
 		a.Sync()
-		a.Subcribe(listener)
+		a.Subscribe(listener)
 		return a, nil
 	}
 	p.RegisterBuilder("qos", builder)
@@ -213,8 +213,8 @@ func (a *qosAdapter) Stop() error {
 	return nil
 }
 
-func (a *qosAdapter) Subcribe(listener EventsListener) {
-	log.Infof("Starting event subcribe: %s", GetAdapterKey(a))
+func (a *qosAdapter) Subscribe(listener EventsListener) {
+	log.Infof("Starting event subscribe: %s", GetAdapterKey(a))
 	remote := "tcp://" + GetNodeAddress(a)
 	// go event.EventsSubscribe(remote)
 	txs := make(chan interface{})
