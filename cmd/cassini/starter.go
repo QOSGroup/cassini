@@ -3,14 +3,16 @@ package main
 import (
 	"context"
 	"os"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/QOSGroup/cassini/adapter/ports"
+	"github.com/QOSGroup/cassini/concurrency"
 	"github.com/QOSGroup/cassini/config"
-	"github.com/QOSGroup/cassini/event"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/msgqueue"
-	"github.com/QOSGroup/cassini/concurrency"
 )
 
 // 命令行 start 命令执行方法
@@ -48,16 +50,11 @@ var starter = func(conf *config.Config) (cancel context.CancelFunc, err error) {
 		log.Tracef("qsc: %s %s", qsc.Name, qsc.NodeAddress)
 	}
 
-	log.Info("Starting event subscriber...")
+	log.Info("Starting adapter ports...")
 	//启动事件监听 chain node
 	w.Add(1)
 	go func() {
-		_, err = event.StartEventSubscibe(conf)
-		if err != nil {
-			log.Errorf("Start event subscribe error: %s", err)
-			log.Flush()
-			os.Exit(1)
-		}
+		startAdapterPorts(conf)
 		w.Done()
 	}()
 
@@ -79,4 +76,36 @@ var starter = func(conf *config.Config) (cancel context.CancelFunc, err error) {
 		log.Info("Cassini started ")
 	}()
 	return
+}
+
+func startAdapterPorts(conf *config.Config) {
+	// _, err = event.StartEventSubscibe(conf)
+	// if err != nil {
+	// 	log.Errorf("Start event subscribe error: %s", err)
+	// 	log.Flush()
+	// 	os.Exit(1)
+	// }
+	for _, qsc := range conf.Qscs {
+		for _, nodeAddr := range strings.Split(qsc.NodeAddress, ",") {
+			// go EventsSubscribe(conf.Nats, "tcp://"+nodeAddr, es)
+			// subEventFrom += fmt.Sprintf("[%s] ", nodeAddr)
+			registerAdapter(nodeAddr, qsc.Name)
+		}
+	}
+}
+
+func registerAdapter(nodeAddr string, chain string) {
+	addrs := strings.Split(nodeAddr, ":")
+	if len(addrs) == 2 {
+		port, err := strconv.Atoi(addrs[1])
+		if err == nil {
+			ports.RegisterAdapter(addrs[0], port, chain)
+			return
+		}
+		log.Errorf("Node address parse error: %s, %v", nodeAddr, err)
+	}
+	log.Errorf("Adapter ports start error: can not parse node address %s", nodeAddr)
+	log.Flush()
+	os.Exit(1)
+
 }
