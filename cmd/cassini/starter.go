@@ -12,7 +12,7 @@ import (
 	"github.com/QOSGroup/cassini/concurrency"
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/log"
-	"github.com/QOSGroup/cassini/msgqueue"
+	"github.com/QOSGroup/cassini/consensus"
 )
 
 // 命令行 start 命令执行方法
@@ -62,7 +62,7 @@ var starter = func(conf *config.Config) (cancel context.CancelFunc, err error) {
 	//启动nats 消费
 	w.Add(1)
 	go func() {
-		err = msgqueue.StartQcpConsume(conf)
+		err = consensus.StartQcpConsume(conf)
 		if err != nil {
 			log.Errorf("Start qcp consume error: %s", err)
 			log.Flush()

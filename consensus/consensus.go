@@ -2,10 +2,14 @@ package consensus
 
 import (
 	"errors"
-
+	"fmt"
+	"strings"
+	"sync"
+	"time"
+	
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/log"
-
+	"github.com/QOSGroup/cassini/msgqueue"
 	"github.com/QOSGroup/cassini/types"
 	"github.com/nats-io/go-nats"
 	"github.com/tendermint/go-amino"
@@ -13,9 +17,6 @@ import (
 
 	"github.com/QOSGroup/cassini/restclient"
 	"github.com/tendermint/tendermint/libs/common"
-	"strings"
-	"sync"
-	"time"
 )
 
 type consResult int
@@ -34,6 +35,135 @@ type ConsEngine struct {
 	from     string
 	to       string
 	mtx      sync.RWMutex
+}
+
+var wg sync.WaitGroup
+
+// StartQcpConsume Start to consume tx msg
+func StartQcpConsume(conf *config.Config) (err error) {
+
+	// qsconfigs := config.DefaultQscConfig()
+	qsconfigs := conf.Qscs
+
+	if len(qsconfigs) < 2 {
+		return errors.New("config error , at least two chain names ")
+	}
+
+	var subjects string
+
+	es := make(chan error, 1024) //TODO 1024参数按需修改
+	defer close(es)
+
+	engines := make([]*ConsEngine, 0)
+	var ce *ConsEngine
+	for i, qsconfig := range qsconfigs {
+		for j := i + 1; j < len(qsconfigs); j++ {
+			wg.Add(2)
+
+			ce = createConsEngine(qsconfigs[j].Name, qsconfig.Name, conf, es)
+			engines = append(engines, ce)
+			ce = createConsEngine(qsconfig.Name, qsconfigs[j].Name, conf, es)
+			engines = append(engines, ce)
+
+			subjects += fmt.Sprintf("[%s] [%s]", qsconfigs[j].Name+"2"+qsconfig.Name, qsconfig.Name+"2"+qsconfigs[j].Name)
+
+		}
+	}
+
+	wg.Wait()
+
+	if len(es) > 0 {
+		for e := range es {
+			log.Error(e)
+		}
+		return errors.New("couldn't start qcp consumer")
+	}
+
+	log.Infof("listening on subjects %s", subjects)
+
+	for _, ce := range engines {
+		go ce.StartEngine()
+		go ce.F.StartFerry()
+	}
+
+	ticker := func(engines []*ConsEngine) {
+		log.Debugf("run roomkeeper...%d", len(engines))
+		// 定时触发共识引擎
+		tick := time.NewTicker(time.Duration(conf.EventWaitMillitime*10) * time.Millisecond)
+		for range tick.C {
+			log.Debug("run roomkeeper...")
+			for _, ce := range engines {
+				ce.RoomKeeper()
+			}
+		}
+	}
+	go ticker(engines)
+
+	return
+}
+
+func createConsEngine(from, to string, conf *config.Config, e chan<- error) (ce *ConsEngine) {
+	ce = NewConsEngine(from, to)
+
+	seq, err := ce.F.GetSequenceFromChain(from, to, "in") // seq= toChain's in/fromchain/maxseq
+	if err != nil {
+		log.Errorf("Create consensus engine error: %v", err)
+	} else {
+		log.Debugf("Create consensus engine query chain %s in-sequence: %d", to, seq)
+		ce.SetSequence(from, to, seq)
+	}
+
+	go qcpConsume(ce, from, to, conf, e)
+	return ce
+}
+
+//QcpConsumer consume the message from nats server
+//
+// from ,to is chain name for example "QOS"
+func qcpConsume(ce *ConsEngine, from, to string, conf *config.Config, e chan<- error) {
+	log.Debugf("Consume qcp f.t[%s %s]", from, to)
+
+	var i int64
+
+	defer wg.Done()
+
+	cb := func(m *nats.Msg) {
+
+		i++
+
+		tx := types.Event{}
+		amino.UnmarshalBinary(m.Data, &tx)
+
+		log.Infof("[#%d] Consume subject [%s] sequence [#%d] nodeAddress '%s'", i, m.Subject, tx.Sequence, tx.NodeAddress)
+
+		// 监听到交易事件后立即查询需要等待一段时间才能查询到交易数据；
+		//TODO 优化
+		// 需要监听下一个块的New Block 事件以确认交易数据入块，abci query 接口才能够查询出交易；
+		// 同时提供定时出发机制，以保证共识模块在交易事件丢失或网络错误等问题出现时仍然能够正常运行。
+		//if conf.EventWaitMillitime > 0 {
+		//	time.Sleep(time.Duration(conf.EventWaitMillitime) * time.Millisecond)
+		//}
+
+		ce.Add2Engine(m)
+	}
+
+	consummer := msgqueue.NATSConsumer{
+		ServerUrls: conf.Nats,
+		Subject:    from + "2" + to,
+		CallBack:   cb}
+
+	nc, err := consummer.Connect()
+	if err != nil {
+		e <- err
+		return
+	}
+
+	if err = consummer.Consume(nc); err != nil {
+		e <- err
+		return
+	}
+
+	return
 }
 
 // NewConsEngine New a consensus engine

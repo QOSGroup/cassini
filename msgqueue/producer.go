@@ -2,26 +2,30 @@ package msgqueue
 
 import (
 	"errors"
+	"time"
+
 	"github.com/QOSGroup/cassini/log"
 	"github.com/nats-io/go-nats"
-	"time"
 )
 
 //type Producer interface {
 //	Produce(nc *nats.Conn, msg []byte) error
 //}
 
+// NATSProducer nats producer client
 type NATSProducer struct {
 	ServerUrls string //消息队列服务地址，多个用","分割  例如 "nats://192.168.168.195:4222，nats://192.168.168.195:4223"
 
 	Subject string //主题
 }
 
+// Connect to nats cluster
 func (n *NATSProducer) Connect() (nc *nats.Conn, err error) {
 
 	return connect2Nats(n.ServerUrls)
 }
 
+// Produce msg to nats cluster
 func (n *NATSProducer) Produce(nc *nats.Conn, msg []byte) (err error) {
 
 	if nc == nil {
@@ -62,7 +66,7 @@ func (n *NATSProducer) Produce(nc *nats.Conn, msg []byte) (err error) {
 	return nil
 }
 
-//TODO
+// ProduceWithReply msg to nats cluster
 func (n *NATSProducer) ProduceWithReply(nc *nats.Conn, reply string, payload []byte) error {
 
 	msg, err := nc.Request(n.Subject, payload, 100*time.Millisecond)
