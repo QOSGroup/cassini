@@ -12,17 +12,15 @@ import (
 	tmttypes "github.com/tendermint/tendermint/types"
 )
 
-// QosBuilder is default builder for qos chain
-var QosBuilder Builder = func(config AdapterConfig) (AdapterService, error) {
-	a := &QosAdapter{config: &config}
-	a.Start()
-	a.Sync()
-	a.Subscribe(config.Listener)
-	return a, nil
-}
-
 func init() {
-	GetPortsIncetance().RegisterBuilder("qos", QosBuilder)
+	builder := func(config AdapterConfig) (AdapterService, error) {
+		a := &QosAdapter{config: &config}
+		a.Start()
+		a.Sync()
+		a.Subscribe(config.Listener)
+		return a, nil
+	}
+	GetPortsIncetance().RegisterBuilder("qos", builder)
 }
 
 // Adapter Chain adapter interface for consensus engine ( consensus.ConsEngine )
@@ -60,17 +58,18 @@ type AdapterService interface {
 }
 
 // AdapterConfig is parameters for build an AdapterService
-type AdapterConfig struct{
+type AdapterConfig struct {
 	ChainName string
-	IP       string
-	Port     int
-	Query string
-	Listener EventsListener
+	ChainType string
+	IP        string
+	Port      int
+	Query     string
+	Listener  EventsListener
 }
 
 // QosAdapter provides adapter for qos chain
 type QosAdapter struct {
-	config *AdapterConfig
+	config   *AdapterConfig
 	sequence int64
 	client   *restclient.RestClient
 	cancels  []context.CancelFunc

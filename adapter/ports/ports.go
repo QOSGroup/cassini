@@ -80,7 +80,7 @@ func (p *defaultPorts) Register(conf *AdapterConfig) (err error) {
 			return fmt.Errorf("adapter already registered: %s", adapterKey)
 		}
 	}
-	if builder, ok := p.builders[conf.ChainName]; ok {
+	if builder, ok := p.builders[conf.ChainType]; ok {
 		if conf.Listener == nil {
 			nats := config.GetConfig().Nats
 			conf.Listener = func(event *types.Event, adapter Adapter) {

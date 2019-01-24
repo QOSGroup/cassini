@@ -45,13 +45,13 @@ func subscribe(remote string, query string) (context.CancelFunc, error) {
 	}
 	conf := &ports.AdapterConfig{
 		ChainName: "cassini-events",
+		ChainType: "qos",
 		IP:        ip,
 		Port:      port,
 		Query:     query}
 	conf.Listener = func(event *types.Event, adapter ports.Adapter) {
 		handle(event)
 	}
-	ports.GetPortsIncetance().RegisterBuilder(conf.ChainName, ports.QosBuilder)
 	ports.RegisterAdapter(conf)
 	log.Infof("Subscribe successful - remote: %v, subscribe: %v", remote, query)
 
