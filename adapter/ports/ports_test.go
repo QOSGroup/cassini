@@ -49,7 +49,7 @@ func TestGetAdapterKey(t *testing.T) {
 		ChainName: "test",
 		IP:        "192.168.1.111",
 		Port:      26657}
-	a := &qosAdapter{config: conf}
+	a := &QosAdapter{config: conf}
 	key := GetAdapterKey(a)
 	assert.Equal(t, "test://192.168.1.111:26657", key)
 
@@ -57,7 +57,7 @@ func TestGetAdapterKey(t *testing.T) {
 		ChainName: "target-chain",
 		IP:        "127.0.0.1",
 		Port:      8080}
-	a = &qosAdapter{config: conf}
+	a = &QosAdapter{config: conf}
 	key = GetAdapterKey(a)
 	assert.Equal(t, "target-chain://127.0.0.1:8080", key)
 }

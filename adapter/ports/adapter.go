@@ -68,6 +68,7 @@ type AdapterConfig struct{
 	Listener EventsListener
 }
 
+// QosAdapter provides adapter for qos chain
 type QosAdapter struct {
 	config *AdapterConfig
 	sequence int64
@@ -75,12 +76,14 @@ type QosAdapter struct {
 	cancels  []context.CancelFunc
 }
 
+// Start qos adapter service
 func (a *QosAdapter) Start() error {
 	a.client = restclient.NewRestClient(GetNodeAddress(a))
 	a.cancels = make([]context.CancelFunc, 0)
 	return nil
 }
 
+// Sync status for qos adapter service
 func (a *QosAdapter) Sync() error {
 	seq, err := a.client.GetSequence(a.config.ChainName, "in")
 	if err == nil {
@@ -93,6 +96,7 @@ func (a *QosAdapter) Sync() error {
 	return err
 }
 
+// Stop qos adapter service
 func (a *QosAdapter) Stop() error {
 	if a.client != nil {
 		// a.client.close()
@@ -100,6 +104,7 @@ func (a *QosAdapter) Stop() error {
 	return nil
 }
 
+// Subscribe events from qos chain
 func (a *QosAdapter) Subscribe(listener EventsListener) {
 	log.Infof("Starting event subscribe: %s", GetAdapterKey(a))
 	remote := "tcp://" + GetNodeAddress(a)
@@ -109,10 +114,12 @@ func (a *QosAdapter) Subscribe(listener EventsListener) {
 	go a.eventHandle(listener, remote, txs)
 }
 
+// SubmitTx submit Tx to qos chain
 func (a *QosAdapter) SubmitTx(tx *txs.TxQcp) error {
 	return nil
 }
 
+// ObtainTx search Tx from qos chain
 func (a *QosAdapter) ObtainTx(sequence int64) (qcp *txs.TxQcp, err error) {
 	qcp, err = a.client.GetTxQcp(a.GetChainName(), sequence)
 	// if err != nil && !strings.Contains(err.Error(), restclient.ERR_emptyqcp) {
@@ -127,24 +134,29 @@ func (a *QosAdapter) ObtainTx(sequence int64) (qcp *txs.TxQcp, err error) {
 	return qcp, nil
 }
 
+// GetSequence returns sequence stored in QosAdapter
 func (a *QosAdapter) GetSequence() int64 {
 	return a.sequence
 }
 
+// Count return total number and consensus number of adapters for qos chain
 func (a *QosAdapter) Count() (totalNumber int, consensusNumber int) {
 	totalNumber = GetPortsIncetance().Count(a.GetChainName())
 	consensusNumber = Consensus2of3(totalNumber)
 	return
 }
 
+// GetChainName returns chain's name
 func (a *QosAdapter) GetChainName() string {
 	return a.config.ChainName
 }
 
+// GetIP returns chain node's ip
 func (a *QosAdapter) GetIP() string {
 	return a.config.IP
 }
 
+// GetPort returns chain node's port
 func (a *QosAdapter) GetPort() int {
 	return a.config.Port
 }
