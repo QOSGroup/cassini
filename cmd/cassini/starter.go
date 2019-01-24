@@ -89,28 +89,29 @@ func startAdapterPorts(conf *config.Config) {
 		for _, nodeAddr := range strings.Split(qsc.NodeAddress, ",") {
 			// go EventsSubscribe(conf.Nats, "tcp://"+nodeAddr, es)
 			// subEventFrom += fmt.Sprintf("[%s] ", nodeAddr)
-			registerAdapter(nodeAddr, qsc.Name)
+			registerAdapter(nodeAddr, qsc)
 		}
 	}
 }
 
-func registerAdapter(nodeAddr string, chainName string) {
+func registerAdapter(nodeAddr string, qsc *config.QscConfig) {
 	addrs := strings.Split(nodeAddr, ":")
 	if len(addrs) == 2 {
 		port, err := strconv.Atoi(addrs[1])
 		if err == nil {
 			conf := &ports.AdapterConfig{
-				ChainName: chainName,
+				ChainName: qsc.Name,
+				ChainType: qsc.Type,
 				IP:        addrs[0],
 				Port:      port}
 			ports.RegisterAdapter(conf)
 			return
 		}
 		log.Errorf("Chain[%s] node address parse error: %s, %v",
-			chainName, nodeAddr, err)
+			qsc.Name, nodeAddr, err)
 	}
 	log.Errorf("Adapter ports start error: can not parse chain[%s] node address %s",
-		chainName, nodeAddr)
+		qsc.Name, nodeAddr)
 	log.Flush()
 	os.Exit(1)
 

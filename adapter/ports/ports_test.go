@@ -46,15 +46,17 @@ func TestCreateAdapter(t *testing.T) {
 
 func TestRegisterAdapter(t *testing.T) {
 	chainName := "cassini-test"
+	chainType := "cassini-test-type"
 	var testBuilder Builder = func(config AdapterConfig) (AdapterService, error) {
 		a := &QosAdapter{config: &config}
 		return a, nil
 	}
-	GetPortsIncetance().RegisterBuilder(chainName, testBuilder)
+	GetPortsIncetance().RegisterBuilder(chainType, testBuilder)
 	ip := "192.168.1.100"
 	port := 9999
 	conf := &AdapterConfig{
 		ChainName: chainName,
+		ChainType: chainType,
 		IP:        ip,
 		Port:      port}
 	err := RegisterAdapter(conf)
