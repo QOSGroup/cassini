@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 	"time"
-	
+
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/msgqueue"
@@ -260,7 +260,7 @@ func (c *ConsEngine) ConSequence() consResult { //交易还没产生和共识出
 	var bempty bool
 	for _, node := range strings.Split(nodes, ",") {
 
-		qcp, err := c.F.queryTxQcpFromNode(c.to, node, c.sequence) // be (c.to, node, c.sequence)
+		qcp, err := c.F.queryTxQcpFromNode(c.from, c.to, node, c.sequence) // be (c.to, node, c.sequence)
 
 		if err != nil || qcp == nil {
 			if strings.Contains(err.Error(), restclient.ERR_emptyqcp) {

@@ -28,6 +28,7 @@ func init() {
 type Adapter interface {
 	SubmitTx(tx *txs.TxQcp) error
 	ObtainTx(sequence int64) (*txs.TxQcp, error)
+	QuerySequence(chainName string, inout string) (int64, error)
 	GetSequence() int64
 	// Count Calculate the total and consensus number for chain
 	Count() (totalNumber int, consensusNumber int)
@@ -115,7 +116,7 @@ func (a *QosAdapter) Subscribe(listener EventsListener) {
 
 // SubmitTx submit Tx to qos chain
 func (a *QosAdapter) SubmitTx(tx *txs.TxQcp) error {
-	return nil
+	return a.client.PostTxQcp(a.config.ChainName, tx)
 }
 
 // ObtainTx search Tx from qos chain
@@ -131,6 +132,11 @@ func (a *QosAdapter) ObtainTx(sequence int64) (qcp *txs.TxQcp, err error) {
 	}
 
 	return qcp, nil
+}
+
+// QuerySequence query sequence for the specified chainName and inout ("in" or "out")
+func (a *QosAdapter)QuerySequence(chainName string, inout string) (int64, error){
+	return a.client.GetSequence(chainName, inout)
 }
 
 // GetSequence returns sequence stored in QosAdapter
