@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCreateFerry(t *testing.T) {
+func TestCreateAdapter(t *testing.T) {
 	// mc := config.TestQscMockConfig()
 	// cancelMock, err := mock.StartMock(*mc)
 	// defer cancelMock()
@@ -19,9 +19,15 @@ func TestCreateFerry(t *testing.T) {
 	ip := "127.0.0.1"
 	port := 27657
 	chain := "qos"
-	err := RegisterAdapter(ip, port, chain)
-	err = RegisterAdapter(ip, port+1, chain)
-	err = RegisterAdapter(ip, port+2, chain)
+	conf := &AdapterConfig{
+		ChainName: chain,
+		IP:        ip,
+		Port:      port}
+	err := RegisterAdapter(conf)
+	conf.Port++
+	err = RegisterAdapter(conf)
+	conf.Port++
+	err = RegisterAdapter(conf)
 
 	assert.NoError(t, err)
 
@@ -38,29 +44,39 @@ func TestCreateFerry(t *testing.T) {
 	}
 }
 
-func TestGetAdapterKey(t *testing.T) {
-	a := &qosAdapter{
-		chain: "test",
-		ip:    "192.168.1.111",
-		port:  26657}
-	key := GetAdapterKey(a)
-	assert.Equal(t, "test://192.168.1.111:26657", key)
+func TestRegisterAdapter(t *testing.T) {
+	chainName := "cassini-test"
+	var testBuilder Builder = func(config AdapterConfig) (AdapterService, error) {
+		a := &QosAdapter{config: &config}
+		return a, nil
+	}
+	GetPortsIncetance().RegisterBuilder(chainName, testBuilder)
+	ip := "192.168.1.100"
+	port := 9999
+	conf := &AdapterConfig{
+		ChainName: chainName,
+		IP:        ip,
+		Port:      port}
+	err := RegisterAdapter(conf)
+	assert.NoError(t, err)
 
-	a = &qosAdapter{
-		chain: "target-chain",
-		ip:    "127.0.0.1",
-		port:  8080}
-	key = GetAdapterKey(a)
-	assert.Equal(t, "target-chain://127.0.0.1:8080", key)
-}
+	c := GetPortsIncetance().Count(chainName)
+	assert.Equal(t, 1, c)
 
-func TestConsensus2of3(t *testing.T) {
-	c := Consensus2of3(3)
-	assert.Equal(t, 2, c)
+	err = RegisterAdapter(conf)
+	assert.Error(t, err)
+	err = RegisterAdapter(conf)
+	assert.Error(t, err)
 
-	c = Consensus2of3(4)
-	assert.Equal(t, 3, c)
+	conf.Port++
+	err = RegisterAdapter(conf)
+	assert.NoError(t, err)
+	conf.Port++
+	err = RegisterAdapter(conf)
+	assert.NoError(t, err)
 
-	c = Consensus2of3(5)
-	assert.Equal(t, 4, c)
+	var ads map[string]Adapter
+	ads, err = GetPortsIncetance().Get(chainName)
+	assert.NoError(t, err)
+	assert.Equal(t, 3, len(ads))
 }
