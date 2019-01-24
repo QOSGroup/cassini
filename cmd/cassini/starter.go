@@ -94,17 +94,23 @@ func startAdapterPorts(conf *config.Config) {
 	}
 }
 
-func registerAdapter(nodeAddr string, chain string) {
+func registerAdapter(nodeAddr string, chainName string) {
 	addrs := strings.Split(nodeAddr, ":")
 	if len(addrs) == 2 {
 		port, err := strconv.Atoi(addrs[1])
 		if err == nil {
-			ports.RegisterAdapter(addrs[0], port, chain)
+			conf := &ports.AdapterConfig{
+				ChainName: chainName,
+				IP:        addrs[0],
+				Port:      port}
+			ports.RegisterAdapter(conf)
 			return
 		}
-		log.Errorf("Node address parse error: %s, %v", nodeAddr, err)
+		log.Errorf("Chain[%s] node address parse error: %s, %v",
+			chainName, nodeAddr, err)
 	}
-	log.Errorf("Adapter ports start error: can not parse node address %s", nodeAddr)
+	log.Errorf("Adapter ports start error: can not parse chain[%s] node address %s",
+		chainName, nodeAddr)
 	log.Flush()
 	os.Exit(1)
 

@@ -4,34 +4,25 @@ import (
 	"context"
 	"os"
 
-	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/event"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/restclient"
-	"github.com/QOSGroup/cassini/route"
 	"github.com/QOSGroup/cassini/types"
 	"github.com/QOSGroup/qbase/txs"
 	tmttypes "github.com/tendermint/tendermint/types"
 )
 
+// QosBuilder is default builder for qos chain
+var QosBuilder Builder = func(config AdapterConfig) (AdapterService, error) {
+	a := &QosAdapter{config: &config}
+	a.Start()
+	a.Sync()
+	a.Subscribe(config.Listener)
+	return a, nil
+}
+
 func init() {
-	listener := func(event *types.Event, adapter Adapter) {
-		_, err := route.Event2queue(config.GetConfig().Nats, event)
-		if err != nil {
-			log.Errorf("failed route event to message queue,%s", err.Error())
-		}
-	}
-	builder := func(ip string, port int, chain string) (AdapterController, error) {
-		a := &qosAdapter{
-			chain: chain,
-			ip:    ip,
-			port:  port}
-		a.Start()
-		a.Sync()
-		a.Subscribe(listener)
-		return a, nil
-	}
-	GetPortsIncetance().RegisterBuilder("qos", builder)
+	GetPortsIncetance().RegisterBuilder("qos", QosBuilder)
 }
 
 // Adapter Chain adapter interface for consensus engine ( consensus.ConsEngine )
@@ -42,7 +33,7 @@ type Adapter interface {
 	GetSequence() int64
 	// Count Calculate the total and consensus number for chain
 	Count() (totalNumber int, consensusNumber int)
-	GetChain() string
+	GetChainName() string
 	GetIP() string
 	GetPort() int
 }
@@ -50,8 +41,8 @@ type Adapter interface {
 // EventsListener Listen Tx events from target chain
 type EventsListener func(event *types.Event, adapter Adapter)
 
-// AdapterService Chain adapter service interface for adapter pool manager ( adapter.Ports )
-type AdapterService interface {
+// AdapterController Chain adapter controller interface for adapter pool manager ( adapter.Ports )
+type AdapterController interface {
 	Start() error
 	Sync() error
 	Stop() error
@@ -59,32 +50,39 @@ type AdapterService interface {
 }
 
 /*
-AdapterController Inner cache type ( AdapterService and Adapter )
+AdapterService Inner cache type ( AdapterController and Adapter )
 
 Suitable for a variety of different block chain
 */
-type AdapterController interface {
-	AdapterService
+type AdapterService interface {
+	AdapterController
 	Adapter
 }
 
-type qosAdapter struct {
-	chain    string
-	ip       string
-	port     int
+// AdapterConfig is parameters for build an AdapterService
+type AdapterConfig struct{
+	ChainName string
+	IP       string
+	Port     int
+	Query string
+	Listener EventsListener
+}
+
+type QosAdapter struct {
+	config *AdapterConfig
 	sequence int64
 	client   *restclient.RestClient
 	cancels  []context.CancelFunc
 }
 
-func (a *qosAdapter) Start() error {
+func (a *QosAdapter) Start() error {
 	a.client = restclient.NewRestClient(GetNodeAddress(a))
 	a.cancels = make([]context.CancelFunc, 0)
 	return nil
 }
 
-func (a *qosAdapter) Sync() error {
-	seq, err := a.client.GetSequence(a.chain, "in")
+func (a *QosAdapter) Sync() error {
+	seq, err := a.client.GetSequence(a.config.ChainName, "in")
 	if err == nil {
 		if seq > 1 {
 			a.sequence = seq + 1
@@ -95,14 +93,14 @@ func (a *qosAdapter) Sync() error {
 	return err
 }
 
-func (a *qosAdapter) Stop() error {
+func (a *QosAdapter) Stop() error {
 	if a.client != nil {
 		// a.client.close()
 	}
 	return nil
 }
 
-func (a *qosAdapter) Subscribe(listener EventsListener) {
+func (a *QosAdapter) Subscribe(listener EventsListener) {
 	log.Infof("Starting event subscribe: %s", GetAdapterKey(a))
 	remote := "tcp://" + GetNodeAddress(a)
 	// go event.EventsSubscribe(remote)
@@ -111,12 +109,12 @@ func (a *qosAdapter) Subscribe(listener EventsListener) {
 	go a.eventHandle(listener, remote, txs)
 }
 
-func (a *qosAdapter) SubmitTx(tx *txs.TxQcp) error {
+func (a *QosAdapter) SubmitTx(tx *txs.TxQcp) error {
 	return nil
 }
 
-func (a *qosAdapter) ObtainTx(sequence int64) (qcp *txs.TxQcp, err error) {
-	qcp, err = a.client.GetTxQcp(a.chain, sequence)
+func (a *QosAdapter) ObtainTx(sequence int64) (qcp *txs.TxQcp, err error) {
+	qcp, err = a.client.GetTxQcp(a.GetChainName(), sequence)
 	// if err != nil && !strings.Contains(err.Error(), restclient.ERR_emptyqcp) {
 	// 	r := restclient.NewRestClient(node)
 	// 	f.rmap[add] = r
@@ -129,34 +127,33 @@ func (a *qosAdapter) ObtainTx(sequence int64) (qcp *txs.TxQcp, err error) {
 	return qcp, nil
 }
 
-func (a *qosAdapter) GetSequence() int64 {
+func (a *QosAdapter) GetSequence() int64 {
 	return a.sequence
 }
 
-func (a *qosAdapter) Count() (totalNumber int, consensusNumber int) {
-	totalNumber = GetPortsIncetance().Count(a.chain)
+func (a *QosAdapter) Count() (totalNumber int, consensusNumber int) {
+	totalNumber = GetPortsIncetance().Count(a.GetChainName())
 	consensusNumber = Consensus2of3(totalNumber)
 	return
 }
 
-func (a *qosAdapter) GetChain() string {
-	return a.chain
+func (a *QosAdapter) GetChainName() string {
+	return a.config.ChainName
 }
 
-func (a *qosAdapter) GetIP() string {
-	return a.ip
+func (a *QosAdapter) GetIP() string {
+	return a.config.IP
 }
 
-func (a *qosAdapter) GetPort() int {
-	return a.port
+func (a *QosAdapter) GetPort() int {
+	return a.config.Port
 }
 
-func (a *qosAdapter) subscribeRemote(remote string, txs chan<- interface{}) {
+func (a *QosAdapter) subscribeRemote(remote string, txs chan<- interface{}) {
 	log.Debug("Event subscribe remote: ", remote)
-
 	//TODO query 条件?? "tm.event = 'Tx' AND qcp.to != '' AND qcp.sequence > 0"
 	cancel, err := event.SubscribeRemote(remote,
-		"cassini", "tm.event = 'Tx'  AND qcp.sequence > 0", txs)
+		a.config.ChainName, a.config.Query, txs)
 	if err != nil {
 		log.Errorf("Subscibe events failed - remote [%s] : '%s'", remote, err)
 		log.Flush()
@@ -165,7 +162,7 @@ func (a *qosAdapter) subscribeRemote(remote string, txs chan<- interface{}) {
 	a.cancels = append(a.cancels, cancel)
 }
 
-func (a *qosAdapter) eventHandle(listener EventsListener, remote string, txs <-chan interface{}) {
+func (a *QosAdapter) eventHandle(listener EventsListener, remote string, txs <-chan interface{}) {
 	for ed := range txs {
 		edt := ed.(tmttypes.EventDataTx)
 		log.Debugf("Received event from[%s],'%s'", remote, edt)

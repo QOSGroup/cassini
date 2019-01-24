@@ -19,9 +19,15 @@ func TestCreateFerry(t *testing.T) {
 	ip := "127.0.0.1"
 	port := 27657
 	chain := "qos"
-	err := RegisterAdapter(ip, port, chain)
-	err = RegisterAdapter(ip, port+1, chain)
-	err = RegisterAdapter(ip, port+2, chain)
+	conf := &AdapterConfig{
+		ChainName: chain,
+		IP:        ip,
+		Port:      port}
+	err := RegisterAdapter(conf)
+	conf.Port++
+	err = RegisterAdapter(conf)
+	conf.Port++
+	err = RegisterAdapter(conf)
 
 	assert.NoError(t, err)
 
@@ -39,17 +45,19 @@ func TestCreateFerry(t *testing.T) {
 }
 
 func TestGetAdapterKey(t *testing.T) {
-	a := &qosAdapter{
-		chain: "test",
-		ip:    "192.168.1.111",
-		port:  26657}
+	conf := &AdapterConfig{
+		ChainName: "test",
+		IP:        "192.168.1.111",
+		Port:      26657}
+	a := &qosAdapter{config: conf}
 	key := GetAdapterKey(a)
 	assert.Equal(t, "test://192.168.1.111:26657", key)
 
-	a = &qosAdapter{
-		chain: "target-chain",
-		ip:    "127.0.0.1",
-		port:  8080}
+	conf = &AdapterConfig{
+		ChainName: "target-chain",
+		IP:        "127.0.0.1",
+		Port:      8080}
+	a = &qosAdapter{config: conf}
 	key = GetAdapterKey(a)
 	assert.Equal(t, "target-chain://127.0.0.1:8080", key)
 }
@@ -63,4 +71,11 @@ func TestConsensus2of3(t *testing.T) {
 
 	c = Consensus2of3(5)
 	assert.Equal(t, 4, c)
+}
+
+func TestParseNodeAddress(t *testing.T) {
+	ip, port, err := ParseNodeAddress("192.168.1.111:26657")
+	assert.NoError(t, err)
+	assert.Equal(t, 26657, port)
+	assert.Equal(t, "192.168.1.111", ip)
 }
