@@ -11,7 +11,16 @@ import (
 
 // GetAdapterKey Gen an adapter key
 func GetAdapterKey(a Adapter) string {
-	return fmt.Sprintf("%s://%s:%d", a.GetChainName(), a.GetIP(), a.GetPort())
+	return genAdapterKey(a.GetChainName(), a.GetIP(), a.GetPort())
+}
+
+// GetAdapterKeyByConfig Gen an adapter key from adapter config
+func GetAdapterKeyByConfig(c *AdapterConfig) string {
+	return genAdapterKey(c.ChainName, c.IP, c.Port)
+}
+
+func genAdapterKey(chainName, ip string, port int) string {
+	return fmt.Sprintf("%s://%s:%d", chainName, ip, port)
 }
 
 // GetNodeAddress Gen a node address

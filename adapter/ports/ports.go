@@ -72,6 +72,14 @@ func (p *defaultPorts) RegisterBuilder(chainName string, builder Builder) error 
 // otherwise create one and cache it.
 func (p *defaultPorts) Register(conf *AdapterConfig) (err error) {
 	var a AdapterService
+	adapterKey := GetAdapterKeyByConfig(conf)
+	var ads map[string]AdapterService
+	var ok bool
+	if ads, ok = p.adapters[conf.ChainName]; ok {
+		if a, ok = ads[adapterKey]; ok {
+			return fmt.Errorf("adapter already registered: %s", adapterKey)
+		}
+	}
 	if builder, ok := p.builders[conf.ChainName]; ok {
 		if conf.Listener == nil {
 			nats := config.GetConfig().Nats
@@ -90,8 +98,6 @@ func (p *defaultPorts) Register(conf *AdapterConfig) (err error) {
 		log.Warnf("no adapter builder found: %s", conf.ChainName)
 		return fmt.Errorf("no adapter builder found: %s", conf.ChainName)
 	}
-	var ads map[string]AdapterService
-	var ok bool
 	if ads, ok = p.adapters[conf.ChainName]; !ok {
 		ads = make(map[string]AdapterService, 0)
 		p.adapters[conf.ChainName] = ads
