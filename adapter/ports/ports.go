@@ -95,8 +95,9 @@ func (p *defaultPorts) Register(conf *AdapterConfig) (err error) {
 		}
 		a, err = builder(*conf)
 	} else {
-		log.Warnf("no adapter builder found: %s", conf.ChainName)
-		return fmt.Errorf("no adapter builder found: %s", conf.ChainName)
+		msg := fmt.Sprintf("no adapter builder found: %s", conf.ChainType)
+		log.Warnf(msg)
+		return fmt.Errorf(msg)
 	}
 	if ads, ok = p.adapters[conf.ChainName]; !ok {
 		ads = make(map[string]AdapterService, 0)

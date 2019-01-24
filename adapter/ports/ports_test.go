@@ -21,6 +21,7 @@ func TestCreateAdapter(t *testing.T) {
 	chain := "qos"
 	conf := &AdapterConfig{
 		ChainName: chain,
+		ChainType: chain,
 		IP:        ip,
 		Port:      port}
 	err := RegisterAdapter(conf)
