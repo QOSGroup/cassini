@@ -1,12 +1,13 @@
 package consensus
 
 import (
-	"github.com/QOSGroup/cassini/config"
-	"github.com/QOSGroup/cassini/restclient"
-	"github.com/QOSGroup/cassini/types"
-	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
+
+	"github.com/QOSGroup/cassini/adapter/ports"
+	"github.com/QOSGroup/cassini/config"
+	"github.com/QOSGroup/cassini/types"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAddMsgToMap(t *testing.T) {
@@ -30,7 +31,7 @@ func TestAddMsgToMap(t *testing.T) {
 	events2 = append(events2, newEvent("192.168.1.102:26657", "Byzantine"))
 
 	m := EngineMap{MsgMap: make(map[int64]map[string]string)}
-	f := newFerry("fromChain", "toChain", 1)
+	f := newFerry(t, "fromChain", "toChain", 1)
 
 	for i, event := range events {
 		j, err := m.AddMsgToMap(f, event, 3)
@@ -71,22 +72,35 @@ func newEvent(node, hash string) types.Event {
 	return event
 }
 
-func newFerry(from, to string, sequence int64) *Ferry {
+func newFerry(t *testing.T, from, to string, sequence int64) *Ferry {
 	conf, _ := config.LoadConfig("../config/config.conf")
-	f := &Ferry{sequence: 1, conf: conf}
-	f.from, f.to = from, to
-	f.ConsMap = &ConsensusMap{ConsMap: make(map[int64]map[string]string)}
-	f.rmap = make(map[string]*restclient.RestClient)
+
 	for _, node := range strings.Split(conf.GetQscConfig(from).NodeAddress, ",") {
-		add := GetAddressFromUrl(node)
-		f.rmap[add] = restclient.NewRestClient(node)
+		ip, port, err := ports.ParseNodeAddress(node)
+		assert.NoError(t, err)
+		conf := &ports.AdapterConfig{
+			ChainName: from,
+			ChainType: "qos",
+			IP:        ip,
+			Port:      port}
+		ports.RegisterAdapter(conf)
 
 	}
 	for _, node := range strings.Split(conf.GetQscConfig(to).NodeAddress, ",") {
-		add := GetAddressFromUrl(node)
-		f.rmap[add] = restclient.NewRestClient(node)
+		ip, port, err := ports.ParseNodeAddress(node)
+		assert.NoError(t, err)
+		conf := &ports.AdapterConfig{
+			ChainName: to,
+			ChainType: "qos",
+			IP:        ip,
+			Port:      port}
+		ports.RegisterAdapter(conf)
 
 	}
+
+	f := &Ferry{sequence: 1, conf: conf}
+	f.from, f.to = from, to
+	f.ConsMap = &ConsensusMap{ConsMap: make(map[int64]map[string]string)}
 
 	f.sequence = sequence
 
