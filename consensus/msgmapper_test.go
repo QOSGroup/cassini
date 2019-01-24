@@ -76,9 +76,9 @@ func newFerry(t *testing.T, from, to string, sequence int64) *Ferry {
 	conf, _ := config.LoadConfig("../config/config.conf")
 
 	for _, node := range strings.Split(conf.GetQscConfig(from).NodeAddress, ",") {
-		if node == "" {
-			continue
-		}
+		// if node == "" {
+		// 	continue
+		// }
 		ip, port, err := ports.ParseNodeAddress(node)
 		assert.NoError(t, err)
 		conf := &ports.AdapterConfig{
@@ -91,9 +91,9 @@ func newFerry(t *testing.T, from, to string, sequence int64) *Ferry {
 
 	}
 	for _, node := range strings.Split(conf.GetQscConfig(to).NodeAddress, ",") {
-		if node == "" {
-			continue
-		}
+		// if node == "" {
+		// 	continue
+		// }
 		ip, port, err := ports.ParseNodeAddress(node)
 		assert.NoError(t, err)
 		conf := &ports.AdapterConfig{
