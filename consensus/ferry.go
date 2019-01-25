@@ -327,7 +327,7 @@ func (f *Ferry) queryTxQcpFromNode(from, to, node string, sequence int64) (qcp *
 	ads, err = ports.GetAdapters(from)
 	if err == nil {
 		for _, a := range ads {
-			qcp, err = a.ObtainTx(sequence)
+			qcp, err = a.ObtainTx(to, sequence)
 			if err == nil {
 				return
 			}
@@ -340,7 +340,7 @@ func (f *Ferry) postTxQcp(to string, qcp *txs.TxQcp) (err error) {
 	ads, err := ports.GetAdapters(to)
 	if err == nil {
 		for _, a := range ads {
-			err := a.SubmitTx(qcp)
+			err := a.SubmitTx(to, qcp)
 			if err == nil {
 				return nil
 			}
