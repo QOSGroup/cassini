@@ -70,6 +70,9 @@ type QscConfig struct {
 	// Name 链名称
 	Name string `json:"name,omitempty"`
 
+	// Type 链类型
+	Type string `json:"type,omitempty"`
+
 	// Signature if need sign tx data for this chain
 	// true - required
 	// false/default - not required

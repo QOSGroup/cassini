@@ -11,6 +11,7 @@ import (
 
 	"errors"
 	"fmt"
+	"github.com/QOSGroup/cassini/adapter/ports"
 	cmn "github.com/QOSGroup/cassini/common"
 	"github.com/QOSGroup/cassini/concurrency"
 	"github.com/QOSGroup/cassini/config"
@@ -27,28 +28,16 @@ type Ferry struct {
 	from, to string
 	sequence int64 //already ferry max sequence
 
-	rmap map[string]*restclient.RestClient //node -> restclient
-
 	ConsMap *ConsensusMap
 	conf    *config.Config
 }
 
+// NewFerry new a ferry for relaying transactions
 func NewFerry(conf *config.Config, from, to string, sequence int64) *Ferry {
 
 	f := &Ferry{sequence: 1, conf: conf}
 	f.from, f.to = from, to
 	f.ConsMap = &ConsensusMap{ConsMap: make(map[int64]map[string]string)}
-	f.rmap = make(map[string]*restclient.RestClient)
-	for _, node := range strings.Split(conf.GetQscConfig(from).NodeAddress, ",") {
-		add := GetAddressFromUrl(node)
-		f.rmap[add] = restclient.NewRestClient(node)
-
-	}
-	for _, node := range strings.Split(conf.GetQscConfig(to).NodeAddress, ",") {
-		add := GetAddressFromUrl(node)
-		f.rmap[add] = restclient.NewRestClient(node)
-
-	}
 
 	seq, _ := f.GetSequenceFromChain(from, to, "in")
 	if seq > 1 {
@@ -70,7 +59,7 @@ func NewFerry(conf *config.Config, from, to string, sequence int64) *Ferry {
 	return f
 }
 
-// StartEngine 启动共识引擎尝试处理下一个交易
+// StartFerry 启动共识引擎尝试处理下一个交易
 func (f *Ferry) StartFerry() error {
 
 	for {
@@ -116,24 +105,34 @@ func (f *Ferry) SetSequence(from, to string, s int64) {
 	log.Infof("f.t[%s %s] ferry sequence set to [#%d]", from, to, f.sequence)
 }
 
-//在to chain上查询 来自/要去 from chain 的 sequence
+//GetSequenceFromChain 在to chain上查询 来自/要去 from chain 的 sequence
 func (f *Ferry) GetSequenceFromChain(from, to, inout string) (int64, error) {
 
-	qsc := f.conf.GetQscConfig(to)
+	// qsc := f.conf.GetQscConfig(to)
 
-	nodeto := strings.Split(qsc.NodeAddress, ",")
+	// nodeto := strings.Split(qsc.NodeAddress, ",")
 
+	// var seq int64
+	// var err error
+	// for _, n := range nodeto {
+	// 	add := GetAddressFromUrl(n)
+	// 	r := f.rmap[add]
+	// 	seq, err = r.GetSequence(from, inout)
+	// 	if err == nil {
+	// 		return seq, nil
+	// 	}
+	// }
 	var seq int64
-	var err error
-	for _, n := range nodeto {
-		add := GetAddressFromUrl(n)
-		r := f.rmap[add]
-		seq, err = r.GetSequence(from, inout)
+	ads, err := ports.GetAdapters(to)
+	if err != nil {
+		return -1, err
+	}
+	for _, a := range ads {
+		seq, err = a.QuerySequence(from, inout)
 		if err == nil {
 			return seq, nil
 		}
 	}
-
 	return -1, err
 }
 
@@ -215,7 +214,7 @@ EndGet:
 
 	for _, node := range strings.Split(nodes, ",") {
 
-		qcp, err = f.getTxQcpFromNode(to, hash, node, sequence)
+		qcp, err = f.getTxQcpFromNode(from, to, hash, node, sequence)
 
 		if err != nil || qcp == nil {
 			if !strings.Contains(err.Error(), restclient.ERR_emptyqcp) {
@@ -242,47 +241,47 @@ EndGet:
 	return qcp, nil
 }
 
-func (f *Ferry) getTxQcpParalle(from, to, hash, nodes string, sequence int64) (qcps []txs.TxQcp, err error) {
+// func (f *Ferry) getTxQcpParalle(from, to, hash, nodes string, sequence int64) (qcps []txs.TxQcp, err error) {
 
-	nodeList := strings.Split(nodes, ",")
-	var tasks = make([]common.Task, len(nodeList))
+// 	nodeList := strings.Split(nodes, ",")
+// 	var tasks = make([]common.Task, len(nodeList))
 
-	for i := 0; i < len(tasks); i++ {
-		tasks[i] = func(i int) (res interface{}, err error, abort bool) {
-			qcp, err := f.getTxQcpFromNode(to, hash, nodeList[i], sequence)
-			return qcp, err, false //TODO
-		}
-	}
+// 	for i := 0; i < len(tasks); i++ {
+// 		tasks[i] = func(i int) (res interface{}, err error, abort bool) {
+// 			qcp, err := f.getTxQcpFromNode(to, hash, nodeList[i], sequence)
+// 			return qcp, err, false //TODO
+// 		}
+// 	}
 
-	var tResults, ok = common.Parallel(tasks...)
-	if !ok {
-		log.Error("parallel failed")
-	}
+// 	var tResults, ok = common.Parallel(tasks...)
+// 	if !ok {
+// 		log.Error("parallel failed")
+// 	}
 
-	var failTasks int
-	for i := 0; i < len(tasks); i++ {
-		tResult, ok := tResults.LatestResult(i)
-		if !ok {
-			failTasks++
-		} else if tResult.Error != nil {
-			failTasks++
-		} else {
-			qcps = append(qcps, *(tResult.Value).(*txs.TxQcp))
-		}
+// 	var failTasks int
+// 	for i := 0; i < len(tasks); i++ {
+// 		tResult, ok := tResults.LatestResult(i)
+// 		if !ok {
+// 			failTasks++
+// 		} else if tResult.Error != nil {
+// 			failTasks++
+// 		} else {
+// 			qcps = append(qcps, *(tResult.Value).(*txs.TxQcp))
+// 		}
 
-	}
+// 	}
 
-	if len(qcps)*2 > failTasks { //TODO 加入共识逻辑
-		return qcps, nil
-	}
+// 	if len(qcps)*2 > failTasks { //TODO 加入共识逻辑
+// 		return qcps, nil
+// 	}
 
-	return nil, errors.New("parallel get qcp transaction from chain " + from + " failed")
-}
+// 	return nil, errors.New("parallel get qcp transaction from chain " + from + " failed")
+// }
 
 //getTxQcpFromNode get QCP transactions from single chain node
-func (f *Ferry) getTxQcpFromNode(to, hash, node string, sequence int64) (qcp *txs.TxQcp, err error) {
+func (f *Ferry) getTxQcpFromNode(from, to, hash, node string, sequence int64) (qcp *txs.TxQcp, err error) {
 
-	qcp, err = f.queryTxQcpFromNode(to, node, sequence)
+	qcp, err = f.queryTxQcpFromNode(from, to, node, sequence)
 
 	if err != nil || qcp == nil {
 		return nil, err
@@ -308,48 +307,45 @@ func (f *Ferry) getTxQcpFromNode(to, hash, node string, sequence int64) (qcp *tx
 //queryTxQcpFromNode get TxQcp from node
 //
 //to destnation chain id
-func (f *Ferry) queryTxQcpFromNode(to, node string, sequence int64) (qcp *txs.TxQcp, err error) {
+func (f *Ferry) queryTxQcpFromNode(from, to, node string, sequence int64) (qcp *txs.TxQcp, err error) {
 
-	add := GetAddressFromUrl(node)
-	r := f.rmap[add]
-	qcp, err = r.GetTxQcp(to, sequence)
-	if err != nil && !strings.Contains(err.Error(), restclient.ERR_emptyqcp) {
-		r := restclient.NewRestClient(node)
-		f.rmap[add] = r
-		qcp, err = r.GetTxQcp(to, sequence)
+	// add := GetAddressFromUrl(node)
+	// r := f.rmap[add]
+	// qcp, err = r.GetTxQcp(to, sequence)
+	// if err != nil && !strings.Contains(err.Error(), restclient.ERR_emptyqcp) {
+	// 	r := restclient.NewRestClient(node)
+	// 	f.rmap[add] = r
+	// 	qcp, err = r.GetTxQcp(to, sequence)
+	// }
+
+	// if err != nil || qcp == nil {
+	// 	return nil, err
+	// }
+
+	// return qcp, nil
+	var ads map[string]ports.Adapter
+	ads, err = ports.GetAdapters(from)
+	if err == nil {
+		for _, a := range ads {
+			qcp, err = a.ObtainTx(sequence)
+			if err == nil {
+				return
+			}
+		}
 	}
-
-	if err != nil || qcp == nil {
-		return nil, err
-	}
-
-	return qcp, nil
+	return
 }
 
 func (f *Ferry) postTxQcp(to string, qcp *txs.TxQcp) (err error) {
-
-	success := false
-	qscConfig := f.conf.GetQscConfig(to)
-	toNodes := qscConfig.NodeAddress
-EndPost:
-	for _, node := range strings.Split(toNodes, ",") {
-
-		add := GetAddressFromUrl(node)
-		r := f.rmap[add]
-
-		err := r.PostTxQcp(to, qcp) //TODO 出错 r := restclient.NewRestClient(node)
-		if err != nil {
-			continue
+	ads, err := ports.GetAdapters(to)
+	if err == nil {
+		for _, a := range ads {
+			err := a.SubmitTx(qcp)
+			if err == nil {
+				return nil
+			}
 		}
-
-		success = true
-		break EndPost
+		err = errors.New("post qcp transaction failed")
 	}
-
-	if !success {
-		return errors.New("post qcp transaction failed")
-	}
-
-	return
-
+	return err
 }

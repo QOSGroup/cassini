@@ -3,8 +3,6 @@ package msgqueue
 import (
 	"testing"
 
-	"github.com/QOSGroup/cassini/config"
-	"github.com/QOSGroup/cassini/consensus"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/nats-io/go-nats"
 )
@@ -80,14 +78,19 @@ func BenchmarkNATSConsumer_Consume(b *testing.B) {
 			b.Error("expect the consume msg and the produce msg to match\n")
 		}
 	}
-	consummer := NATSConsumer{serverUrls: DEFAULTNATSURLS, subject: DEFAULTSUBJECT, CallBack: cb}
+	consummer := NATSConsumer{
+		ServerUrls: DEFAULTNATSURLS,
+		Subject:    DEFAULTSUBJECT,
+		CallBack:   cb}
 	nc, err := consummer.Connect()
 	if err != nil {
 		b.Error("couldn't connect to msg server")
 	}
 	consummer.Consume(nc)
 
-	producer := NATSProducer{ServerUrls: DEFAULTNATSURLS, Subject: DEFAULTSUBJECT}
+	producer := NATSProducer{
+		ServerUrls: DEFAULTNATSURLS,
+		Subject:    DEFAULTSUBJECT}
 	np, err := producer.Connect()
 	if err != nil {
 		b.Error("couldn't connect to msg server")
@@ -97,14 +100,14 @@ func BenchmarkNATSConsumer_Consume(b *testing.B) {
 	}
 }
 
-func newConsEngine(from, to string) *consensus.ConsEngine {
+// func newConsEngine(from, to string) *consensus.ConsEngine {
 
-	conf, _ := config.LoadConfig("../config/config.conf")
-	ce := new(consensus.ConsEngine)
-	ce.M = &consensus.EngineMap{MsgMap: make(map[int64]map[string]string)}
-	ce.F = consensus.NewFerry(conf, from, to, 0)
+// 	conf, _ := config.LoadConfig("../config/config.conf")
+// 	ce := new(consensus.ConsEngine)
+// 	ce.M = &consensus.EngineMap{MsgMap: make(map[int64]map[string]string)}
+// 	ce.F = consensus.NewFerry(conf, from, to, 0)
 
-	ce.Setfrom(from)
-	ce.Setto(to)
-	return ce
-}
+// 	ce.Setfrom(from)
+// 	ce.Setto(to)
+// 	return ce
+// }

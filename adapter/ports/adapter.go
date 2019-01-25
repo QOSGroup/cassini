@@ -12,17 +12,15 @@ import (
 	tmttypes "github.com/tendermint/tendermint/types"
 )
 
-// QosBuilder is default builder for qos chain
-var QosBuilder Builder = func(config AdapterConfig) (AdapterService, error) {
-	a := &QosAdapter{config: &config}
-	a.Start()
-	a.Sync()
-	a.Subscribe(config.Listener)
-	return a, nil
-}
-
 func init() {
-	GetPortsIncetance().RegisterBuilder("qos", QosBuilder)
+	builder := func(config AdapterConfig) (AdapterService, error) {
+		a := &QosAdapter{config: &config}
+		a.Start()
+		a.Sync()
+		a.Subscribe(config.Listener)
+		return a, nil
+	}
+	GetPortsIncetance().RegisterBuilder("qos", builder)
 }
 
 // Adapter Chain adapter interface for consensus engine ( consensus.ConsEngine )
@@ -30,6 +28,7 @@ func init() {
 type Adapter interface {
 	SubmitTx(tx *txs.TxQcp) error
 	ObtainTx(sequence int64) (*txs.TxQcp, error)
+	QuerySequence(chainName string, inout string) (int64, error)
 	GetSequence() int64
 	// Count Calculate the total and consensus number for chain
 	Count() (totalNumber int, consensusNumber int)
@@ -60,17 +59,18 @@ type AdapterService interface {
 }
 
 // AdapterConfig is parameters for build an AdapterService
-type AdapterConfig struct{
+type AdapterConfig struct {
 	ChainName string
-	IP       string
-	Port     int
-	Query string
-	Listener EventsListener
+	ChainType string
+	IP        string
+	Port      int
+	Query     string
+	Listener  EventsListener
 }
 
 // QosAdapter provides adapter for qos chain
 type QosAdapter struct {
-	config *AdapterConfig
+	config   *AdapterConfig
 	sequence int64
 	client   *restclient.RestClient
 	cancels  []context.CancelFunc
@@ -116,7 +116,7 @@ func (a *QosAdapter) Subscribe(listener EventsListener) {
 
 // SubmitTx submit Tx to qos chain
 func (a *QosAdapter) SubmitTx(tx *txs.TxQcp) error {
-	return nil
+	return a.client.PostTxQcp(a.config.ChainName, tx)
 }
 
 // ObtainTx search Tx from qos chain
@@ -132,6 +132,11 @@ func (a *QosAdapter) ObtainTx(sequence int64) (qcp *txs.TxQcp, err error) {
 	}
 
 	return qcp, nil
+}
+
+// QuerySequence query sequence for the specified chainName and inout ("in" or "out")
+func (a *QosAdapter)QuerySequence(chainName string, inout string) (int64, error){
+	return a.client.GetSequence(chainName, inout)
 }
 
 // GetSequence returns sequence stored in QosAdapter
