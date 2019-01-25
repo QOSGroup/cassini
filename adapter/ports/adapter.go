@@ -26,9 +26,9 @@ func init() {
 // Adapter Chain adapter interface for consensus engine ( consensus.ConsEngine )
 // and ferry ( consensus.Ferry )
 type Adapter interface {
-	SubmitTx(tx *txs.TxQcp) error
-	ObtainTx(sequence int64) (*txs.TxQcp, error)
-	QuerySequence(chainName string, inout string) (int64, error)
+	SubmitTx(chainID string, tx *txs.TxQcp) error
+	ObtainTx(chainID string, sequence int64) (*txs.TxQcp, error)
+	QuerySequence(chainID string, inout string) (int64, error)
 	GetSequence() int64
 	// Count Calculate the total and consensus number for chain
 	Count() (totalNumber int, consensusNumber int)
@@ -115,13 +115,13 @@ func (a *QosAdapter) Subscribe(listener EventsListener) {
 }
 
 // SubmitTx submit Tx to qos chain
-func (a *QosAdapter) SubmitTx(tx *txs.TxQcp) error {
-	return a.client.PostTxQcp(a.config.ChainName, tx)
+func (a *QosAdapter) SubmitTx(chain string, tx *txs.TxQcp) error {
+	return a.client.PostTxQcp(chain, tx)
 }
 
 // ObtainTx search Tx from qos chain
-func (a *QosAdapter) ObtainTx(sequence int64) (qcp *txs.TxQcp, err error) {
-	qcp, err = a.client.GetTxQcp(a.GetChainName(), sequence)
+func (a *QosAdapter) ObtainTx(chain string, sequence int64) (qcp *txs.TxQcp, err error) {
+	qcp, err = a.client.GetTxQcp(chain, sequence)
 	// if err != nil && !strings.Contains(err.Error(), restclient.ERR_emptyqcp) {
 	// 	r := restclient.NewRestClient(node)
 	// 	f.rmap[add] = r
@@ -135,7 +135,7 @@ func (a *QosAdapter) ObtainTx(sequence int64) (qcp *txs.TxQcp, err error) {
 }
 
 // QuerySequence query sequence for the specified chainName and inout ("in" or "out")
-func (a *QosAdapter)QuerySequence(chainName string, inout string) (int64, error){
+func (a *QosAdapter) QuerySequence(chainName string, inout string) (int64, error) {
 	return a.client.GetSequence(chainName, inout)
 }
 
