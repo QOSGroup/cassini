@@ -9,6 +9,7 @@ before_install:
   - go mod download
   - go get github.com/nats-io/gnatsd
   - gnatsd &
+  - rm -f github.com/coreos/etcd@v3.3.10+incompatible/client/keys.generated.go
 
 script:
   - go test ./... -race -coverprofile=coverage.txt -covermode=atomic
