@@ -105,7 +105,8 @@ func makeJSONRPCHandler(funcMap map[string]*RPCFunc, cdc *amino.Codec) http.Hand
 	return func(w http.ResponseWriter, r *http.Request) {
 		b, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			WriteRPCResponseHTTP(w, types.RPCInvalidRequestError("", errors.Wrap(err, "Error reading request body")))
+			WriteRPCResponseHTTP(w, types.RPCInvalidRequestError(
+				types.JSONRPCStringID(""), errors.Wrap(err, "Error reading request body")))
 			return
 		}
 		// if its an empty request (like from a browser),
@@ -118,12 +119,13 @@ func makeJSONRPCHandler(funcMap map[string]*RPCFunc, cdc *amino.Codec) http.Hand
 		var request types.RPCRequest
 		err = json.Unmarshal(b, &request)
 		if err != nil {
-			WriteRPCResponseHTTP(w, types.RPCParseError("", errors.Wrap(err, "Error unmarshalling request")))
+			WriteRPCResponseHTTP(w, types.RPCParseError(
+				types.JSONRPCStringID(""), errors.Wrap(err, "Error unmarshalling request")))
 			return
 		}
 		// A Notification is a Request object without an "id" member.
 		// The Server MUST NOT reply to a Notification, including those that are within a batch request.
-		if request.ID == "" {
+		if request.ID == types.JSONRPCStringID("") {
 			log.Debug("HTTPJSONRPC received a notification, skipping... (please send a non-empty ID if you want to call a method)")
 			return
 		}
@@ -257,7 +259,7 @@ func makeHTTPHandler(rpcFunc *RPCFunc, cdc *amino.Codec) func(http.ResponseWrite
 	// Exception for websocket endpoints
 	if rpcFunc.ws {
 		return func(w http.ResponseWriter, r *http.Request) {
-			WriteRPCResponseHTTP(w, types.RPCMethodNotFoundError(""))
+			WriteRPCResponseHTTP(w, types.RPCMethodNotFoundError(types.JSONRPCStringID("")))
 		}
 	}
 	// All other endpoints
@@ -265,17 +267,18 @@ func makeHTTPHandler(rpcFunc *RPCFunc, cdc *amino.Codec) func(http.ResponseWrite
 		log.Debug("HTTP handler request - ", r)
 		args, err := httpParamsToArgs(rpcFunc, cdc, r)
 		if err != nil {
-			WriteRPCResponseHTTP(w, types.RPCInvalidParamsError("", errors.Wrap(err, "Error converting http params to arguments")))
+			WriteRPCResponseHTTP(w, types.RPCInvalidParamsError(
+				types.JSONRPCStringID(""), errors.Wrap(err, "Error converting http params to arguments")))
 			return
 		}
 		returns := rpcFunc.f.Call(args)
 		log.Infof("HTTP rpc - method: %v, path: %v, args: %s, returns: %s", r.Method, r.URL.Path, args, returns)
 		result, err := unreflectResult(returns)
 		if err != nil {
-			WriteRPCResponseHTTP(w, types.RPCInternalError("", err))
+			WriteRPCResponseHTTP(w, types.RPCInternalError(types.JSONRPCStringID(""), err))
 			return
 		}
-		WriteRPCResponseHTTP(w, types.NewRPCSuccessResponse(cdc, "", result))
+		WriteRPCResponseHTTP(w, types.NewRPCSuccessResponse(cdc, types.JSONRPCStringID(""), result))
 	}
 }
 
@@ -581,7 +584,8 @@ func (wsc *wsConnection) readRoutine() {
 				err = fmt.Errorf("WSJSONRPC: %v", r)
 			}
 			log.Error("Panic in WSJSONRPC handler", "err", err, "stack", string(debug.Stack()))
-			wsc.WriteRPCResponse(types.RPCInternalError("unknown", err))
+			wsc.WriteRPCResponse(types.RPCInternalError(
+				types.JSONRPCStringID("unknown"), err))
 			go wsc.readRoutine()
 		} else {
 			wsc.baseConn.Close() // nolint: errcheck
@@ -616,13 +620,14 @@ func (wsc *wsConnection) readRoutine() {
 			var request types.RPCRequest
 			err = json.Unmarshal(in, &request)
 			if err != nil {
-				wsc.WriteRPCResponse(types.RPCParseError("", errors.Wrap(err, "Error unmarshaling request")))
+				wsc.WriteRPCResponse(types.RPCParseError(
+					types.JSONRPCStringID(""), errors.Wrap(err, "Error unmarshaling request")))
 				continue
 			}
 
 			// A Notification is a Request object without an "id" member.
 			// The Server MUST NOT reply to a Notification, including those that are within a batch request.
-			if request.ID == "" {
+			if request.ID == types.JSONRPCStringID("") {
 				log.Debug("WSJSONRPC received a notification, skipping... (please send a non-empty ID if you want to call a method)")
 				continue
 			}

@@ -19,7 +19,7 @@ func Event2queue(nats string, event *types.Event) (subject string, err error) {
 		return "", errors.New("event is nil")
 	}
 
-	eventbytes, _ := amino.MarshalBinary(*event)
+	eventbytes, _ := amino.MarshalBinaryLengthPrefixed(*event)
 
 	subject = event.From + "2" + event.To
 

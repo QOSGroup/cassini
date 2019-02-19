@@ -18,6 +18,7 @@ import (
 	"golang.org/x/net/netutil"
 
 	trtypes "github.com/tendermint/tendermint/rpc/lib/types"
+	types "github.com/tendermint/tendermint/rpc/lib/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
@@ -184,7 +185,8 @@ func RecoverAndLogHandler(handler http.Handler) http.Handler {
 						e, string(debug.Stack()),
 					)
 					rww.WriteHeader(http.StatusInternalServerError)
-					WriteRPCResponseHTTP(rww, trtypes.RPCInternalError("", e.(error)))
+					WriteRPCResponseHTTP(rww, trtypes.RPCInternalError(
+						types.JSONRPCStringID(""), e.(error)))
 				}
 			}
 

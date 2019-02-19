@@ -11,8 +11,8 @@ import (
 	"github.com/QOSGroup/cassini/adapter/ports"
 	"github.com/QOSGroup/cassini/concurrency"
 	"github.com/QOSGroup/cassini/config"
-	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/consensus"
+	"github.com/QOSGroup/cassini/log"
 )
 
 // 命令行 start 命令执行方法

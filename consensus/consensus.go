@@ -132,7 +132,7 @@ func qcpConsume(ce *ConsEngine, from, to string, conf *config.Config, e chan<- e
 		i++
 
 		tx := types.Event{}
-		amino.UnmarshalBinary(m.Data, &tx)
+		amino.UnmarshalBinaryLengthPrefixed(m.Data, &tx)
 
 		log.Infof("[#%d] Consume subject [%s] sequence [#%d] nodeAddress '%s'", i, m.Subject, tx.Sequence, tx.NodeAddress)
 
@@ -181,7 +181,7 @@ func NewConsEngine(from, to string) *ConsEngine {
 func (c *ConsEngine) Add2Engine(msg *nats.Msg) error {
 	event := types.Event{}
 
-	if amino.UnmarshalBinary(msg.Data, &event) != nil {
+	if amino.UnmarshalBinaryLengthPrefixed(msg.Data, &event) != nil {
 
 		return errors.New("the event Unmarshal error")
 	}
