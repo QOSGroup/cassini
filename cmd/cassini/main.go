@@ -4,13 +4,8 @@
 package main
 
 import (
-	"context"
-	"fmt"
-
 	"github.com/QOSGroup/cassini/commands"
-	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/log"
-	"github.com/QOSGroup/cassini/version"
 )
 
 // 链中继服务主程序，包括正常服务启动和mock 测试运行两种模式
@@ -30,10 +25,4 @@ func main() {
 	if err := root.Execute(); err != nil {
 		log.Error("Exit by error: ", err)
 	}
-}
-
-var versioner = func(conf *config.Config) (context.CancelFunc, error) {
-
-	fmt.Println(version.Version)
-	return nil, nil
 }
