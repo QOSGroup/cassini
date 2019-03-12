@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 
+	_ "github.com/QOSGroup/cassini/adapter/ports/fabric"
 	"github.com/QOSGroup/cassini/commands"
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/log"

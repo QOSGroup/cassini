@@ -262,8 +262,8 @@ func (c *ConsEngine) ConSequence() consResult { //交易还没产生和共识出
 
 		qcp, err := c.F.queryTxQcpFromNode(c.from, c.to, node, c.sequence) // be (c.to, node, c.sequence)
 
-		if err != nil || qcp == nil {
-			if strings.Contains(err.Error(), restclient.ERR_emptyqcp) {
+		if qcp == nil {
+			if err != nil && strings.Contains(err.Error(), restclient.ERR_emptyqcp) {
 				bempty = true //交易还没产生
 			}
 			continue

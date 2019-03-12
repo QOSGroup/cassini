@@ -57,7 +57,7 @@ require (
 	github.com/tendermint/go-amino v0.12.0
 	github.com/tendermint/tendermint v0.23.1
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8 // indirect
-	github.com/ugorji/go/codec v0.0.0-20190204201341-e444a5086c43 // indirect
+	github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8
 	github.com/xiang90/probing v0.0.0-20160813154853-07dd2e8dfe18 // indirect
 	go.etcd.io/bbolt v1.3.2 // indirect
 	go.uber.org/atomic v1.3.2 // indirect
@@ -70,3 +70,5 @@ require (
 	gopkg.in/olebedev/go-duktape.v3 v3.0.0-20190213234257-ec84240a7772 // indirect
 	gopkg.in/urfave/cli.v1 v1.20.0 // indirect
 )
+
+replace github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8 => github.com/ugorji/go/codec v0.0.0-20181018023622-b30ce92d500b
