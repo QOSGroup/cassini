@@ -1,5 +1,5 @@
 package ethereum
 
-// EthAdaptor provides adapter for ethereum
-type EthAdaptor struct {
+// Adaptor provides adapter for ethereum
+type Adaptor struct {
 }
