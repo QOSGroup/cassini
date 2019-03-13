@@ -2,6 +2,7 @@ package fabric
 
 import (
 	"encoding/json"
+	"strconv"
 
 	"github.com/QOSGroup/cassini/adapter/ports/fabric/sdk"
 
@@ -83,8 +84,16 @@ func (a *FabAdaptor) SubmitTx(chainID string, tx *txs.TxQcp) error {
 // if Tx is digital asset withdraw:
 //     call ethereum api to transfer
 func (a *FabAdaptor) ObtainTx(chainID string, sequence int64) (*txs.TxQcp, error) {
-	log.Infof("ObtainTx: %s, %d", chainID, sequence)
-	return nil, nil
+	log.Infof("ObtainTx: %s(%s), %d", a.GetChainName(), chainID, sequence)
+	var as []string
+	as = append(as, "transaction", "sequence", strconv.FormatInt(sequence, 10))
+	args := sdk.Args{
+		Func: "query", Args: as}
+	var argsArray []sdk.Args
+	argsArray = append(argsArray, args)
+	ret, err := sdk.ChaincodeQuery(ChannelID, ChaincodeID, argsArray)
+	log.Debug("obtain tx: ", ret)
+	return nil, err
 }
 
 // QuerySequence query sequence of Tx in chaincode
@@ -106,7 +115,7 @@ func (a *FabAdaptor) QuerySequence(chainID string, inout string) (int64, error) 
 		log.Errorf("parse chain result error: %v\n%s", err, ret)
 		return 0, err
 	}
-	log.Infof("query result: %s, %s, %d", chainID, r.ChaincodeID, r.Sequence)
+	log.Infof("QuerySequence: %s(%s), %s %d", a.GetChainName(), chainID, inout, r.Sequence)
 	return r.Sequence, nil
 }
 
