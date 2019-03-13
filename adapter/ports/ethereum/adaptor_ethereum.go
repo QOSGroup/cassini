@@ -56,6 +56,7 @@ func (a *EthAdaptor) Subscribe(listener ports.EventsListener) {
 
 // SubmitTx submit Tx to hyperledger fabric chain
 func (a *EthAdaptor) SubmitTx(chainID string, tx *txs.TxQcp) error {
+	log.Infof("SubmitTx: %s(%s) %d: %s", a.GetChainName(), chainID, tx.Sequence, tx.Extends)
 	return nil
 }
 
@@ -70,7 +71,7 @@ func (a *EthAdaptor) ObtainTx(chainID string, sequence int64) (*txs.TxQcp, error
 	return nil, nil
 }
 
-// QuerySequence query sequence of Tx in chaincode
+// QuerySequence query sequence of Tx in ethereum
 func (a *EthAdaptor) QuerySequence(chainID string, inout string) (int64, error) {
 	if strings.EqualFold("in", inout) {
 		log.Infof("QuerySequence: %s(%s), in %d", a.GetChainName(), chainID, a.inSequence)

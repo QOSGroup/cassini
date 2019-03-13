@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/QOSGroup/cassini/log"
+	"github.com/pkg/errors"
 )
 
 // ChaincodeInvoke invoke chaincode
@@ -66,7 +67,8 @@ func ChaincodeQuery(channelID, chaincodeID string, argsArray []Args) (result str
 		err = fmt.Errorf("must specify the chaincode ID")
 		return
 	}
-	action, err := newQueryAction()
+	var action *queryAction
+	action, err = newQueryAction()
 	if err != nil {
 		log.Errorf("Error while initializing queryAction: %v", err)
 		return
@@ -77,6 +79,8 @@ func ChaincodeQuery(channelID, chaincodeID string, argsArray []Args) (result str
 	result, err = action.query(channelID, chaincodeID, argsArray)
 	if err != nil {
 		log.Errorf("Error while running queryAction: %v", err)
+	} else if result == "" {
+		err = errors.New("transaction not found")
 	}
 	return
 }

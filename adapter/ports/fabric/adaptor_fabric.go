@@ -2,11 +2,13 @@ package fabric
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 
 	"github.com/QOSGroup/cassini/adapter/ports/fabric/sdk"
 
 	"github.com/QOSGroup/cassini/adapter/ports"
+	msgtx "github.com/QOSGroup/cassini/adapter/ports/txs"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/qbase/txs"
 )
@@ -40,8 +42,9 @@ type fabricChaincodeQuerySequenceResult struct {
 
 // FabAdaptor provides adapter for hyperledger fabric
 type FabAdaptor struct {
-	config   *ports.AdapterConfig
-	sequence int64
+	config      *ports.AdapterConfig
+	inSequence  int64
+	outSequence int64
 }
 
 // Start fabric adapter service
@@ -54,9 +57,9 @@ func (a *FabAdaptor) Sync() error {
 	seq, err := a.QuerySequence(a.config.ChainName, "in")
 	if err == nil {
 		if seq > 1 {
-			a.sequence = seq + 1
+			a.outSequence = seq + 1
 		} else {
-			a.sequence = 1
+			a.outSequence = 1
 		}
 	}
 	return err
@@ -92,8 +95,14 @@ func (a *FabAdaptor) ObtainTx(chainID string, sequence int64) (*txs.TxQcp, error
 	var argsArray []sdk.Args
 	argsArray = append(argsArray, args)
 	ret, err := sdk.ChaincodeQuery(ChannelID, ChaincodeID, argsArray)
-	log.Debug("obtain tx: ", ret)
-	return nil, err
+	if err != nil {
+		log.Errorf("ObtainTx error: %v", err)
+		return nil, err
+	}
+	log.Info("query transaction result: ", ret)
+	tx := msgtx.NewTxQcp(fmt.Sprintf("%s(%s)", a.GetChainName(), chainID),
+		a.GetChainName(), chainID, int64(1), int64(sequence), ret)
+	return tx, nil
 }
 
 // QuerySequence query sequence of Tx in chaincode
@@ -121,7 +130,7 @@ func (a *FabAdaptor) QuerySequence(chainID string, inout string) (int64, error) 
 
 // GetSequence returns sequence of tx in cache
 func (a *FabAdaptor) GetSequence() int64 {
-	return a.sequence
+	return a.outSequence
 }
 
 // Count Calculate the total and consensus number for chain
