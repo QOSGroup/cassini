@@ -49,23 +49,26 @@ func (a *EthAdaptor) Stop() error {
 	return nil
 }
 
-// Subscribe events from fabric chain
+// Subscribe events from ethereum chain
 func (a *EthAdaptor) Subscribe(listener ports.EventsListener) {
 	log.Infof("no event subscribe: %s", ports.GetAdapterKey(a))
 }
 
-// SubmitTx submit Tx to hyperledger fabric chain
+// SubmitTx submit Tx to ethereum chain
 func (a *EthAdaptor) SubmitTx(chainID string, tx *txs.TxQcp) error {
 	log.Infof("SubmitTx: %s(%s) %d: %s", a.GetChainName(), chainID, tx.Sequence, tx.Extends)
+	// encrypted
+	// etcd
+	// (recharge) query ethereum transactions
+	// (withdraw) transfer
 	return nil
 }
 
-// ObtainTx obtain Tx from hyperledger fabric chain
-//
-// if Tx is register a new account:
-//     call ethereum api to create a new account's key, and SubmitTx account's key back to fabric
-// if Tx is digital asset withdraw:
-//     call ethereum api to transfer
+// ObtainTx obtain Tx from ethereum chain
+// recharge:
+//     send transaction data back to fabric
+// withdraw:
+//     send transaction data back to fabric
 func (a *EthAdaptor) ObtainTx(chainID string, sequence int64) (*txs.TxQcp, error) {
 	log.Infof("ObtainTx: %s(%s), %d", a.GetChainName(), chainID, sequence)
 	return nil, nil
@@ -90,6 +93,7 @@ func (a *EthAdaptor) GetSequence() int64 {
 func (a *EthAdaptor) Count() (totalNumber int, consensusNumber int) {
 	totalNumber = ports.GetPortsIncetance().Count(a.GetChainName())
 	consensusNumber = ports.Consensus2of3(totalNumber)
+	log.Debugf("total: %d; consensus: %d;", totalNumber, consensusNumber)
 	return
 }
 

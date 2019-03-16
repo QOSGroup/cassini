@@ -4,9 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
+	"github.com/QOSGroup/cassini/adapter/ports/ethereum/sdk"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/pkg/errors"
+)
+
+const (
+	errUnsuportedToken = `{"code": 404, "message": "unsupported network and token"}`
 )
 
 // ChaincodeInvoke invoke chaincode
@@ -115,4 +121,31 @@ func ChaincodeQueryByString(channelID, chaincodeID, argsStr string) string {
 	}
 	log.Errorf("%s %v", DefaultResultJSON, err)
 	return DefaultResultJSON
+}
+
+// NewAccountByString create a new account
+func NewAccountByString(accountID, key, chain, token string) string {
+	if strings.EqualFold(chain, "ethereum") {
+		if strings.EqualFold(token, "eth") {
+			account, err := sdk.NewAccount(accountID, key)
+			if err != nil {
+				log.Errorf("new account error: %v", err)
+				return errUnsuportedToken
+			}
+			var strs []string
+			strs = append(strs, accountID,
+				account.WalletAddress, account.PrivateKey,
+				chain, token, "999999")
+			a := Args{Func: "register", Args: strs}
+			var args []Args
+			args = append(args, a)
+			ret, err := ChaincodeInvoke(Config().ChannelID, "wallet", args)
+			if err != nil {
+				log.Errorf("new account error: %v", err)
+				return errUnsuportedToken
+			}
+			return ret
+		}
+	}
+	return errUnsuportedToken
 }

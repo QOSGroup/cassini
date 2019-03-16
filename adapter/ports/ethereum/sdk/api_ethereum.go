@@ -2,16 +2,20 @@ package sdk
 
 import (
 	"crypto/rand"
+	"encoding/hex"
 
-	"github.com/ethereum/go-ethereum/accounts/keystore"
+	"github.com/ethereum/go-ethereum/common/math"
 )
 
 // NewAccount create a new account on ethereum
-func NewAccount(name, password string) (*keystore.Key, error) {
-	// conf = Config()
-	// scryptN, scryptP, _, err := conf.Node.AccountConfig()
-	// if err != nil {
-	// 	utils.Fatalf("Configuration error: %v", err)
-	// }
-	return NewKey(rand.Reader)
+func NewAccount(name, password string) (*Account, error) {
+	key, err := newKey(rand.Reader)
+	if err != nil {
+		return nil, err
+	}
+	bytes := math.PaddedBigBytes(key.PrivateKey.D, 32)
+	account := &Account{
+		WalletAddress: key.Address.Hex(),
+		PrivateKey:    hex.EncodeToString(bytes)}
+	return account, nil
 }

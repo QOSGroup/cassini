@@ -23,6 +23,7 @@ type FabConfig struct {
 	ConfigFile         string
 	UserName           string
 	ChainID            string
+	ChannelID          string
 	SelectionProvider  string
 	OrdererURL         string
 	IsLoggingEnabledFo bool                // enable log
@@ -60,6 +61,7 @@ func Config() *FabConfig {
 			ConfigFile:         "/vagrant/gopath/src/github.com/securekey/fabric-examples/fabric-cli/test/fixtures/config/config_test_local.yaml",
 			UserName:           "",
 			ChainID:            "demo.fabric",
+			ChannelID:          "orgchannel",
 			SelectionProvider:  AutoDetectSelectionProvider,
 			OrdererURL:         "",
 			IsLoggingEnabledFo: true,

@@ -19,8 +19,8 @@ func newKeyFromECDSA(priECDSA *ecdsa.PrivateKey) *keystore.Key {
 	return key
 }
 
-// NewKey create a new key for ethereum account
-func NewKey(rand io.Reader) (*keystore.Key, error) {
+// newKey create a new key for ethereum account
+func newKey(rand io.Reader) (*keystore.Key, error) {
 	priECDSA, err := ecdsa.GenerateKey(crypto.S256(), rand)
 	if err != nil {
 		return nil, err
