@@ -106,12 +106,8 @@ func makeJSONRPCHandler(funcMap map[string]*RPCFunc, cdc *amino.Codec) http.Hand
 		b, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			WriteRPCResponseHTTP(w, types.RPCInvalidRequestError(
-<<<<<<< c7703af06aeaa1aa06e461c355a85dd3648a25e1
-				types.JSONRPCStringID(""), errors.Wrap(err, "Error reading request body")))
-=======
 				types.JSONRPCStringID(""),
 				errors.Wrap(err, "Error reading request body")))
->>>>>>> 升级qbase,qos依赖版本
 			return
 		}
 		// if its an empty request (like from a browser),
