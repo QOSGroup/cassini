@@ -121,12 +121,8 @@ func makeJSONRPCHandler(funcMap map[string]*RPCFunc, cdc *amino.Codec) http.Hand
 		err = json.Unmarshal(b, &request)
 		if err != nil {
 			WriteRPCResponseHTTP(w, types.RPCParseError(
-<<<<<<< c7703af06aeaa1aa06e461c355a85dd3648a25e1
-				types.JSONRPCStringID(""), errors.Wrap(err, "Error unmarshalling request")))
-=======
 				types.JSONRPCStringID(""),
 				errors.Wrap(err, "Error unmarshalling request")))
->>>>>>> 升级qbase,qos依赖版本
 			return
 		}
 		// A Notification is a Request object without an "id" member.
@@ -268,12 +264,8 @@ func makeHTTPHandler(rpcFunc *RPCFunc, cdc *amino.Codec) func(http.ResponseWrite
 	// Exception for websocket endpoints
 	if rpcFunc.ws {
 		return func(w http.ResponseWriter, r *http.Request) {
-<<<<<<< c7703af06aeaa1aa06e461c355a85dd3648a25e1
-			WriteRPCResponseHTTP(w, types.RPCMethodNotFoundError(types.JSONRPCStringID("")))
-=======
 			WriteRPCResponseHTTP(w, types.RPCMethodNotFoundError(
 				types.JSONRPCStringID("")))
->>>>>>> 升级qbase,qos依赖版本
 		}
 	}
 	// All other endpoints
@@ -282,31 +274,20 @@ func makeHTTPHandler(rpcFunc *RPCFunc, cdc *amino.Codec) func(http.ResponseWrite
 		args, err := httpParamsToArgs(rpcFunc, cdc, r)
 		if err != nil {
 			WriteRPCResponseHTTP(w, types.RPCInvalidParamsError(
-<<<<<<< c7703af06aeaa1aa06e461c355a85dd3648a25e1
-				types.JSONRPCStringID(""), errors.Wrap(err, "Error converting http params to arguments")))
-=======
 				types.JSONRPCStringID(""),
 				errors.Wrap(err, "Error converting http params to arguments")))
->>>>>>> 升级qbase,qos依赖版本
 			return
 		}
 		returns := rpcFunc.f.Call(args)
 		log.Infof("HTTP rpc - method: %v, path: %v, args: %s, returns: %s", r.Method, r.URL.Path, args, returns)
 		result, err := unreflectResult(returns)
 		if err != nil {
-<<<<<<< c7703af06aeaa1aa06e461c355a85dd3648a25e1
-			WriteRPCResponseHTTP(w, types.RPCInternalError(types.JSONRPCStringID(""), err))
-			return
-		}
-		WriteRPCResponseHTTP(w, types.NewRPCSuccessResponse(cdc, types.JSONRPCStringID(""), result))
-=======
 			WriteRPCResponseHTTP(w, types.RPCInternalError(
 				types.JSONRPCStringID(""), err))
 			return
 		}
 		WriteRPCResponseHTTP(w, types.NewRPCSuccessResponse(cdc,
 			types.JSONRPCStringID(""), result))
->>>>>>> 升级qbase,qos依赖版本
 	}
 }
 
