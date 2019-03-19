@@ -14,9 +14,14 @@ import (
 // Event2queue produce event to message queue (Nats)
 func Event2queue(nats string, event *types.Event) (subject string, err error) {
 
-	if event == nil || event.HashBytes == nil || event.From == "" || event.To == "" || event.NodeAddress == "" {
+	if event == nil {
 
 		return "", errors.New("event is nil")
+	}
+	// log.Infof("event from: %s, to: %s, nodes: %s, sequence: %d, hash: %v",
+	// 	event.From, event.To, event.NodeAddress, event.Sequence, event.HashBytes)
+	if event.HashBytes == nil || event.From == "" || event.To == "" || event.NodeAddress == "" {
+		return "", errors.New("event data is empty")
 	}
 
 	eventbytes, _ := amino.MarshalBinaryLengthPrefixed(*event)
