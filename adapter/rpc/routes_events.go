@@ -4,6 +4,7 @@ package rpc
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/QOSGroup/cassini/log"
 	"github.com/pkg/errors"
@@ -11,7 +12,6 @@ import (
 	tmquery "github.com/tendermint/tendermint/libs/pubsub/query"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	rpctypes "github.com/tendermint/tendermint/rpc/lib/types"
-	types "github.com/tendermint/tendermint/rpc/lib/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
@@ -36,12 +36,9 @@ func (s RequestHandler) Subscribe(wsCtx rpctypes.WSRPCContext, query string) (*c
 	go func() {
 		for event := range ch {
 			tmResult := &ctypes.ResultEvent{Query: query, Data: event.(tmtypes.TMEventData)}
-			idStr := "#event"
-			if id, ok := wsCtx.Request.ID.(types.JSONRPCStringID); ok {
-				idStr = string(id) + "#event"
-			}
 			wsCtx.TryWriteRPCResponse(rpctypes.NewRPCSuccessResponse(wsCtx.Codec(),
-				types.JSONRPCStringID(idStr), tmResult))
+				rpctypes.JSONRPCStringID(fmt.Sprintf("%v#event", wsCtx.Request.ID)),
+				tmResult))
 		}
 	}()
 

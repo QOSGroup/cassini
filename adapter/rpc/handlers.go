@@ -106,7 +106,8 @@ func makeJSONRPCHandler(funcMap map[string]*RPCFunc, cdc *amino.Codec) http.Hand
 		b, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			WriteRPCResponseHTTP(w, types.RPCInvalidRequestError(
-				types.JSONRPCStringID(""), errors.Wrap(err, "Error reading request body")))
+				types.JSONRPCStringID(""),
+				errors.Wrap(err, "Error reading request body")))
 			return
 		}
 		// if its an empty request (like from a browser),
@@ -120,7 +121,8 @@ func makeJSONRPCHandler(funcMap map[string]*RPCFunc, cdc *amino.Codec) http.Hand
 		err = json.Unmarshal(b, &request)
 		if err != nil {
 			WriteRPCResponseHTTP(w, types.RPCParseError(
-				types.JSONRPCStringID(""), errors.Wrap(err, "Error unmarshalling request")))
+				types.JSONRPCStringID(""),
+				errors.Wrap(err, "Error unmarshalling request")))
 			return
 		}
 		// A Notification is a Request object without an "id" member.
@@ -130,7 +132,8 @@ func makeJSONRPCHandler(funcMap map[string]*RPCFunc, cdc *amino.Codec) http.Hand
 			return
 		}
 		if len(r.URL.Path) > 1 {
-			WriteRPCResponseHTTP(w, types.RPCInvalidRequestError(request.ID, errors.Errorf("Path %s is invalid", r.URL.Path)))
+			WriteRPCResponseHTTP(w, types.RPCInvalidRequestError(
+				request.ID, errors.Errorf("Path %s is invalid", r.URL.Path)))
 			return
 		}
 		rpcFunc := funcMap[request.Method]
@@ -142,7 +145,9 @@ func makeJSONRPCHandler(funcMap map[string]*RPCFunc, cdc *amino.Codec) http.Hand
 		if len(request.Params) > 0 {
 			args, err = jsonParamsToArgsRPC(rpcFunc, cdc, request.Params)
 			if err != nil {
-				WriteRPCResponseHTTP(w, types.RPCInvalidParamsError(request.ID, errors.Wrap(err, "Error converting json params to arguments")))
+				WriteRPCResponseHTTP(w,
+					types.RPCInvalidParamsError(request.ID,
+						errors.Wrap(err, "Error converting json params to arguments")))
 				return
 			}
 		}
@@ -259,7 +264,8 @@ func makeHTTPHandler(rpcFunc *RPCFunc, cdc *amino.Codec) func(http.ResponseWrite
 	// Exception for websocket endpoints
 	if rpcFunc.ws {
 		return func(w http.ResponseWriter, r *http.Request) {
-			WriteRPCResponseHTTP(w, types.RPCMethodNotFoundError(types.JSONRPCStringID("")))
+			WriteRPCResponseHTTP(w, types.RPCMethodNotFoundError(
+				types.JSONRPCStringID("")))
 		}
 	}
 	// All other endpoints
@@ -268,17 +274,20 @@ func makeHTTPHandler(rpcFunc *RPCFunc, cdc *amino.Codec) func(http.ResponseWrite
 		args, err := httpParamsToArgs(rpcFunc, cdc, r)
 		if err != nil {
 			WriteRPCResponseHTTP(w, types.RPCInvalidParamsError(
-				types.JSONRPCStringID(""), errors.Wrap(err, "Error converting http params to arguments")))
+				types.JSONRPCStringID(""),
+				errors.Wrap(err, "Error converting http params to arguments")))
 			return
 		}
 		returns := rpcFunc.f.Call(args)
 		log.Infof("HTTP rpc - method: %v, path: %v, args: %s, returns: %s", r.Method, r.URL.Path, args, returns)
 		result, err := unreflectResult(returns)
 		if err != nil {
-			WriteRPCResponseHTTP(w, types.RPCInternalError(types.JSONRPCStringID(""), err))
+			WriteRPCResponseHTTP(w, types.RPCInternalError(
+				types.JSONRPCStringID(""), err))
 			return
 		}
-		WriteRPCResponseHTTP(w, types.NewRPCSuccessResponse(cdc, types.JSONRPCStringID(""), result))
+		WriteRPCResponseHTTP(w, types.NewRPCSuccessResponse(cdc,
+			types.JSONRPCStringID(""), result))
 	}
 }
 
@@ -621,7 +630,8 @@ func (wsc *wsConnection) readRoutine() {
 			err = json.Unmarshal(in, &request)
 			if err != nil {
 				wsc.WriteRPCResponse(types.RPCParseError(
-					types.JSONRPCStringID(""), errors.Wrap(err, "Error unmarshaling request")))
+					types.JSONRPCStringID(""),
+					errors.Wrap(err, "Error unmarshaling request")))
 				continue
 			}
 
