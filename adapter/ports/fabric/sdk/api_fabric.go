@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/QOSGroup/cassini/adapter/ports/ethereum/sdk"
+	ethsdk "github.com/QOSGroup/cassini/adapter/ports/ethereum/sdk"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/pkg/errors"
 )
@@ -30,7 +30,7 @@ func ChaincodeInvoke(channelID, chaincodeID string, argsArray []Args) (result st
 
 	defer action.Terminate()
 
-	err = action.invoke(channelID, chaincodeID, argsArray)
+	result, err = action.invoke(channelID, chaincodeID, argsArray)
 	if err != nil {
 		log.Errorf("Error while calling action.invoke(): %v", err)
 	}
@@ -127,14 +127,14 @@ func ChaincodeQueryByString(channelID, chaincodeID, argsStr string) string {
 func NewAccountByString(accountID, key, chain, token string) string {
 	if strings.EqualFold(chain, "ethereum") {
 		if strings.EqualFold(token, "eth") {
-			account, err := sdk.NewAccount(accountID, key)
+			account, err := ethsdk.NewAccount(accountID, key)
 			if err != nil {
 				log.Errorf("new account error: %v", err)
 				return errUnsuportedToken
 			}
 			var strs []string
 			strs = append(strs, accountID,
-				account.WalletAddress, account.PrivateKey,
+				account.WalletAddress, account.EncryptedKey,
 				chain, token, "999999")
 			a := Args{Func: "register", Args: strs}
 			var args []Args
