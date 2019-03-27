@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/QOSGroup/cassini/adapter/ports/ethereum/sdk"
@@ -64,13 +65,22 @@ func callEthereum() {
 		if err != nil {
 			fmt.Println("eth_getBlockByNumber error: ", err)
 		} else {
-			fmt.Println("eth_getBlockByNumber resp: ",
-				result.Difficulty, len(result.Transactions))
-			for i, tx := range result.Transactions {
-				fmt.Println("tx in block: ", i, "; ",
-					tx.From, " -> ", tx.To)
-			}
+			checkBlock(&result)
 		}
 		time.Sleep(2 * time.Second)
+	}
+}
+
+func checkBlock(result *sdk.Result) {
+	fmt.Println("eth_getBlockByNumber resp: ",
+		result.Difficulty, len(result.Transactions))
+	for i, tx := range result.Transactions {
+		fmt.Println("tx in block: ", i, "; ",
+			tx.From, " -> ", tx.To)
+		if strings.EqualFold(tx.To,
+			"0x3d947eB8c366D2416468675cEDd00fd311D70dFB") {
+			fmt.Println("check address: ", tx.To,
+				"; ", tx.TransactionIndex)
+		}
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/QOSGroup/cassini/adapter/ports/fabric/sdk"
 
@@ -37,7 +38,8 @@ const (
 
 type fabricChaincodeQuerySequenceResult struct {
 	ChaincodeID string `json:"chaincode,omitempty"`
-	Sequence    int64  `json:"sequence,omitempty"`
+	InSequence  int64  `json:"InSequence,omitempty"`
+	OutSequence int64  `json:"OutSequence,omitempty"`
 }
 
 // FabAdaptor provides adapter for hyperledger fabric
@@ -108,7 +110,7 @@ func (a *FabAdaptor) ObtainTx(chainID string, sequence int64) (*txs.TxQcp, error
 // QuerySequence query sequence of Tx in chaincode
 func (a *FabAdaptor) QuerySequence(chainID string, inout string) (int64, error) {
 	var as []string
-	as = append(as, "sequence", inout)
+	as = append(as, "sequence")
 	args := sdk.Args{
 		Func: "query", Args: as}
 	var argsArray []sdk.Args
@@ -124,8 +126,16 @@ func (a *FabAdaptor) QuerySequence(chainID string, inout string) (int64, error) 
 		log.Errorf("parse chain result error: %v\n%s", err, ret)
 		return 0, err
 	}
-	log.Infof("QuerySequence: %s(%s), %s %d", a.GetChainName(), chainID, inout, r.Sequence)
-	return r.Sequence, nil
+	a.inSequence = r.InSequence
+	a.outSequence = r.OutSequence
+	if strings.EqualFold("in", inout) {
+		log.Infof("QuerySequence: %s(%s), in %d",
+			a.GetChainName(), chainID, r.InSequence)
+		return r.InSequence, nil
+	}
+	log.Infof("QuerySequence: %s(%s), out %d",
+		a.GetChainName(), chainID, r.OutSequence)
+	return r.OutSequence, nil
 }
 
 // GetSequence returns sequence of tx in cache

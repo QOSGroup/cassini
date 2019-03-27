@@ -61,11 +61,17 @@ func Close() {
 	ethCLI.cancel()
 }
 
+// EthBlockNumberHex json-rpc for eth_blockNumber
+func EthBlockNumberHex() (height string, err error) {
+	err = ethCLI.client.CallContext(ethCLI.ctx, &height,
+		"eth_blockNumber")
+	return
+}
+
 // EthBlockNumber json-rpc for eth_blockNumber
 func EthBlockNumber() (height int64, err error) {
 	var resp string
-	err = ethCLI.client.CallContext(ethCLI.ctx, &resp,
-		"eth_blockNumber")
+	resp, err = EthBlockNumberHex()
 	if err != nil {
 		return
 	}

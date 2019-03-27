@@ -88,6 +88,11 @@ func ChaincodeQuery(channelID, chaincodeID string, argsArray []Args) (result str
 	} else if result == "" {
 		err = errors.New("transaction not found")
 	}
+	if strings.HasPrefix(result, "v") {
+		if i := strings.Index(result, ":"); i > -1 {
+			result = result[i+1:]
+		}
+	}
 	return
 }
 
@@ -127,25 +132,34 @@ func ChaincodeQueryByString(channelID, chaincodeID, argsStr string) string {
 func NewAccountByString(accountID, key, chain, token string) string {
 	if strings.EqualFold(chain, "ethereum") {
 		if strings.EqualFold(token, "eth") {
-			account, err := ethsdk.NewAccount(accountID, key)
-			if err != nil {
-				log.Errorf("new account error: %v", err)
-				return errUnsuportedToken
-			}
-			var strs []string
-			strs = append(strs, accountID,
-				account.WalletAddress, account.EncryptedKey,
-				chain, token, "999999")
-			a := Args{Func: "register", Args: strs}
-			var args []Args
-			args = append(args, a)
-			ret, err := ChaincodeInvoke(Config().ChannelID, "wallet", args)
-			if err != nil {
-				log.Errorf("new account error: %v", err)
-				return errUnsuportedToken
-			}
-			return ret
+			return ethNewAccount(accountID, key, chain, token)
 		}
 	}
 	return errUnsuportedToken
+}
+
+func ethNewAccount(accountID, key, chain, token string) string {
+	account, err := ethsdk.NewAccount(accountID, key)
+	if err != nil {
+		log.Errorf("new account error: %v", err)
+		return errUnsuportedToken
+	}
+	var strs []string
+	height, err := ethsdk.EthBlockNumberHex()
+	if err != nil {
+		log.Errorf("eth get block number error: %v", err)
+		return errUnsuportedToken
+	}
+	strs = append(strs, accountID,
+		account.WalletAddress, account.EncryptedKey,
+		chain, token, height)
+	a := Args{Func: "register", Args: strs}
+	var args []Args
+	args = append(args, a)
+	ret, err := ChaincodeInvoke(Config().ChannelID, "wallet", args)
+	if err != nil {
+		log.Errorf("new account error: %v", err)
+		return errUnsuportedToken
+	}
+	return ret
 }

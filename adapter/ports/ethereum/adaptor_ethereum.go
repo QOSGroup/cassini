@@ -1,9 +1,11 @@
 package ethereum
 
 import (
+	"encoding/json"
 	"strings"
 
 	"github.com/QOSGroup/cassini/adapter/ports"
+	fabricTx "github.com/QOSGroup/cassini/adapter/ports/fabric/sdk/tx"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/qbase/txs"
 )
@@ -56,7 +58,20 @@ func (a *EthAdaptor) Subscribe(listener ports.EventsListener) {
 
 // SubmitTx submit Tx to ethereum chain
 func (a *EthAdaptor) SubmitTx(chainID string, tx *txs.TxQcp) error {
-	log.Infof("SubmitTx: %s(%s) %d: %s", a.GetChainName(), chainID, tx.Sequence, tx.Extends)
+	jsonTx := tx.TxStd.ITx.GetSignData()
+	log.Infof("SubmitTx: %s(%s) %d: chain result: %s",
+		a.GetChainName(), chainID, tx.Sequence, jsonTx)
+	t := fabricTx.WalletTx{}
+	err := json.Unmarshal([]byte(jsonTx), &t)
+	if err != nil {
+		log.Errorf("SubmitTx: %s(%s) error: %v",
+			a.GetChainName(), chainID, err)
+		return err
+	}
+	a.inSequence = tx.Sequence
+	if a.outSequence <= 1 {
+		a.outSequence = t.Height
+	}
 	// encrypted
 	// etcd
 	// (recharge) query ethereum transactions
@@ -77,10 +92,12 @@ func (a *EthAdaptor) ObtainTx(chainID string, sequence int64) (*txs.TxQcp, error
 // QuerySequence query sequence of Tx in ethereum
 func (a *EthAdaptor) QuerySequence(chainID string, inout string) (int64, error) {
 	if strings.EqualFold("in", inout) {
-		log.Infof("QuerySequence: %s(%s), in %d", a.GetChainName(), chainID, a.inSequence)
+		log.Infof("QuerySequence: %s(%s), in %d",
+			a.GetChainName(), chainID, a.inSequence)
 		return a.inSequence, nil
 	}
-	log.Infof("QuerySequence: %s(%s), out %d", a.GetChainName(), chainID, a.outSequence)
+	log.Infof("QuerySequence: %s(%s), out %d",
+		a.GetChainName(), chainID, a.outSequence)
 	return a.outSequence, nil
 }
 
