@@ -79,6 +79,15 @@ func (a *FabAdaptor) Subscribe(listener ports.EventsListener) {
 
 // SubmitTx submit Tx to hyperledger fabric chain
 func (a *FabAdaptor) SubmitTx(chainID string, tx *txs.TxQcp) error {
+	jsonTx := tx.TxStd.ITx.GetSignData()
+	log.Infof("SubmitTx: %s(%s) %d: chain result: %s",
+		a.GetChainName(), chainID, tx.Sequence, jsonTx)
+	var args []string
+	args = append(args, "ethereum", string(jsonTx))
+	arg := sdk.Args{Func: "registerBlock", Args: args}
+	var argsArray []sdk.Args
+	argsArray = append(argsArray, arg)
+	sdk.ChaincodeInvoke(ChannelID, ChaincodeID, argsArray)
 	return nil
 }
 

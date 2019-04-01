@@ -2,10 +2,13 @@ package ethereum
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/QOSGroup/cassini/adapter/ports"
+	ethsdk "github.com/QOSGroup/cassini/adapter/ports/ethereum/sdk"
 	fabricTx "github.com/QOSGroup/cassini/adapter/ports/fabric/sdk/tx"
+	msgtx "github.com/QOSGroup/cassini/adapter/ports/txs"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/qbase/txs"
 )
@@ -86,7 +89,26 @@ func (a *EthAdaptor) SubmitTx(chainID string, tx *txs.TxQcp) error {
 //     send transaction data back to fabric
 func (a *EthAdaptor) ObtainTx(chainID string, sequence int64) (*txs.TxQcp, error) {
 	log.Infof("ObtainTx: %s(%s), %d", a.GetChainName(), chainID, sequence)
-	return nil, nil
+	ret, err := ethsdk.EthGetBlockByNumber(sequence)
+	if err != nil {
+		log.Errorf("ethereum rpc error: %v", err)
+		return nil, err
+	} else if len(ret.Transactions) == 0 {
+		log.Warn("ethereum empty block")
+		// ret.Difficulty = "0"
+	}
+	bytes, err := json.Marshal(ret)
+	if err != nil {
+		log.Errorf("json marshal error: %v", err)
+		return nil, err
+	}
+	log.Infof("ObtainTx: %s(%s) %d: %s", a.GetChainName(), chainID,
+		sequence, string(bytes))
+	tx := msgtx.NewTxQcp(fmt.Sprintf("%s(%s)", a.GetChainName(), chainID),
+		a.GetChainName(), chainID, int64(1), int64(sequence),
+		string(bytes))
+	a.outSequence = sequence + 1
+	return tx, nil
 }
 
 // QuerySequence query sequence of Tx in ethereum
