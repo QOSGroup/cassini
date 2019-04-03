@@ -58,7 +58,7 @@ func init() {
 func Config() *FabConfig {
 	once.Do(func() {
 		config = &FabConfig{
-			ConfigFile:         "/vagrant/gopath/src/github.com/securekey/fabric-examples/fabric-cli/test/fixtures/config/config_test_local.yaml",
+			ConfigFile:         "/opt/gopath/src/github.com/securekey/fabric-examples/fabric-cli/test/fixtures/config/config_test_local.yaml",
 			UserName:           "",
 			ChainID:            "demo.fabric",
 			ChannelID:          "orgchannel",

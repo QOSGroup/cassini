@@ -132,7 +132,8 @@ func (a *EthAdaptor) GetSequence() int64 {
 func (a *EthAdaptor) Count() (totalNumber int, consensusNumber int) {
 	totalNumber = ports.GetPortsIncetance().Count(a.GetChainName())
 	consensusNumber = ports.Consensus2of3(totalNumber)
-	log.Debugf("total: %d; consensus: %d;", totalNumber, consensusNumber)
+	log.Debugf("%s adaptor count: %d; consensus: %d;",
+		a.GetChainName(), totalNumber, consensusNumber)
 	return
 }
 
