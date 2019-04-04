@@ -1,10 +1,9 @@
-// +build ignore
-
 package main
 
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -12,28 +11,6 @@ import (
 	"github.com/QOSGroup/cassini/common"
 	"github.com/QOSGroup/cassini/log"
 )
-
-// JSONRPC wrapped the rpc request
-type JSONRPC struct {
-	JSONRPC string        `json:"jsonrpc,omitempty"`
-	Method  string        `json:"method,omitempty"`
-	Params  []interface{} `json:"params,omitempty"`
-	ID      int           `json:"id,omitempty"`
-}
-
-// Transaction wrap transaction in block
-type Transaction struct {
-	BlockHash        string `json:"blockHash,omitempty"`
-	TransactionIndex string `json:"transactionIndex,omitempty"`
-	From             string `json:"from,omitempty"`
-	To               string `json:"to,omitempty"`
-}
-
-// Result returns from ethereum
-type Result struct {
-	Difficulty   string         `json:"difficulty,omitempty"`
-	Transactions []*Transaction `json:"transactions,omitempty"`
-}
 
 func main() {
 	go func() {
@@ -48,41 +25,62 @@ func main() {
 }
 
 func callEthereum() {
+	height := int64(0)
 	for true {
-		height, err := sdk.EthBlockNumber()
+		h, err := sdk.EthBlockNumberInt64()
 		if err != nil {
 			fmt.Println("eth_blockNumber error: ", err)
-		} else {
-			fmt.Printf("eth_blockNumber %d\n", height)
+			continue
+		} else if height == h {
+			continue
 		}
+		height = h
+		fmt.Printf("eth_blockNumber %d\n", height)
 
-		protocol, err := sdk.EthProtocolVersion()
+		protocol, err := sdk.EthProtocolVersionResponse()
 		if err != nil {
 			fmt.Println("eth_protocolVersion error: ", err)
 		} else {
 			fmt.Println("eth_protocolVersion resp: ", protocol)
 		}
-
-		result, err := sdk.EthGetBlockByNumber(height)
-		if err != nil {
-			fmt.Println("eth_getBlockByNumber error: ", err)
-		} else {
-			checkBlock(&result)
+		var result *sdk.ResultBlock
+		for result == nil {
+			result, err = sdk.EthGetBlockByNumber(height)
+			if err != nil {
+				fmt.Println("eth_getBlockByNumber error: ", err)
+			}
+			if result == nil {
+				fmt.Printf("block %d is nil\n", height)
+			}
 		}
+		checkBlock(result)
+
+		// result, err = sdk.EthGetBlockByNumber(10686098)
+		// if err != nil {
+		// 	fmt.Println("eth_getBlockByNumber error: ", err)
+		// } else {
+		// 	checkBlock(result)
+		// }
 		time.Sleep(2 * time.Second)
 	}
 }
 
-func checkBlock(result *sdk.Result) {
+func checkBlock(result *sdk.ResultBlock) {
 	fmt.Println("eth_getBlockByNumber resp: ",
 		result.Difficulty, len(result.Transactions))
 	for i, tx := range result.Transactions {
+		value, err := strconv.ParseInt(tx.Value[2:], 16, 64)
+		if err != nil {
+			log.Errorf("value: %s parse error: %v", tx.Value, err)
+			continue
+		}
 		fmt.Println("tx in block: ", i, "; ",
-			tx.From, " -> ", tx.To)
+			tx.From, " -> ", tx.To, " : ", value)
 		if strings.EqualFold(tx.To,
 			"0x3d947eB8c366D2416468675cEDd00fd311D70dFB") {
-			fmt.Println("check address: ", tx.To,
-				"; ", tx.TransactionIndex)
+			fmt.Println("check address: ",
+				tx.To, "; ", tx.TransactionIndex,
+				" value: ", value)
 		}
 	}
 }

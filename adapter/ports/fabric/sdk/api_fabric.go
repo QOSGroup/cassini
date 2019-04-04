@@ -145,7 +145,7 @@ func ethNewAccount(accountID, key, chain, token string) string {
 		return errUnsuportedToken
 	}
 	var strs []string
-	height, err := ethsdk.EthBlockNumberHex()
+	height, err := ethsdk.EthBlockNumber()
 	if err != nil {
 		log.Errorf("eth get block number error: %v", err)
 		return errUnsuportedToken
