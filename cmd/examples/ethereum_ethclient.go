@@ -25,16 +25,22 @@ func main() {
 }
 
 func callEthereum() {
-	height := int64(0)
+	height := int64(10705633)
+	h := int64(0)
+	var err error
 	for true {
-		h, err := sdk.EthBlockNumberInt64()
+		h, err = sdk.EthBlockNumberInt64()
 		if err != nil {
 			fmt.Println("eth_blockNumber error: ", err)
 			continue
 		} else if height == h {
 			continue
 		}
-		height = h
+		if height < h {
+			height++
+		} else {
+			height = h
+		}
 		fmt.Printf("eth_blockNumber %d\n", height)
 
 		protocol, err := sdk.EthProtocolVersionResponse()
@@ -61,7 +67,7 @@ func callEthereum() {
 		// } else {
 		// 	checkBlock(result)
 		// }
-		time.Sleep(2 * time.Second)
+		time.Sleep(1 * time.Second)
 	}
 }
 
@@ -77,7 +83,8 @@ func checkBlock(result *sdk.ResultBlock) {
 		fmt.Println("tx in block: ", i, "; ",
 			tx.From, " -> ", tx.To, " : ", value)
 		if strings.EqualFold(tx.To,
-			"0x3d947eB8c366D2416468675cEDd00fd311D70dFB") {
+			// "0x3d947eB8c366D2416468675cEDd00fd311D70dFB") {
+			"0xb0d2da0f43Cd2E44e4F3a38E24945F0ca0Ea95e2") {
 			fmt.Println("check address: ",
 				tx.To, "; ", tx.TransactionIndex,
 				" value: ", value)
