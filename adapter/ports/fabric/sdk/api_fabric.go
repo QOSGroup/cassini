@@ -151,8 +151,7 @@ func ethNewAccount(accountID, key, chain, token string) string {
 		return errUnsuportedToken
 	}
 	strs = append(strs, accountID,
-		account.WalletAddress, account.EncryptedKey,
-		chain, token, height)
+		account.WalletAddress, "", chain, token, height)
 	a := Args{Func: "register", Args: strs}
 	var args []Args
 	args = append(args, a)

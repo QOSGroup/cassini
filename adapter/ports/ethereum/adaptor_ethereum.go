@@ -2,6 +2,7 @@ package ethereum
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -89,24 +90,19 @@ func (a *EthAdaptor) SubmitTx(chainID string, tx *txs.TxQcp) error {
 //     send transaction data back to fabric
 func (a *EthAdaptor) ObtainTx(chainID string, sequence int64) (*txs.TxQcp, error) {
 	log.Infof("ObtainTx: %s(%s), %d", a.GetChainName(), chainID, sequence)
-	ret, err := ethsdk.EthGetBlockByNumber(sequence)
+	// ignore useless block, 10000000 in kovan
+	if sequence < 10000000 {
+		return nil, errors.New("invalid sequence")
+	}
+	ret, err := ethsdk.EthGetBlockByNumberResponse(sequence)
 	if err != nil {
 		log.Errorf("ethereum rpc error: %v", err)
 		return nil, err
-	} else if len(ret.Transactions) == 0 {
-		log.Warn("ethereum empty block")
-		// ret.Difficulty = "0"
-	}
-	bytes, err := json.Marshal(ret)
-	if err != nil {
-		log.Errorf("json marshal error: %v", err)
-		return nil, err
 	}
 	log.Infof("ObtainTx: %s(%s) %d: %s", a.GetChainName(), chainID,
-		sequence, string(bytes))
+		sequence, ret)
 	tx := msgtx.NewTxQcp(fmt.Sprintf("%s(%s)", a.GetChainName(), chainID),
-		a.GetChainName(), chainID, int64(1), int64(sequence),
-		string(bytes))
+		a.GetChainName(), chainID, int64(1), int64(sequence), ret)
 	a.outSequence = sequence + 1
 	return tx, nil
 }
