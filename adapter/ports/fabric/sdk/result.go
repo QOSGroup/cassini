@@ -1,8 +1,8 @@
 package sdk
 
 const (
-	// DefaultResultJSON default result json string when json.Marshal error
-	DefaultResultJSON string = `{"code": "500", "message": "unknown error"}`
+	// defaultResultJSON default result json string when json.Marshal error
+	defaultResultJSON string = `{"code": "500", "message": "unknown error"}`
 )
 
 // CallResult api call result

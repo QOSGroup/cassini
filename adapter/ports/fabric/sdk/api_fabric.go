@@ -1,9 +1,7 @@
 package sdk
 
 import (
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"strings"
 
 	ethsdk "github.com/QOSGroup/cassini/adapter/ports/ethereum/sdk"
@@ -39,31 +37,18 @@ func ChaincodeInvoke(channelID, chaincodeID string, argsArray []Args) (result st
 
 // ChaincodeInvokeByString call chaincode invoke of hyperledger fabric
 func ChaincodeInvokeByString(channelID, chaincodeID, argsStr string) string {
-	result := &CallResult{
-		Code: http.StatusOK, Message: "OK"}
-	argsArray, err := ArgsArray(argsStr)
+	log.Infof("chaincode invoke: %s; %s; %s", channelID, chaincodeID, argsStr)
+	args, err := ArgsArray(argsStr)
 	if err == nil {
-		for _, args := range argsArray {
-			result.Message = fmt.Sprintf("OK; %s:%s:%s", channelID, chaincodeID, args.Func)
-		}
-		ret, err := ChaincodeInvoke(channelID, chaincodeID, argsArray)
-		if err != nil {
-			result.Code = http.StatusInternalServerError
-			result.Message = fmt.Sprintf("chaincode invoke error: %v", err)
-		} else {
+		var ret string
+		ret, err = ChaincodeInvoke(channelID, chaincodeID, args)
+		if err == nil {
 			log.Info("chaincode invoke result: ", ret)
+			return ret
 		}
-	} else {
-		result.Code = http.StatusInternalServerError
-		result.Message = fmt.Sprintf("args JSON parsing err: %v", err)
 	}
-	bytes, err := json.Marshal(result)
-	if err == nil {
-		log.Info(string(bytes))
-		return string(bytes)
-	}
-	log.Errorf("%s %v", DefaultResultJSON, err)
-	return DefaultResultJSON
+	log.Errorf("%s %v", defaultResultJSON, err)
+	return defaultResultJSON
 }
 
 // ChaincodeQuery call chaincode query of hyperledger fabric
@@ -98,34 +83,18 @@ func ChaincodeQuery(channelID, chaincodeID string, argsArray []Args) (result str
 
 // ChaincodeQueryByString call chaincode query of hyperledger fabric
 func ChaincodeQueryByString(channelID, chaincodeID, argsStr string) string {
-	log.Infof("%s; %s; %s", channelID, chaincodeID, argsStr)
-	result := &CallResult{
-		Code: http.StatusOK, Message: "OK"}
+	log.Infof("chaincode query: %s; %s; %s", channelID, chaincodeID, argsStr)
 	argsArray, err := ArgsArray(argsStr)
 	if err == nil {
-		for _, args := range argsArray {
-			result.Message = fmt.Sprintf("OK; %s:%s:%s", channelID, chaincodeID, args.Func)
-			log.Infof("result.Message: ", result.Message)
-		}
-		ret, err := ChaincodeQuery(channelID, chaincodeID, argsArray)
-		if err != nil {
-			result.Code = http.StatusInternalServerError
-			result.Message = fmt.Sprintf("chaincode query error: %v", err)
-		} else {
-			result.Result = ret
+		var ret string
+		ret, err = ChaincodeQuery(channelID, chaincodeID, argsArray)
+		if err == nil {
 			log.Info("chaincode query result: ", ret)
+			return ret
 		}
-	} else {
-		result.Code = http.StatusInternalServerError
-		result.Message = fmt.Sprintf("args JSON parsing err: %v", err)
 	}
-	bytes, err := json.Marshal(result)
-	if err == nil {
-		log.Info(string(bytes))
-		return string(bytes)
-	}
-	log.Errorf("%s %v", DefaultResultJSON, err)
-	return DefaultResultJSON
+	log.Errorf("%s %v", defaultResultJSON, err)
+	return defaultResultJSON
 }
 
 // NewAccountByString create a new account

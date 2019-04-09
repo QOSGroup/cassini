@@ -1,3 +1,5 @@
+// +build ignore
+
 package main
 
 import (
@@ -41,7 +43,7 @@ func callEthereum() {
 		} else {
 			height = h
 		}
-		fmt.Printf("eth_blockNumber %d\n", height)
+		fmt.Printf("eth_blockNumber %d; current %d\n", height, h)
 
 		protocol, err := sdk.EthProtocolVersionResponse()
 		if err != nil {
