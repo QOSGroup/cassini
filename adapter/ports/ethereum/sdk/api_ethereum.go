@@ -40,7 +40,7 @@ func ImportToken(chain, tokenAddress string) (*Token, error) {
 		log.Fatal(err)
 		return nil, err
 	}
-
+	defer client.Close()
 	address := common.HexToAddress(tokenAddress)
 	instance, err := token.NewToken(address, client)
 	if err != nil {
@@ -52,13 +52,11 @@ func ImportToken(chain, tokenAddress string) (*Token, error) {
 		log.Fatal(err)
 		return nil, err
 	}
-
 	symbol, err := instance.Symbol(&bind.CallOpts{})
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
 	}
-
 	decimals, err := instance.Decimals(&bind.CallOpts{})
 	if err != nil {
 		log.Fatal(err)

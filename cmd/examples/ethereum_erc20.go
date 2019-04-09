@@ -18,6 +18,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer client.Close()
 
 	tokenAddress := common.HexToAddress("0xEAd5C972Fe8Bbf6f725Ab8A4C7E9d40E15f35241")
 	instance, err := token.NewToken(tokenAddress, client)
