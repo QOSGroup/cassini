@@ -1,16 +1,13 @@
 package sdk
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	ethsdk "github.com/QOSGroup/cassini/adapter/ports/ethereum/sdk"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/pkg/errors"
-)
-
-const (
-	errUnsuportedToken = `{"code": 404, "message": "unsupported network and token"}`
 )
 
 // ChaincodeInvoke invoke chaincode
@@ -97,14 +94,30 @@ func ChaincodeQueryByString(channelID, chaincodeID, argsStr string) string {
 	return defaultResultJSON
 }
 
-// NewAccountByString create a new account
-func NewAccountByString(accountID, key, chain, token string) string {
+// RegisterWalletByString create a new account
+func RegisterWalletByString(accountID, key, chain, token string) string {
 	if strings.EqualFold(chain, "ethereum") {
 		if strings.EqualFold(token, "eth") {
 			return ethNewAccount(accountID, key, chain, token)
 		}
 	}
 	return errUnsuportedToken
+}
+
+// ImportTokenByString query token info from chain
+func ImportTokenByString(chain, tokenAddress string) string {
+	token, err := ethsdk.ImportToken(chain, tokenAddress)
+	if err != nil {
+		log.Errorf("import token error: %v", err)
+		return errUnsuportedToken
+	}
+	ret := CallResult{Code: 200, Message: "OK", Result: token}
+	bytes, err := json.Marshal(&ret)
+	if err != nil {
+		log.Errorf("import token error: %v", err)
+		return errUnsuportedToken
+	}
+	return string(bytes)
 }
 
 func ethNewAccount(accountID, key, chain, token string) string {

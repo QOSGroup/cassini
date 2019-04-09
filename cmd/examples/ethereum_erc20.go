@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	"github.com/QOSGroup/cassini/adapter/ports/ethereum/token" // for demo
+	"github.com/QOSGroup/cassini/adapter/ports/ethereum/token"
 )
 
 func main() {
@@ -19,7 +19,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Golem (GNT) Address
 	tokenAddress := common.HexToAddress("0xEAd5C972Fe8Bbf6f725Ab8A4C7E9d40E15f35241")
 	instance, err := token.NewToken(tokenAddress, client)
 	if err != nil {
