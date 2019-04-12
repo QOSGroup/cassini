@@ -30,9 +30,9 @@ func registerWallet(accountID, key, chain, token *C.char) *C.char {
 		C.GoString(chain), C.GoString(token)))
 }
 
-//export importToken
-func importToken(chain, token *C.char) *C.char {
-	return C.CString(sdk.ImportTokenByString(
+//export registerToken
+func registerToken(chain, token *C.char) *C.char {
+	return C.CString(sdk.RegisterTokenByString(
 		C.GoString(chain), C.GoString(token)))
 }
 

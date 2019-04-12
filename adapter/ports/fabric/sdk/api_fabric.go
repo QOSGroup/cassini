@@ -1,8 +1,8 @@
 package sdk
 
 import (
-	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	ethsdk "github.com/QOSGroup/cassini/adapter/ports/ethereum/sdk"
@@ -104,20 +104,29 @@ func RegisterWalletByString(accountID, key, chain, token string) string {
 	return errUnsuportedToken
 }
 
-// ImportTokenByString query token info from chain
-func ImportTokenByString(chain, tokenAddress string) string {
-	token, err := ethsdk.ImportToken(chain, tokenAddress)
+// RegisterTokenByString query token info from chain
+func RegisterTokenByString(chain, tokenAddress string) string {
+	token, err := ethsdk.QueryTokenInfo(chain, tokenAddress)
 	if err != nil {
-		log.Errorf("import token error: %v", err)
+		log.Errorf("query token info error: %v", err)
 		return errUnsuportedToken
 	}
-	ret := CallResult{Code: 200, Message: "OK", Result: token}
-	bytes, err := json.Marshal(&ret)
+	decimals := fmt.Sprintf("0x%s",
+		strconv.FormatUint(uint64(token.Decimals), 16))
+	a := Args{
+		Func: "register",
+		Args: []string{"token", tokenAddress, chain,
+			token.Symbol, token.Name, decimals}}
+	var args []Args
+	args = append(args, a)
+	var ret string
+	ret, err = ChaincodeInvoke(Config().ChannelID, "wallet", args)
 	if err != nil {
-		log.Errorf("import token error: %v", err)
-		return errUnsuportedToken
+		log.Errorf("register token error: %v", err)
+		return defaultResultJSON
 	}
-	return string(bytes)
+	log.Info(ret)
+	return ret
 }
 
 func ethNewAccount(accountID, key, chain, token string) string {

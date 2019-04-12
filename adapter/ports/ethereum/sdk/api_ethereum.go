@@ -33,8 +33,8 @@ func NewAccount(accountID, pass string) (*Account, error) {
 	return account, nil
 }
 
-// ImportToken query token info on ethereum
-func ImportToken(chain, tokenAddress string) (*Token, error) {
+// QueryTokenInfo query token info on ethereum
+func QueryTokenInfo(chain, tokenAddress string) (*Token, error) {
 	client, err := ethclient.Dial(cli.url)
 	if err != nil {
 		log.Fatal(err)
