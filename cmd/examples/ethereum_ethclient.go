@@ -27,7 +27,7 @@ func main() {
 }
 
 func callEthereum() {
-	height := int64(10705633)
+	height := int64(10705666) // 10705633)
 	h := int64(0)
 	var err error
 	for true {
@@ -87,7 +87,7 @@ func checkBlock(result *sdk.ResultBlock) {
 		if strings.EqualFold(tx.To,
 			// "0x3d947eB8c366D2416468675cEDd00fd311D70dFB") {
 			"0xb0d2da0f43Cd2E44e4F3a38E24945F0ca0Ea95e2") {
-			fmt.Println("check address: ",
+			fmt.Println("!!!check address: ",
 				tx.To, "; ", tx.TransactionIndex,
 				" value: ", value)
 		}

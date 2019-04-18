@@ -3,9 +3,11 @@ package fabric
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 
+	ethsdk "github.com/QOSGroup/cassini/adapter/ports/ethereum/sdk"
 	"github.com/QOSGroup/cassini/adapter/ports/fabric/sdk"
 
 	"github.com/QOSGroup/cassini/adapter/ports"
@@ -40,6 +42,14 @@ type fabricChaincodeQuerySequenceResult struct {
 	ChaincodeID string `json:"chaincode,omitempty"`
 	InSequence  int64  `json:"InSequence,omitempty"`
 	OutSequence int64  `json:"OutSequence,omitempty"`
+}
+
+// ChainResult result of hypelrdger fabric chaincode
+type ChainResult struct {
+	Code      int    `json:"code,omitempty"`
+	Message   string `json:"message,omitempty"`
+	ErrString string `json:"error,omitempty"`
+	// Result    interface{} `json:"result,omitempty"`
 }
 
 // FabAdaptor provides adapter for hyperledger fabric
@@ -79,15 +89,42 @@ func (a *FabAdaptor) Subscribe(listener ports.EventsListener) {
 
 // SubmitTx submit Tx to hyperledger fabric chain
 func (a *FabAdaptor) SubmitTx(chainID string, tx *txs.TxQcp) error {
-	jsonTx := tx.TxStd.ITx.GetSignData()
-	log.Infof("SubmitTx: %s(%s) %d: chain result: %s",
-		a.GetChainName(), chainID, tx.Sequence, jsonTx)
+	bytes := tx.TxStd.ITx.GetSignData()
+	log.Infof("SubmitTx: %s(%s) %d Tx: %s",
+		a.GetChainName(), chainID, tx.Sequence, string(bytes))
+	ethBlock := &ethsdk.Block{}
+	if err := json.Unmarshal(bytes, ethBlock); err != nil {
+		log.Errorf("SubmitTx: %s(%s) %d: tx unmarshal error: %v",
+			a.GetChainName(), chainID, tx.Sequence, err)
+		return err
+	}
+	// regBlock := &sdk.BlockRegister{
+	// 	Height: ethBlock.Number}
+
 	var args []string
-	args = append(args, "ethereum", string(jsonTx))
-	arg := sdk.Args{Func: "registerBlock", Args: args}
+	args = append(args, "block", string(bytes))
+	arg := sdk.Args{Func: "register", Args: args}
 	var argsArray []sdk.Args
 	argsArray = append(argsArray, arg)
-	sdk.ChaincodeInvoke(ChannelID, ChaincodeID, argsArray)
+	ret, err := sdk.ChaincodeInvoke(ChannelID, ChaincodeID, argsArray)
+	if err != nil {
+		log.Errorf("SubmitTx: %s(%s) %d: error: %v",
+			a.GetChainName(), chainID, tx.Sequence, err)
+		return err
+	}
+	log.Infof("SubmitTx: %s(%s) %d: response: %s",
+		a.GetChainName(), chainID, tx.Sequence, ret)
+	result := &ChainResult{}
+	if err = json.Unmarshal([]byte(ret), result); err != nil {
+		log.Errorf("SubmitTx: %s(%s) %d: result unmarshal error: %v",
+			a.GetChainName(), chainID, tx.Sequence, err)
+		return err
+	}
+	if result.Code != http.StatusOK {
+		log.Errorf("SubmitTx: %s(%s) %d: failed: %s",
+			a.GetChainName(), chainID, tx.Sequence, ret)
+		return err
+	}
 	return nil
 }
 

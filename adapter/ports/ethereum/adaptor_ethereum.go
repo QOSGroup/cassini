@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/QOSGroup/cassini/adapter/ports"
-	ethsdk "github.com/QOSGroup/cassini/adapter/ports/ethereum/sdk"
+	"github.com/QOSGroup/cassini/adapter/ports/ethereum/sdk"
+	fabsdk "github.com/QOSGroup/cassini/adapter/ports/fabric/sdk"
 	fabricTx "github.com/QOSGroup/cassini/adapter/ports/fabric/sdk/tx"
 	msgtx "github.com/QOSGroup/cassini/adapter/ports/txs"
 	"github.com/QOSGroup/cassini/log"
@@ -30,6 +32,7 @@ type EthAdaptor struct {
 	config      *ports.AdapterConfig
 	inSequence  int64
 	outSequence int64
+	Addrs       []string
 }
 
 // Start fabric adapter service
@@ -74,7 +77,18 @@ func (a *EthAdaptor) SubmitTx(chainID string, tx *txs.TxQcp) error {
 	}
 	a.inSequence = tx.Sequence
 	if a.outSequence <= 1 {
-		a.outSequence = t.Height
+		height, err := strconv.ParseInt(t.Height[2:], 16, 64)
+		if err != nil {
+			log.Errorf("SubmitTx: %s(%s) parse height(%s) error: %v",
+				a.GetChainName(), chainID, t.Height, err)
+			return err
+		}
+		a.outSequence = height
+	}
+	// cache wallet address for block filtering in ObtainTx
+	if strings.EqualFold("register", t.Func) {
+		log.Infof("new ethereum wallet address: %s", t.Address)
+		a.Addrs = append(a.Addrs, t.Address)
 	}
 	// encrypted
 	// etcd
@@ -94,15 +108,37 @@ func (a *EthAdaptor) ObtainTx(chainID string, sequence int64) (*txs.TxQcp, error
 	if sequence < 10000000 {
 		return nil, errors.New("invalid sequence")
 	}
-	ret, err := ethsdk.EthGetBlockByNumberResponse(sequence)
+	block, err := sdk.EthGetBlockByNumber(sequence)
 	if err != nil {
 		log.Errorf("ethereum rpc error: %v", err)
 		return nil, err
 	}
+	registerBlock := &fabsdk.BlockRegister{
+		Height: block.Number}
+	for _, tx := range block.Transactions {
+		for _, addr := range a.Addrs {
+			if strings.EqualFold(tx.To, addr) && len(tx.Value) > 0 {
+				t := &fabsdk.TxRegister{
+					Chain:  "ethereum",
+					Token:  "eth",
+					From:   tx.From,
+					To:     tx.To,
+					Amount: tx.Value,
+					Txhash: tx.Hash}
+				registerBlock.Txs = append(registerBlock.Txs, t)
+			}
+		}
+	}
+	bytes, err := json.Marshal(registerBlock)
+	if err != nil {
+		log.Errorf("register block marshal error: %v", err)
+		return nil, err
+	}
+	jsonRegisterBlock := string(bytes)
 	log.Infof("ObtainTx: %s(%s) %d: %s", a.GetChainName(), chainID,
-		sequence, ret)
+		sequence, jsonRegisterBlock)
 	tx := msgtx.NewTxQcp(fmt.Sprintf("%s(%s)", a.GetChainName(), chainID),
-		a.GetChainName(), chainID, int64(1), int64(sequence), ret)
+		a.GetChainName(), chainID, int64(1), int64(sequence), jsonRegisterBlock)
 	a.outSequence = sequence + 1
 	return tx, nil
 }

@@ -11,13 +11,14 @@ import (
 
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/QOSGroup/cassini/adapter/ports"
 	cmn "github.com/QOSGroup/cassini/common"
 	"github.com/QOSGroup/cassini/concurrency"
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/restclient"
-	"time"
 )
 
 // Ferry Comsumer tx message and handle(consensus, broadcast...) it.
@@ -297,7 +298,9 @@ func (f *Ferry) getTxQcpFromNode(from, to, hash, node string, sequence int64) (q
 	//if string(tmhash.Sum(qcp.GetSigData())) != hash { //算法保持 tmhash.hash 一致 sha256 前 20byte
 	hash2 := cmn.Bytes2HexStr(crypto.Sha256(qcp.BuildSignatureBytes()))
 	if hash2 != hash {
-		return nil, errors.New("get TxQcp from " + node + "failed,transaction hash not correct ")
+		return nil, fmt.Errorf("get TxQcp failed, tansaction hash not correct: %s",
+			fmt.Sprintf("node: %s from: %s to: %s sequence: %d hash: %s hash2: %s",
+				node, from, to, sequence, hash, hash2))
 	}
 
 	return qcp, nil
@@ -325,6 +328,7 @@ func (f *Ferry) queryTxQcpFromNode(from, to, node string, sequence int64) (qcp *
 	// return qcp, nil
 	var ads map[string]ports.Adapter
 	ads, err = ports.GetAdapters(from)
+	log.Warnf("queryTxQcpFromNode: from %s: to %s: adapters: %d: seq: %d", from, to, len(ads), sequence)
 	if err == nil {
 		for _, a := range ads {
 			qcp, err = a.ObtainTx(to, sequence)

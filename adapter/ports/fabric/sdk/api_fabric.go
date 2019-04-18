@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -92,6 +93,46 @@ func ChaincodeQueryByString(channelID, chaincodeID, argsStr string) string {
 	}
 	log.Errorf("%s %v", defaultResultJSON, err)
 	return defaultResultJSON
+}
+
+// TxRegister registered Tx
+type TxRegister struct {
+	Chain    string `json:"chain,omitempty"`
+	Token    string `json:"token,omitempty"`
+	Contract string `json:"contract,omitempty"`
+	From     string `json:"from,omitempty"`
+	To       string `json:"to,omitempty"`
+	Amount   string `json:"amount,omitempty"`
+	Txhash   string `json:"txhash,omitempty"`
+}
+
+// BlockRegister registered block
+type BlockRegister struct {
+	Height string        `json:"height,omitempty"`
+	Txs    []*TxRegister `json:"transactions,omitempty"`
+}
+
+// RegisterBlock register block of source chain into hyperledger fabric
+func RegisterBlock(block *BlockRegister) string {
+	var err error
+	var bytes []byte
+	if bytes, err = json.Marshal(block); err != nil {
+		log.Errorf("register block error: %v", err)
+		return defaultResultJSON
+	}
+	a := Args{
+		Func: "register",
+		Args: []string{"block", string(bytes)}}
+	var args []Args
+	args = append(args, a)
+	var ret string
+	ret, err = ChaincodeInvoke(Config().ChannelID, "wallet", args)
+	if err != nil {
+		log.Errorf("register block error: %v", err)
+		return defaultResultJSON
+	}
+	log.Info(ret)
+	return ret
 }
 
 // RegisterWalletByString create a new account

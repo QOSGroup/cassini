@@ -71,17 +71,18 @@ type Transaction struct {
 	V         string `json:"v,omitempty"`
 }
 
-// ResultBlock returns from ethereum
-type ResultBlock struct {
+// Block returns from ethereum
+type Block struct {
+	Number       string         `json:"number,omitempty"`
 	Difficulty   string         `json:"difficulty,omitempty"`
 	Transactions []*Transaction `json:"transactions,omitempty"`
 }
 
 // ResponseBlock returns block from ethereum
 type ResponseBlock struct {
-	JSONRPCVersion string       `json:"jsonrpc"`
-	ID             uint8        `json:"id"`
-	Result         *ResultBlock `json:"result"`
+	JSONRPCVersion string `json:"jsonrpc"`
+	ID             uint8  `json:"id"`
+	Result         *Block `json:"result"`
 }
 
 // Close client's connection
@@ -137,7 +138,7 @@ func EthGetBlockByNumberResponse(height int64) (response string, err error) {
 }
 
 // EthGetBlockByNumber json-rpc for eth_getBlockByNumber
-func EthGetBlockByNumber(height int64) (*ResultBlock, error) {
+func EthGetBlockByNumber(height int64) (*Block, error) {
 	resp, err := EthGetBlockByNumberResponse(height)
 	if err != nil {
 		return nil, err
