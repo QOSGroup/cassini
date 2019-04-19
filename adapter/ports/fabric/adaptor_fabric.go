@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	ethsdk "github.com/QOSGroup/cassini/adapter/ports/ethereum/sdk"
 	"github.com/QOSGroup/cassini/adapter/ports/fabric/sdk"
 
 	"github.com/QOSGroup/cassini/adapter/ports"
@@ -92,15 +91,6 @@ func (a *FabAdaptor) SubmitTx(chainID string, tx *txs.TxQcp) error {
 	bytes := tx.TxStd.ITx.GetSignData()
 	log.Infof("SubmitTx: %s(%s) %d Tx: %s",
 		a.GetChainName(), chainID, tx.Sequence, string(bytes))
-	ethBlock := &ethsdk.Block{}
-	if err := json.Unmarshal(bytes, ethBlock); err != nil {
-		log.Errorf("SubmitTx: %s(%s) %d: tx unmarshal error: %v",
-			a.GetChainName(), chainID, tx.Sequence, err)
-		return err
-	}
-	// regBlock := &sdk.BlockRegister{
-	// 	Height: ethBlock.Number}
-
 	var args []string
 	args = append(args, "block", string(bytes))
 	arg := sdk.Args{Func: "register", Args: args}

@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/QOSGroup/cassini/log"
@@ -30,14 +31,6 @@ type JSONRPC struct {
 	Method  string        `json:"method,omitempty"`
 	Params  []interface{} `json:"params,omitempty"`
 	ID      uint8         `json:"id,omitempty"`
-}
-
-// Response rpc response
-type Response struct {
-	JSONRPCVersion string       `json:"jsonrpc"`
-	ID             uint8        `json:"id"`
-	Result         string       `json:"result"`
-	Error          *ResultError `json:"error"`
 }
 
 // ResultError error message
@@ -78,16 +71,62 @@ type Block struct {
 	Transactions []*Transaction `json:"transactions,omitempty"`
 }
 
-// ResponseBlock returns block from ethereum
-type ResponseBlock struct {
-	JSONRPCVersion string `json:"jsonrpc"`
-	ID             uint8  `json:"id"`
-	Result         *Block `json:"result"`
+// TransactionReceipt receipt of transaction
+type TransactionReceipt struct {
+	Height          string `json:"blockNumber,omitempty"`
+	Hash            string `json:"transactionHash,omitempty"`
+	Status          string `json:"status,omitempty"`
+	GasUsed         string `json:"gasUsed,omitempty"`
+	ContractAddress string `json:"contractAddress,omitempty"`
+}
+
+// Success or not
+func (r *TransactionReceipt) Success() bool {
+	return strings.EqualFold(r.Status, "0x1")
+}
+
+// RPCResponse returns block from ethereum
+type RPCResponse struct {
+	JSONRPCVersion string       `json:"jsonrpc"`
+	ID             uint8        `json:"id"`
+	Result         interface{}  `json:"result"`
+	Error          *ResultError `json:"error"`
 }
 
 // Close client's connection
 func Close() {
 	cli.cancel()
+}
+
+// EthGetBalance returns the balance of the account of given address.
+func EthGetBalance(address string, blockParameter string) (response string, err error) {
+	log.Infof("eth get balance: address: %s", address)
+	response, err = cli.call("eth_getBalance", address, blockParameter)
+	log.Info("response: ", response)
+	return
+}
+
+// EthGetTransactionReceiptResponse returns the receipt of a transaction by transaction hash
+func EthGetTransactionReceiptResponse(hash string) (response string, err error) {
+	log.Infof("eth get transaction receipt: hash: %s", hash)
+	response, err = cli.call("eth_getTransactionReceipt", hash)
+	log.Info("response: ", response)
+	return
+}
+
+// EthGetTransactionReceipt returns the receipt of a transaction by transaction hash
+func EthGetTransactionReceipt(hash string) (*TransactionReceipt, error) {
+	resp, err := EthGetTransactionReceiptResponse(hash)
+	if err != nil {
+		return nil, err
+	}
+	receipt := &TransactionReceipt{}
+	response := &RPCResponse{
+		Result: receipt}
+	if err = json.Unmarshal([]byte(resp), response); err != nil {
+		return nil, err
+	}
+	return receipt, nil
 }
 
 // EthBlockNumberResponse json-rpc response string for eth_blockNumber
@@ -103,12 +142,14 @@ func EthBlockNumber() (height string, err error) {
 	if err != nil {
 		return
 	}
-	var response Response
-	err = json.Unmarshal([]byte(resp), &response)
+	result := ""
+	response := &RPCResponse{
+		Result: &result}
+	err = json.Unmarshal([]byte(resp), response)
 	if err != nil {
 		return
 	}
-	height = response.Result
+	height = result
 	log.Debug("height: ", height)
 	if response.Error != nil {
 		err = fmt.Errorf("code: %d; message: %s",
@@ -143,12 +184,14 @@ func EthGetBlockByNumber(height int64) (*Block, error) {
 	if err != nil {
 		return nil, err
 	}
-	var response ResponseBlock
-	err = json.Unmarshal([]byte(resp), &response)
+	block := &Block{}
+	response := &RPCResponse{
+		Result: block}
+	err = json.Unmarshal([]byte(resp), response)
 	if err != nil {
 		return nil, err
 	}
-	return response.Result, nil
+	return block, nil
 }
 
 // EthProtocolVersionResponse json-rpc for eth_protocolVersion

@@ -117,14 +117,29 @@ func (a *EthAdaptor) ObtainTx(chainID string, sequence int64) (*txs.TxQcp, error
 		Height: block.Number}
 	for _, tx := range block.Transactions {
 		for _, addr := range a.Addrs {
-			if strings.EqualFold(tx.To, addr) && len(tx.Value) > 0 {
+			if strings.EqualFold(tx.To, addr) ||
+				strings.EqualFold(tx.From, addr) {
+				receipt, err := sdk.EthGetTransactionReceipt(tx.Hash)
+				if err != nil {
+					log.Errorf("register block transaction receipt hash: %s error: %v",
+						tx.Hash, err)
+					return nil, err
+				}
+				if !receipt.Success() {
+					log.Warnf("ObtainTx: %s(%s) %d register block: %s",
+						a.GetChainName(), chainID, sequence,
+						fmt.Sprintf("transaction reverted hash: %s", tx.Hash))
+					continue
+				}
 				t := &fabsdk.TxRegister{
-					Chain:  "ethereum",
-					Token:  "eth",
-					From:   tx.From,
-					To:     tx.To,
-					Amount: tx.Value,
-					Txhash: tx.Hash}
+					Chain:    "ethereum",
+					Token:    "eth",
+					From:     tx.From,
+					To:       tx.To,
+					Amount:   tx.Value,
+					Txhash:   tx.Hash,
+					Gas:      tx.Gas,
+					GasPrice: tx.GasPrice}
 				registerBlock.Txs = append(registerBlock.Txs, t)
 			}
 		}
@@ -135,7 +150,7 @@ func (a *EthAdaptor) ObtainTx(chainID string, sequence int64) (*txs.TxQcp, error
 		return nil, err
 	}
 	jsonRegisterBlock := string(bytes)
-	log.Infof("ObtainTx: %s(%s) %d: %s", a.GetChainName(), chainID,
+	log.Infof("ObtainTx: %s(%s) %d register block: %s", a.GetChainName(), chainID,
 		sequence, jsonRegisterBlock)
 	tx := msgtx.NewTxQcp(fmt.Sprintf("%s(%s)", a.GetChainName(), chainID),
 		a.GetChainName(), chainID, int64(1), int64(sequence), jsonRegisterBlock)

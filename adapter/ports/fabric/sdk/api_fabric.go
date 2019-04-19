@@ -103,6 +103,8 @@ type TxRegister struct {
 	From     string `json:"from,omitempty"`
 	To       string `json:"to,omitempty"`
 	Amount   string `json:"amount,omitempty"`
+	Gas      string `json:"gas,omitempty"`
+	GasPrice string `json:"gasPrice,omitempty"`
 	Txhash   string `json:"txhash,omitempty"`
 }
 
