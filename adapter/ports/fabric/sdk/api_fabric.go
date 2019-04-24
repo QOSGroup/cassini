@@ -111,6 +111,7 @@ type TxRegister struct {
 	GasUsed  string `json:"gasUsed,omitempty"`
 	GasPrice string `json:"gasPrice,omitempty"`
 	Txhash   string `json:"txhash,omitempty"`
+	Status   string `json:"status,omitempty"`
 }
 
 // BlockRegister registered block

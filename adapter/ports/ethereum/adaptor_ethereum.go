@@ -125,21 +125,22 @@ func (a *EthAdaptor) ObtainTx(chainID string, sequence int64) (*txs.TxQcp, error
 						tx.Hash, err)
 					return nil, err
 				}
-				if !receipt.Success() {
+				t := &fabsdk.TxRegister{
+					Chain:  "ethereum",
+					Token:  "eth",
+					From:   tx.From,
+					To:     tx.To,
+					Txhash: tx.Hash,
+					Status: receipt.Status}
+				if receipt.Success() {
+					t.Amount = tx.Value
+				} else {
 					log.Warnf("ObtainTx: %s(%s) %d register block: %s",
 						a.GetChainName(), chainID, sequence,
 						fmt.Sprintf("transaction reverted hash: %s", tx.Hash))
-					continue
+					t.GasUsed = receipt.GasUsed
+					t.GasPrice = tx.GasPrice
 				}
-				t := &fabsdk.TxRegister{
-					Chain:    "ethereum",
-					Token:    "eth",
-					From:     tx.From,
-					To:       tx.To,
-					Amount:   tx.Value,
-					Txhash:   tx.Hash,
-					Gas:      tx.Gas,
-					GasPrice: tx.GasPrice}
 				registerBlock.Txs = append(registerBlock.Txs, t)
 			}
 		}
