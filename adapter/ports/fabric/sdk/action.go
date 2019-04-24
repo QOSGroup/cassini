@@ -534,6 +534,15 @@ func ArgsArray(argsStr string) ([]Args, error) {
 	return argsArray, nil
 }
 
+// ParseArgs returns an args used in chaincode invocations
+func ParseArgs(argsStr string) (*Args, error) {
+	args := Args{}
+	if err := json.Unmarshal([]byte(argsStr), &args); err != nil {
+		return nil, errors.Errorf("Error unmarshaling JSON arg string: %v", err)
+	}
+	return &args, nil
+}
+
 func (action *Action) getPeers(allPeers []fab.Peer, peerURLs []string, orgIDs []string) ([]fab.Peer, error) {
 	selectAll := false
 	if len(peerURLs) == 0 && len(orgIDs) == 0 {

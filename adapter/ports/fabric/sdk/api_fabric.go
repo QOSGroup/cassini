@@ -36,10 +36,15 @@ func ChaincodeInvoke(channelID, chaincodeID string, argsArray []Args) (result st
 // ChaincodeInvokeByString call chaincode invoke of hyperledger fabric
 func ChaincodeInvokeByString(channelID, chaincodeID, argsStr string) string {
 	log.Infof("chaincode invoke: %s; %s; %s", channelID, chaincodeID, argsStr)
-	args, err := ArgsArray(argsStr)
+	arg, err := ParseArgs(argsStr)
+	if strings.EqualFold(arg.Func, "create") {
+		RegisterWalletByString(arg.Args[0], arg.Args[1], arg.Args[2])
+	}
 	if err == nil {
+		var argsArray []Args
+		argsArray = append(argsArray, *arg)
 		var ret string
-		ret, err = ChaincodeInvoke(channelID, chaincodeID, args)
+		ret, err = ChaincodeInvoke(channelID, chaincodeID, argsArray)
 		if err == nil {
 			log.Info("chaincode invoke result: ", ret)
 			return ret
@@ -103,7 +108,7 @@ type TxRegister struct {
 	From     string `json:"from,omitempty"`
 	To       string `json:"to,omitempty"`
 	Amount   string `json:"amount,omitempty"`
-	Gas      string `json:"gas,omitempty"`
+	GasUsed  string `json:"gasUsed,omitempty"`
 	GasPrice string `json:"gasPrice,omitempty"`
 	Txhash   string `json:"txhash,omitempty"`
 }
@@ -138,10 +143,10 @@ func RegisterBlock(block *BlockRegister) string {
 }
 
 // RegisterWalletByString create a new account
-func RegisterWalletByString(accountID, key, chain, token string) string {
+func RegisterWalletByString(key, chain, token string) string {
 	if strings.EqualFold(chain, "ethereum") {
 		if strings.EqualFold(token, "eth") {
-			return ethNewAccount(accountID, key, chain, token)
+			return ethNewAccount(key, chain, token)
 		}
 	}
 	return errUnsuportedToken
@@ -172,8 +177,8 @@ func RegisterTokenByString(chain, tokenAddress string) string {
 	return ret
 }
 
-func ethNewAccount(accountID, key, chain, token string) string {
-	account, err := ethsdk.NewAccount(accountID, key)
+func ethNewAccount(key, chain, token string) string {
+	account, err := ethsdk.NewAccount("", key)
 	if err != nil {
 		log.Errorf("new account error: %v", err)
 		return errUnsuportedToken
@@ -184,8 +189,7 @@ func ethNewAccount(accountID, key, chain, token string) string {
 		log.Errorf("eth get block number error: %v", err)
 		return errUnsuportedToken
 	}
-	strs = append(strs, accountID,
-		account.WalletAddress, chain, token, height)
+	strs = append(strs, account.WalletAddress, chain, token, height)
 	a := Args{Func: "register", Args: strs}
 	var args []Args
 	args = append(args, a)

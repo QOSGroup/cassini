@@ -23,13 +23,6 @@ func chaincodeQuery(channelID, chaincodeID, args *C.char) *C.char {
 		C.GoString(chaincodeID), C.GoString(args)))
 }
 
-//export registerWallet
-func registerWallet(accountID, key, chain, token *C.char) *C.char {
-	return C.CString(sdk.RegisterWalletByString(
-		C.GoString(accountID), C.GoString(key),
-		C.GoString(chain), C.GoString(token)))
-}
-
 //export registerToken
 func registerToken(chain, token *C.char) *C.char {
 	return C.CString(sdk.RegisterTokenByString(

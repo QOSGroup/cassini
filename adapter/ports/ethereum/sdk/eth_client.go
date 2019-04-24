@@ -106,6 +106,29 @@ func EthGetBalance(address string, blockParameter string) (response string, err 
 	return
 }
 
+// EthGetTransactionByHashResponse returns the information about a transaction requested by transaction hash.
+func EthGetTransactionByHashResponse(hash string) (response string, err error) {
+	log.Infof("eth get transaction receipt: hash: %s", hash)
+	response, err = cli.call("eth_getTransactionByHash", hash)
+	log.Info("response: ", response)
+	return
+}
+
+// EthGetTransactionByHash returns the information about a transaction requested by transaction hash.
+func EthGetTransactionByHash(hash string) (*Transaction, error) {
+	resp, err := EthGetTransactionByHashResponse(hash)
+	if err != nil {
+		return nil, err
+	}
+	tx := &Transaction{}
+	response := &RPCResponse{
+		Result: tx}
+	if err = json.Unmarshal([]byte(resp), response); err != nil {
+		return nil, err
+	}
+	return tx, nil
+}
+
 // EthGetTransactionReceiptResponse returns the receipt of a transaction by transaction hash
 func EthGetTransactionReceiptResponse(hash string) (response string, err error) {
 	log.Infof("eth get transaction receipt: hash: %s", hash)
