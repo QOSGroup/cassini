@@ -65,15 +65,15 @@ func (a *FabAdaptor) Start() error {
 
 // Sync status for fabric adapter service
 func (a *FabAdaptor) Sync() error {
-	seq, err := a.QuerySequence(a.config.ChainName, "in")
-	if err == nil {
-		if seq > 1 {
-			a.outSequence = seq + 1
-		} else {
-			a.outSequence = 1
-		}
-	}
-	return err
+	// seq, err := a.QuerySequence(a.config.ChainName, "in")
+	// if err == nil {
+	// 	if seq > 1 {
+	// 		a.outSequence = seq + 1
+	// 	} else {
+	// 		a.outSequence = 1
+	// 	}
+	// }
+	return nil
 }
 
 // Stop fabric adapter service
@@ -89,7 +89,7 @@ func (a *FabAdaptor) Subscribe(listener ports.EventsListener) {
 // SubmitTx submit Tx to hyperledger fabric chain
 func (a *FabAdaptor) SubmitTx(chainID string, tx *txs.TxQcp) error {
 	bytes := tx.TxStd.ITx.GetSignData()
-	log.Infof("SubmitTx: %s(%s) %d Tx: %s",
+	log.Infof("SubmitTx: %s(%s) %d register block: %s",
 		a.GetChainName(), chainID, tx.Sequence, string(bytes))
 	var args []string
 	args = append(args, "block", string(bytes))
@@ -98,20 +98,22 @@ func (a *FabAdaptor) SubmitTx(chainID string, tx *txs.TxQcp) error {
 	argsArray = append(argsArray, arg)
 	ret, err := sdk.ChaincodeInvoke(ChannelID, ChaincodeID, argsArray)
 	if err != nil {
-		log.Errorf("SubmitTx: %s(%s) %d: error: %v",
+		log.Errorf("SubmitTx: %s(%s) %d: register block error: %v",
 			a.GetChainName(), chainID, tx.Sequence, err)
 		return err
 	}
-	log.Infof("SubmitTx: %s(%s) %d: response: %s",
+	log.Infof("SubmitTx: %s(%s) %d: register block response: %s",
 		a.GetChainName(), chainID, tx.Sequence, ret)
 	result := &ChainResult{}
 	if err = json.Unmarshal([]byte(ret), result); err != nil {
-		log.Errorf("SubmitTx: %s(%s) %d: result unmarshal error: %v",
+		log.Errorf("SubmitTx: %s(%s) %d: register block result unmarshal error: %v",
 			a.GetChainName(), chainID, tx.Sequence, err)
 		return err
 	}
 	if result.Code != http.StatusOK {
-		log.Errorf("SubmitTx: %s(%s) %d: failed: %s",
+		log.Errorf("SubmitTx: %s(%s) %d: register block failed: %s",
+			a.GetChainName(), chainID, tx.Sequence, ret)
+		err = fmt.Errorf("SubmitTx: %s(%s) %d: register block failed: %s",
 			a.GetChainName(), chainID, tx.Sequence, ret)
 		return err
 	}
@@ -134,7 +136,8 @@ func (a *FabAdaptor) ObtainTx(chainID string, sequence int64) (*txs.TxQcp, error
 	argsArray = append(argsArray, args)
 	ret, err := sdk.ChaincodeQuery(ChannelID, ChaincodeID, argsArray)
 	if err != nil {
-		log.Errorf("ObtainTx error: %v", err)
+		log.Errorf("ObtainTx %s(%s), %d error: %v",
+			a.GetChainName(), chainID, sequence, err)
 		return nil, err
 	}
 	log.Info("query transaction result: ", ret)

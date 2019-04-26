@@ -3,11 +3,11 @@ package consensus
 import (
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/QOSGroup/qbase/example/basecoin/app"
 	"github.com/QOSGroup/qbase/txs"
 	"github.com/tendermint/tendermint/crypto"
-	"github.com/tendermint/tendermint/libs/common"
 
 	"errors"
 	"fmt"
@@ -62,34 +62,25 @@ func NewFerry(conf *config.Config, from, to string, sequence int64) *Ferry {
 
 // StartFerry 启动共识引擎尝试处理下一个交易
 func (f *Ferry) StartFerry() error {
+	go func() {
+		for {
+			f.SetSequence(f.from, f.to, 0)
+			seq := atomic.LoadInt64(&f.sequence)
+			cons, err := f.ConsMap.GetConsFromMap(seq)
 
-	for {
-		cons, err := f.ConsMap.GetConsFromMap(f.sequence)
-
-		if err != nil {
-			//consseqs := ""
-			//for k, _ := range f.ConsMap.ConsMap {
-			//	consseqs += strconv.FormatInt(k, 10) + " "
-			//}
-			//log.Debugf("consensused sequence [%s] f.sequence:[#%d]", consseqs, f.sequence)
-
-			time.Sleep(time.Duration(f.conf.EventWaitMillitime) * time.Millisecond)
-			continue
-		}
-
-		if err == nil && cons != nil { //已有该sequence 共识
-			if err := f.ferryQCP(cons.Hash, cons.Nodes, f.sequence); err != nil {
-				//if strings.Contains(err.Error(), restclient.ERR_emptyqcp) { //qcp transaction may be lags behind event
-				if err != nil {
+			if err != nil {
+				log.Errorf("consensus sequence: [#%d] error: %v", seq, err)
+				time.Sleep(time.Duration(f.conf.EventWaitMillitime) * time.Millisecond)
+			} else if cons != nil { //已有该sequence 共识
+				if err = f.ferryQCP(cons.Hash, cons.Nodes, seq); err != nil {
+					log.Errorf("ferry qcp transaction f.t.s[%s %s #%d] hash[%s] failed. %v",
+						f.from, f.to, seq, cons.Hash[:10], err)
 					time.Sleep(time.Duration(f.conf.EventWaitMillitime) * time.Millisecond)
-					continue
 				}
-				log.Errorf("ferry qcp transaction f.t.s[%s %s #%d] hash[%s] failed. %v", f.from, f.to, f.sequence, cons.Hash[:10], err)
 			}
+
 		}
-
-	}
-
+	}()
 	return nil
 }
 
@@ -100,8 +91,10 @@ func (f *Ferry) SetSequence(from, to string, s int64) {
 	defer f.mtx.Unlock()
 
 	seq, _ := f.GetSequenceFromChain(from, to, "in")
-
-	f.sequence = common.MaxInt64(s, seq) + 1
+	log.Infof("f.t[%s %s] ferry set sequence: %d or %d?", from, to, s, seq)
+	// f.sequence = common.MaxInt64(s, seq) + 1
+	// TODO ??? why max + 1?
+	f.sequence = seq + 1
 
 	log.Infof("f.t[%s %s] ferry sequence set to [#%d]", from, to, f.sequence)
 }
@@ -170,17 +163,18 @@ func (f *Ferry) ferryQCP(hash, nodes string, sequence int64) (err error) {
 	}
 
 	if f.conf.UseEtcd {
-		if lockseq, err := f.mutex.Lock(f.sequence); err != nil {
-			log.Warnf("get lock failed. sequence [%d] / [%d]", f.sequence, lockseq)
+		if lockseq, err := f.mutex.Lock(sequence); err != nil {
+			log.Warnf("get lock failed. sequence [%d] / [%d]", sequence, lockseq)
 			if lockseq > 0 {
-				if f.sequence < lockseq {
-					log.Warnf("update sequence [#%d] to etcd sequence [#%d]", f.sequence, lockseq)
-					f.SetSequence(f.from, f.to, lockseq-1)
+				if sequence < lockseq {
+					log.Warnf("update sequence [#%d] to etcd sequence [#%d]",
+						sequence, lockseq)
+					// f.SetSequence(f.from, f.to, lockseq-1)
 				}
 			}
 			return fmt.Errorf("get lock fail %v", err)
 		}
-		log.Debugf("get lock success ,sequence [%d]", f.sequence)
+		log.Debugf("get lock success ,sequence [%d]", sequence)
 		err = f.postTxQcp(f.to, qcp)
 
 		if err != nil {
@@ -192,14 +186,16 @@ func (f *Ferry) ferryQCP(hash, nodes string, sequence int64) (err error) {
 	} else {
 		err = f.postTxQcp(f.to, qcp)
 		if err != nil {
-			//log.Errorf("post qcp transaction failed. %v", err)
+			log.Errorf("post qcp transaction failed. %v", err)
 			return errors.New("post qcp transaction failed")
 		}
 	}
-	delete(f.ConsMap.ConsMap, f.sequence)
-	log.Infof("success ferry qcp transaction f.t.s[%s %s #%d] \n", f.from, f.to, sequence)
+	delete(f.ConsMap.ConsMap, sequence)
+	log.Infof("success ferry qcp transaction f.t.s[%s %s #%d] \n",
+		f.from, f.to, sequence)
 
-	f.SetSequence(f.from, f.to, f.sequence)
+	// TODO check sequence at everytime???
+	// f.SetSequence(f.from, f.to, f.sequence)
 
 	return nil
 
@@ -345,7 +341,9 @@ func (f *Ferry) postTxQcp(to string, qcp *txs.TxQcp) (err error) {
 	if err == nil {
 		for _, a := range ads {
 			err := a.SubmitTx(to, qcp)
-			if err == nil {
+			if err != nil {
+				log.Errorf("post TxQcp error: %v", err)
+			} else {
 				return nil
 			}
 		}

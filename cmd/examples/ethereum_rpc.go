@@ -82,7 +82,7 @@ func main() {
 
 	client := &http.Client{}
 	var height string
-	height = "0xa2fce1"
+	height = "0xa35b14"
 	// height = "0xa2fd92"
 	h, _ := strconv.ParseInt(height[2:], 16, 64)
 

@@ -82,8 +82,8 @@ func StartQcpConsume(conf *config.Config) (err error) {
 	log.Infof("listening on subjects %s", subjects)
 
 	for _, ce := range engines {
-		go ce.StartEngine()
-		go ce.F.StartFerry()
+		ce.StartEngine()
+		ce.F.StartFerry()
 	}
 
 	ticker := func(engines []*ConsEngine) {
@@ -211,44 +211,34 @@ func (c *ConsEngine) consensus32() (N int) {
 
 // StartEngine 启动共识引擎尝试处理下一个交易
 func (c *ConsEngine) StartEngine() error {
+	go func() {
+		for {
+			_, err := c.F.ConsMap.GetConsFromMap(c.sequence)
+			if err == nil { //已有共识
+				c.SetSequence(c.from, c.to, c.sequence)
+			}
 
-	for {
-		//seqDes, _ := c.F.GetSequenceFromChain(c.from, c.to, "in")
-		//seqSou, _ := c.F.GetSequenceFromChain(c.to, c.from, "out")
-		//
-		//if seqDes >= seqSou || c.sequence > seqSou {
-		//	time.Sleep(time.Duration(c.F.conf.EventWaitMillitime) * time.Millisecond)
-		//	continue
-		//}
-		//
-		//if seqDes >= c.sequence {
-		//	c.SetSequence(c.from, c.to, seqDes)
-		//}
-
-		_, err := c.F.ConsMap.GetConsFromMap(c.sequence)
-		if err == nil { //已有共识
-			c.SetSequence(c.from, c.to, c.sequence)
+			cresult := c.ConSequence()
+			if cresult == success {
+				c.SetSequence(c.from, c.to, c.sequence)
+			}
+			if cresult == empty {
+				time.Sleep(time.Duration(c.F.conf.EventWaitMillitime) * time.Millisecond)
+				continue
+			}
+			if cresult == fail { //TODO 不能达成共识 继续下一sequence？
+				log.Errorf("MsgMap%v", c.M.MsgMap[c.sequence])
+				time.Sleep(time.Duration(c.F.conf.EventWaitMillitime) * time.Millisecond * 10)
+				//s := fmt.Sprintf("consensusEngine f.t.s[%s %s #%d] failed.", c.from, c.to, c.sequence)
+				//panic(s)
+			}
 		}
-
-		cresult := c.ConSequence()
-		if cresult == success {
-			c.SetSequence(c.from, c.to, c.sequence)
-		}
-		if cresult == empty {
-			time.Sleep(time.Duration(c.F.conf.EventWaitMillitime) * time.Millisecond)
-			continue
-		}
-		if cresult == fail { //TODO 不能达成共识 继续下一sequence？
-			log.Errorf("MsgMap%v", c.M.MsgMap[c.sequence])
-			time.Sleep(time.Duration(c.F.conf.EventWaitMillitime) * time.Millisecond * 10)
-			//s := fmt.Sprintf("consensusEngine f.t.s[%s %s #%d] failed.", c.from, c.to, c.sequence)
-			//panic(s)
-		}
-	}
+	}()
 
 	return nil
 }
 
+// ConSequence ???
 func (c *ConsEngine) ConSequence() consResult { //交易还没产生和共识出错区别开
 
 	log.Debugf("Start consensus engine f.t.s[%s %s #%d]", c.from, c.to, c.sequence)
@@ -302,7 +292,7 @@ func (c *ConsEngine) SetSequence(from, to string, s int64) {
 	log.Infof("f.t[%s %s] ConsEngine sequence set to [#%d]", from, to, c.sequence)
 }
 
-//在to chain上查询 来自/要去 from chain 的 sequence
+// GetSequenceFromChain 在to chain上查询 来自/要去 from chain 的 sequence
 func (c *ConsEngine) GetSequenceFromChain(from, to, inout string) (int64, error) {
 	//qsc := c.F.conf.GetQscConfig(to)
 	//
@@ -315,6 +305,7 @@ func (c *ConsEngine) GetSequenceFromChain(from, to, inout string) (int64, error)
 	return c.F.GetSequenceFromChain(from, to, inout)
 }
 
+// GetAddressFromUrl returns address
 func GetAddressFromUrl(url string) string {
 	n := strings.Index(url, "://")
 	if n < 0 {
@@ -323,23 +314,27 @@ func GetAddressFromUrl(url string) string {
 	return url[n+3:]
 }
 
+// Setfrom set from
 func (c *ConsEngine) Setfrom(from string) {
 	c.from = from
 }
 
+// Setto set to
 func (c *ConsEngine) Setto(to string) {
 	c.to = to
 }
 
+// Getfrom reutrns from
 func (c *ConsEngine) Getfrom() string {
 	return c.from
 }
 
+// Getto returns to
 func (c *ConsEngine) Getto() string {
 	return c.to
 }
 
-//roomKeeper 清理 EngineMap,ConsensusMap过时k-v;校正sequence
+// RoomKeeper 清理 EngineMap,ConsensusMap过时k-v;校正sequence
 func (c *ConsEngine) RoomKeeper() {
 	c.cleanMap()
 	c.ajustSequence()

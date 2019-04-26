@@ -10,7 +10,7 @@ import (
 
 func main() {
 
-	gas := "0x3777c02e70512800" //"0x3782dace9d900000"
+	gas := "0x377e6001ccdf5000" //"0x3782dace9d900000"
 
 	gasV, err := strconv.ParseInt(gas[2:], 16, 64)
 	if err != nil {
@@ -81,7 +81,10 @@ func main() {
 	fmt.Println("balance: ", balance.Text(16), "; ", balance.Text(10))
 
 	sub(balance, "0xbefe6f672000")
-	fmt.Println("balance: ", balance.Text(16), "; ", balance.Text(10))
+	fmt.Println("last balance: ", balance.Text(16), "; ", balance.Text(10))
+
+	sub(balance, "0xbefe6f672000")
+	fmt.Println("last balance: ", balance.Text(16), "; ", balance.Text(10))
 	// ////////////////////
 
 	// gas = "0x12e40"
@@ -116,6 +119,9 @@ func main() {
 	// fmt.Println("balance: ", balance.Text(16), "; ", balance.Text(10))
 	// balance.Sub(balance, f)
 	// fmt.Println("balance: ", balance.Text(16), "; ", balance.Text(10))
+
+	balance = sum("0x00f", "0x-3")
+	fmt.Println("sum balance: ", balance.Text(16), "; ", balance.Text(10))
 }
 
 func count(gasUsed, gasPrice string) *big.Int {

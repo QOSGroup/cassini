@@ -42,15 +42,15 @@ func (a *EthAdaptor) Start() error {
 
 // Sync status for fabric adapter service
 func (a *EthAdaptor) Sync() error {
-	seq, err := a.QuerySequence(a.config.ChainName, "in")
-	if err == nil {
-		if seq > 1 {
-			a.outSequence = seq + 1
-		} else {
-			a.outSequence = 1
-		}
-	}
-	return err
+	// seq, err := a.QuerySequence(a.config.ChainName, "in")
+	// if err == nil {
+	// 	if seq > 1 {
+	// 		a.outSequence = seq + 1
+	// 	} else {
+	// 		a.outSequence = 1
+	// 	}
+	// }
+	return nil
 }
 
 // Stop fabric adapter service
@@ -121,7 +121,7 @@ func (a *EthAdaptor) ObtainTx(chainID string, sequence int64) (*txs.TxQcp, error
 				strings.EqualFold(tx.From, addr) {
 				receipt, err := sdk.EthGetTransactionReceipt(tx.Hash)
 				if err != nil {
-					log.Errorf("register block transaction receipt hash: %s error: %v",
+					log.Errorf("check block transaction receipt hash: %s error: %v",
 						tx.Hash, err)
 					return nil, err
 				}
@@ -135,7 +135,7 @@ func (a *EthAdaptor) ObtainTx(chainID string, sequence int64) (*txs.TxQcp, error
 				if receipt.Success() {
 					t.Amount = tx.Value
 				} else {
-					log.Warnf("ObtainTx: %s(%s) %d register block: %s",
+					log.Warnf("ObtainTx: %s(%s) %d check block: %s",
 						a.GetChainName(), chainID, sequence,
 						fmt.Sprintf("transaction reverted hash: %s", tx.Hash))
 					t.GasUsed = receipt.GasUsed
@@ -147,15 +147,15 @@ func (a *EthAdaptor) ObtainTx(chainID string, sequence int64) (*txs.TxQcp, error
 	}
 	bytes, err := json.Marshal(registerBlock)
 	if err != nil {
-		log.Errorf("register block marshal error: %v", err)
+		log.Errorf("check block marshal error: %v", err)
 		return nil, err
 	}
 	jsonRegisterBlock := string(bytes)
-	log.Infof("ObtainTx: %s(%s) %d register block: %s", a.GetChainName(), chainID,
+	log.Infof("ObtainTx: %s(%s) %d check block: %s", a.GetChainName(), chainID,
 		sequence, jsonRegisterBlock)
 	tx := msgtx.NewTxQcp(fmt.Sprintf("%s(%s)", a.GetChainName(), chainID),
 		a.GetChainName(), chainID, int64(1), int64(sequence), jsonRegisterBlock)
-	a.outSequence = sequence + 1
+	// a.outSequence = sequence + 1
 	return tx, nil
 }
 
