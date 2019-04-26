@@ -13,12 +13,15 @@ import (
 	fabricTx "github.com/QOSGroup/cassini/adapter/ports/fabric/sdk/tx"
 	msgtx "github.com/QOSGroup/cassini/adapter/ports/txs"
 	"github.com/QOSGroup/cassini/log"
+	"github.com/QOSGroup/cassini/storage"
 	"github.com/QOSGroup/qbase/txs"
 )
 
 func init() {
 	builder := func(config ports.AdapterConfig) (ports.AdapterService, error) {
-		a := &EthAdaptor{config: &config}
+		a := &EthAdaptor{
+			config: &config,
+			Addrs:  storage.NewAddressCacheBook()}
 		a.Start()
 		a.Sync()
 		a.Subscribe(config.Listener)
@@ -32,7 +35,7 @@ type EthAdaptor struct {
 	config      *ports.AdapterConfig
 	inSequence  int64
 	outSequence int64
-	Addrs       []string
+	Addrs       storage.AddressBook
 }
 
 // Start fabric adapter service
@@ -87,8 +90,8 @@ func (a *EthAdaptor) SubmitTx(chainID string, tx *txs.TxQcp) error {
 	}
 	// cache wallet address for block filtering in ObtainTx
 	if strings.EqualFold("register", t.Func) {
+		a.Addrs.Add(t.Address)
 		log.Infof("new ethereum wallet address: %s", t.Address)
-		a.Addrs = append(a.Addrs, t.Address)
 	}
 	// encrypted
 	// etcd
@@ -116,33 +119,31 @@ func (a *EthAdaptor) ObtainTx(chainID string, sequence int64) (*txs.TxQcp, error
 	registerBlock := &fabsdk.BlockRegister{
 		Height: block.Number}
 	for _, tx := range block.Transactions {
-		for _, addr := range a.Addrs {
-			if strings.EqualFold(tx.To, addr) ||
-				strings.EqualFold(tx.From, addr) {
-				receipt, err := sdk.EthGetTransactionReceipt(tx.Hash)
-				if err != nil {
-					log.Errorf("check block transaction receipt hash: %s error: %v",
-						tx.Hash, err)
-					return nil, err
-				}
-				t := &fabsdk.TxRegister{
-					Chain:  "ethereum",
-					Token:  "eth",
-					From:   tx.From,
-					To:     tx.To,
-					Txhash: tx.Hash,
-					Status: receipt.Status}
-				if receipt.Success() {
-					t.Amount = tx.Value
-				} else {
-					log.Warnf("ObtainTx: %s(%s) %d check block: %s",
-						a.GetChainName(), chainID, sequence,
-						fmt.Sprintf("transaction reverted hash: %s", tx.Hash))
-					t.GasUsed = receipt.GasUsed
-					t.GasPrice = tx.GasPrice
-				}
-				registerBlock.Txs = append(registerBlock.Txs, t)
+		if a.Addrs.Exist(tx.To) ||
+			a.Addrs.Exist(tx.From) {
+			receipt, err := sdk.EthGetTransactionReceipt(tx.Hash)
+			if err != nil {
+				log.Errorf("check block transaction receipt hash: %s error: %v",
+					tx.Hash, err)
+				return nil, err
 			}
+			t := &fabsdk.TxRegister{
+				Chain:    "ethereum",
+				Token:    "eth",
+				From:     tx.From,
+				To:       tx.To,
+				Txhash:   tx.Hash,
+				GasUsed:  receipt.GasUsed,
+				GasPrice: tx.GasPrice,
+				Status:   receipt.Status}
+			if receipt.Success() {
+				t.Amount = tx.Value
+			} else {
+				log.Warnf("ObtainTx: %s(%s) %d check block: %s",
+					a.GetChainName(), chainID, sequence,
+					fmt.Sprintf("transaction reverted hash: %s", tx.Hash))
+			}
+			registerBlock.Txs = append(registerBlock.Txs, t)
 		}
 	}
 	bytes, err := json.Marshal(registerBlock)

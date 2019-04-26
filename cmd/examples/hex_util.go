@@ -10,7 +10,7 @@ import (
 
 func main() {
 
-	gas := "0x377e6001ccdf5000" //"0x3782dace9d900000"
+	gas := "0x3777c02e70512800" //"0x3782dace9d900000"
 
 	gasV, err := strconv.ParseInt(gas[2:], 16, 64)
 	if err != nil {

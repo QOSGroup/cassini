@@ -238,7 +238,6 @@ func (c *ConsEngine) StartEngine() error {
 	return nil
 }
 
-// ConSequence ???
 func (c *ConsEngine) ConSequence() consResult { //交易还没产生和共识出错区别开
 
 	log.Debugf("Start consensus engine f.t.s[%s %s #%d]", c.from, c.to, c.sequence)
@@ -305,8 +304,8 @@ func (c *ConsEngine) GetSequenceFromChain(from, to, inout string) (int64, error)
 	return c.F.GetSequenceFromChain(from, to, inout)
 }
 
-// GetAddressFromUrl returns address
-func GetAddressFromUrl(url string) string {
+// GetAddressFromURL returns address
+func GetAddressFromURL(url string) string {
 	n := strings.Index(url, "://")
 	if n < 0 {
 		return url

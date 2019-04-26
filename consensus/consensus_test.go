@@ -1,9 +1,10 @@
 package consensus
 
 import (
+	"testing"
+
 	"github.com/QOSGroup/cassini/config"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestConsensus32(t *testing.T) {
@@ -17,7 +18,7 @@ func TestConsensus32(t *testing.T) {
 
 func TestGetAddressFromUrl(t *testing.T) {
 
-	assert.Equal(t, GetAddressFromUrl("nats://127.0.0.1"), "127.0.0.1")
-	assert.Equal(t, GetAddressFromUrl("tcp://127.0.0.1:26657"), "127.0.0.1:26657")
-	assert.Equal(t, GetAddressFromUrl("http://127.0.0.1:8080"), "127.0.0.1:8080")
+	assert.Equal(t, GetAddressFromURL("nats://127.0.0.1"), "127.0.0.1")
+	assert.Equal(t, GetAddressFromURL("tcp://127.0.0.1:26657"), "127.0.0.1:26657")
+	assert.Equal(t, GetAddressFromURL("http://127.0.0.1:8080"), "127.0.0.1:8080")
 }
