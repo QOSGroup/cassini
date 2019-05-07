@@ -21,7 +21,7 @@ func init() {
 	builder := func(config ports.AdapterConfig) (ports.AdapterService, error) {
 		a := &EthAdaptor{
 			config: &config,
-			Addrs:  storage.NewAddressCacheBook()}
+			Addrs:  storage.NewAddressBook()}
 		a.Start()
 		a.Sync()
 		a.Subscribe(config.Listener)
@@ -118,33 +118,61 @@ func (a *EthAdaptor) ObtainTx(chainID string, sequence int64) (*txs.TxQcp, error
 	}
 	registerBlock := &fabsdk.BlockRegister{
 		Height: block.Number}
+	var isReceiver bool
+	var addr string
 	for _, tx := range block.Transactions {
-		if a.Addrs.Exist(tx.To) ||
-			a.Addrs.Exist(tx.From) {
-			receipt, err := sdk.EthGetTransactionReceipt(tx.Hash)
-			if err != nil {
-				log.Errorf("check block transaction receipt hash: %s error: %v",
-					tx.Hash, err)
-				return nil, err
-			}
-			t := &fabsdk.TxRegister{
-				Chain:    "ethereum",
-				Token:    "eth",
+		if isReceiver, err = a.Addrs.Exist(tx.To); err != nil {
+			log.Errorf("check address book: %s hash: %s error: %v",
+				tx.To, tx.Hash, err)
+			return nil, err
+		} else if isReceiver {
+			addr = tx.To
+		} else if isReceiver, err = a.Addrs.Exist(tx.From); err != nil {
+			log.Errorf("check address book %s hash: %s error: %v",
+				tx.From, tx.Hash, err)
+			return nil, err
+		} else if isReceiver {
+			isReceiver = false
+			addr = tx.From
+		} else {
+			continue
+		}
+		log.Infof("check address book is receiver: %t", isReceiver)
+		receipt, err := sdk.EthGetTransactionReceipt(tx.Hash)
+		if err != nil {
+			log.Errorf("check tx receipt hash: %s error: %v",
+				tx.Hash, err)
+			return nil, err
+		}
+		t := &fabsdk.TxRegister{
+			ChainName: "ethereum",
+			TokenName: "eth",
+			Addr:      addr,
+			Amount:    tx.Value,
+			GasUsed:   receipt.GasUsed,
+			GasPrice:  tx.GasPrice,
+			Info: &fabsdk.TxInfo{
 				From:     tx.From,
 				To:       tx.To,
-				Txhash:   tx.Hash,
+				Amount:   tx.Value,
 				GasUsed:  receipt.GasUsed,
 				GasPrice: tx.GasPrice,
-				Status:   receipt.Status}
-			if receipt.Success() {
-				t.Amount = tx.Value
-			} else {
-				log.Warnf("ObtainTx: %s(%s) %d check block: %s",
-					a.GetChainName(), chainID, sequence,
-					fmt.Sprintf("transaction reverted hash: %s", tx.Hash))
-			}
-			registerBlock.Txs = append(registerBlock.Txs, t)
+				Height:   block.Number,
+				TxHash:   tx.Hash,
+				Status:   receipt.Status}}
+		if isReceiver {
+			t.GasUsed = ""
+			t.GasPrice = ""
+		} else {
+			t.Amount = fmt.Sprintf("0x-%s", t.Amount[2:])
 		}
+		if !receipt.Success() {
+			t.Amount = ""
+			log.Warnf("ObtainTx: %s(%s) %d check block: %s",
+				a.GetChainName(), chainID, sequence,
+				fmt.Sprintf("transaction reverted hash: %s", tx.Hash))
+		}
+		registerBlock.Txs = append(registerBlock.Txs, t)
 	}
 	bytes, err := json.Marshal(registerBlock)
 	if err != nil {

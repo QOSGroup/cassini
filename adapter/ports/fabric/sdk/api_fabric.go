@@ -100,18 +100,29 @@ func ChaincodeQueryByString(channelID, chaincodeID, argsStr string) string {
 	return defaultResultJSON
 }
 
-// TxRegister registered Tx
-type TxRegister struct {
-	Chain    string `json:"chain,omitempty"`
-	Token    string `json:"token,omitempty"`
+// TxInfo info of Tx
+type TxInfo struct {
 	Contract string `json:"contract,omitempty"`
 	From     string `json:"from,omitempty"`
 	To       string `json:"to,omitempty"`
 	Amount   string `json:"amount,omitempty"`
 	GasUsed  string `json:"gasUsed,omitempty"`
 	GasPrice string `json:"gasPrice,omitempty"`
-	Txhash   string `json:"txhash,omitempty"`
+	TxHash   string `json:"txHash,omitempty"`
+	Height   string `json:"height,omitempty"`
 	Status   string `json:"status,omitempty"`
+}
+
+// TxRegister registered Tx
+type TxRegister struct {
+	Key       string  `json:"key,omitempty"`
+	ChainName string  `json:"chain,omitempty"`
+	TokenName string  `json:"token,omitempty"`
+	Addr      string  `json:"address,omitempty"`
+	Amount    string  `json:"amount,omitempty"`
+	GasUsed   string  `json:"gasUsed,omitempty"`
+	GasPrice  string  `json:"gasPrice,omitempty"`
+	Info      *TxInfo `json:"info,omitempty"`
 }
 
 // BlockRegister registered block
