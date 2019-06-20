@@ -4,22 +4,20 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"strings"
-
-	"github.com/QOSGroup/cassini/log"
 )
 
-// Config 封装配置数据
+// Config wraps all configure data of cassini
 type Config struct {
 
-	// ConfigFile 配置文件路径，通过命令行设置
+	// ConfigFile is configure file path of cassini
 	ConfigFile string `json:"config,omitempty"`
 
-	// LogConfigFile 日志配置文件路径，通过命令行设置
+	// LogConfigFile is configure file path of log
 	LogConfigFile string `json:"log,omitempty"`
 
-	// Consensus 中继共识配置，为了以后支持更多共识算法，添加次配置
-	//    "no" - 不启用共识
-	//    默认 - 2/3共识
+	// Consensus setting the consensus for cassini
+	// "no"    - no consensus
+	// default - 2/3 consensus
 	Consensus bool `json:"consensus,omitempty"`
 
 	// EventWaitMillitime 交易事件被监听到后需要等待的事件，
@@ -90,29 +88,27 @@ type QscConfig struct {
 
 var conf = &Config{}
 
-// LoadConfig 读取配置数据
-func LoadConfig(path string) (*Config, error) {
-	bytes, err := ioutil.ReadFile(path)
-	if err != nil {
-		log.Errorf("Read file: %v error: %v", path, err)
-		return nil, err
-	}
-	return CreateConfig(bytes)
-}
-
-// CreateConfig 根据传入数据创建配置
-func CreateConfig(bytes []byte) (*Config, error) {
-	err := json.Unmarshal(bytes, conf)
-	if err != nil {
-		log.Errorf("Create config error: %v", err)
-		return nil, err
-	}
-	return conf, nil
-}
-
-// GetConfig 获取配置数据
+// GetConfig returns the config instance of cassini
 func GetConfig() *Config {
 	return conf
+}
+
+// Load the configure file
+func (c *Config) Load() error {
+	bytes, err := ioutil.ReadFile(c.ConfigFile)
+	if err != nil {
+		return err
+	}
+	return c.parse(bytes)
+}
+
+// parse the configure file
+func (c *Config) parse(bytes []byte) error {
+	err := json.Unmarshal(bytes, conf)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // GetQscConfig 获取指定 ChainID 的 QSC 配置

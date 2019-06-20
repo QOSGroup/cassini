@@ -23,7 +23,9 @@ func TestConfigParse(t *testing.T) {
 	    }
 	]
         	}`)
-	conf, err := CreateConfig(buf)
+	conf := GetConfig()
+	err := conf.parse(buf)
+
 	assert.NoError(t, err)
 	assert.Equal(t, int(2), len(conf.Mocks))
 	assert.Equal(t, "qos", conf.Mocks[0].Name)
@@ -31,7 +33,9 @@ func TestConfigParse(t *testing.T) {
 }
 
 func TestLoadConfig(t *testing.T) {
-	conf, err := LoadConfig("./config.conf")
+	conf := GetConfig()
+	conf.ConfigFile = "./config.conf"
+	err := conf.Load()
 	assert.NoError(t, err)
 
 	assert.Equal(t, true, conf.Consensus)
