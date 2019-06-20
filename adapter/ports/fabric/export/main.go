@@ -12,14 +12,14 @@ import (
 // ----------------------------------------------------------------------------
 
 //export chaincodeInvoke
-func chaincodeInvoke(channelID, chaincodeID, args *C.char) *C.char {
-	return C.CString(sdk.ChaincodeInvokeByString(C.GoString(channelID),
+func chaincodeInvoke(chaincodeID, args *C.char) *C.char {
+	return C.CString(sdk.ChaincodeInvokeByString(
 		C.GoString(chaincodeID), C.GoString(args)))
 }
 
 //export chaincodeQuery
-func chaincodeQuery(channelID, chaincodeID, args *C.char) *C.char {
-	return C.CString(sdk.ChaincodeQueryByString(C.GoString(channelID),
+func chaincodeQuery(chaincodeID, args *C.char) *C.char {
+	return C.CString(sdk.ChaincodeQueryByString(
 		C.GoString(chaincodeID), C.GoString(args)))
 }
 

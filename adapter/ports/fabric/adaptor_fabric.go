@@ -29,10 +29,6 @@ func init() {
 const (
 	// ChainName name of hyperledger fabric
 	ChainName = "fabric"
-	// ChainID id of hyperledger fabric chain
-	ChainID = "demo.fabric"
-	// ChannelID id of hyperledger fabric chain
-	ChannelID = "orgchannel"
 	// ChaincodeID id of chaincode
 	ChaincodeID = "wallet"
 )
@@ -96,7 +92,7 @@ func (a *FabAdaptor) SubmitTx(chainID string, tx *txs.TxQcp) error {
 	arg := sdk.Args{Func: "register", Args: args}
 	var argsArray []sdk.Args
 	argsArray = append(argsArray, arg)
-	ret, err := sdk.ChaincodeInvoke(ChannelID, ChaincodeID, argsArray)
+	ret, err := sdk.ChaincodeInvoke(ChaincodeID, argsArray)
 	if err != nil {
 		log.Errorf("SubmitTx: %s(%s) %d: register block error: %v",
 			a.GetChainName(), chainID, tx.Sequence, err)
@@ -134,7 +130,7 @@ func (a *FabAdaptor) ObtainTx(chainID string, sequence int64) (*txs.TxQcp, error
 		Func: "query", Args: as}
 	var argsArray []sdk.Args
 	argsArray = append(argsArray, args)
-	ret, err := sdk.ChaincodeQuery(ChannelID, ChaincodeID, argsArray)
+	ret, err := sdk.ChaincodeQuery(ChaincodeID, argsArray)
 	if err != nil {
 		log.Errorf("ObtainTx %s(%s), %d error: %v",
 			a.GetChainName(), chainID, sequence, err)
@@ -154,7 +150,7 @@ func (a *FabAdaptor) QuerySequence(chainID string, inout string) (int64, error) 
 		Func: "query", Args: as}
 	var argsArray []sdk.Args
 	argsArray = append(argsArray, args)
-	ret, err := sdk.ChaincodeQuery(ChannelID, ChaincodeID, argsArray)
+	ret, err := sdk.ChaincodeQuery(ChaincodeID, argsArray)
 	if err != nil {
 		log.Error("query error: %v", err)
 		return 0, err

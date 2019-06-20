@@ -12,7 +12,8 @@ import (
 )
 
 // ChaincodeInvoke invoke chaincode
-func ChaincodeInvoke(channelID, chaincodeID string, argsArray []Args) (result string, err error) {
+func ChaincodeInvoke(chaincodeID string, argsArray []Args) (
+	result string, err error) {
 	log.Info("chaincode invoke...")
 	if chaincodeID == "" {
 		err = fmt.Errorf("must specify the chaincode ID")
@@ -26,7 +27,7 @@ func ChaincodeInvoke(channelID, chaincodeID string, argsArray []Args) (result st
 
 	defer action.Terminate()
 
-	result, err = action.invoke(channelID, chaincodeID, argsArray)
+	result, err = action.invoke(Config().ChannelID, chaincodeID, argsArray)
 	if err != nil {
 		log.Errorf("Error while calling action.invoke(): %v", err)
 	}
@@ -34,8 +35,8 @@ func ChaincodeInvoke(channelID, chaincodeID string, argsArray []Args) (result st
 }
 
 // ChaincodeInvokeByString call chaincode invoke of hyperledger fabric
-func ChaincodeInvokeByString(channelID, chaincodeID, argsStr string) string {
-	log.Infof("chaincode invoke: %s; %s; %s", channelID, chaincodeID, argsStr)
+func ChaincodeInvokeByString(chaincodeID, argsStr string) string {
+	log.Infof("chaincode invoke: %s; %s; %s", chaincodeID, argsStr)
 	arg, err := ParseArgs(argsStr)
 	if strings.EqualFold(arg.Func, "create") {
 		RegisterWalletByString(arg.Args[0], arg.Args[1], arg.Args[2])
@@ -44,7 +45,7 @@ func ChaincodeInvokeByString(channelID, chaincodeID, argsStr string) string {
 		var argsArray []Args
 		argsArray = append(argsArray, *arg)
 		var ret string
-		ret, err = ChaincodeInvoke(channelID, chaincodeID, argsArray)
+		ret, err = ChaincodeInvoke(chaincodeID, argsArray)
 		if err == nil {
 			log.Info("chaincode invoke result: ", ret)
 			return ret
@@ -55,7 +56,7 @@ func ChaincodeInvokeByString(channelID, chaincodeID, argsStr string) string {
 }
 
 // ChaincodeQuery call chaincode query of hyperledger fabric
-func ChaincodeQuery(channelID, chaincodeID string, argsArray []Args) (result string, err error) {
+func ChaincodeQuery(chaincodeID string, argsArray []Args) (result string, err error) {
 	log.Info("chaincode query...")
 	if chaincodeID == "" {
 		err = fmt.Errorf("must specify the chaincode ID")
@@ -70,7 +71,7 @@ func ChaincodeQuery(channelID, chaincodeID string, argsArray []Args) (result str
 
 	defer action.Terminate()
 
-	result, err = action.query(channelID, chaincodeID, argsArray)
+	result, err = action.query(Config().ChannelID, chaincodeID, argsArray)
 	if err != nil {
 		log.Errorf("Error while running queryAction: %v", err)
 	} else if result == "" {
@@ -85,12 +86,12 @@ func ChaincodeQuery(channelID, chaincodeID string, argsArray []Args) (result str
 }
 
 // ChaincodeQueryByString call chaincode query of hyperledger fabric
-func ChaincodeQueryByString(channelID, chaincodeID, argsStr string) string {
-	log.Infof("chaincode query: %s; %s; %s", channelID, chaincodeID, argsStr)
+func ChaincodeQueryByString(chaincodeID, argsStr string) string {
+	log.Infof("chaincode query: %s; %s; %s", chaincodeID, argsStr)
 	argsArray, err := ArgsArray(argsStr)
 	if err == nil {
 		var ret string
-		ret, err = ChaincodeQuery(channelID, chaincodeID, argsArray)
+		ret, err = ChaincodeQuery(chaincodeID, argsArray)
 		if err == nil {
 			log.Info("chaincode query result: ", ret)
 			return ret
@@ -145,7 +146,7 @@ func RegisterBlock(block *BlockRegister) string {
 	var args []Args
 	args = append(args, a)
 	var ret string
-	ret, err = ChaincodeInvoke(Config().ChannelID, "wallet", args)
+	ret, err = ChaincodeInvoke("wallet", args)
 	if err != nil {
 		log.Errorf("register block error: %v", err)
 		return defaultResultJSON
@@ -180,7 +181,7 @@ func RegisterTokenByString(chain, tokenAddress string) string {
 	var args []Args
 	args = append(args, a)
 	var ret string
-	ret, err = ChaincodeInvoke(Config().ChannelID, "wallet", args)
+	ret, err = ChaincodeInvoke("wallet", args)
 	if err != nil {
 		log.Errorf("register token error: %v", err)
 		return defaultResultJSON
@@ -205,7 +206,7 @@ func ethNewAccount(key, chain, token string) string {
 	a := Args{Func: "register", Args: strs}
 	var args []Args
 	args = append(args, a)
-	ret, err := ChaincodeInvoke(Config().ChannelID, "wallet", args)
+	ret, err := ChaincodeInvoke("wallet", args)
 	if err != nil {
 		log.Errorf("new account error: %v", err)
 		return errUnsuportedToken
