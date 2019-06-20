@@ -13,15 +13,28 @@ import (
 
 var (
 	// Version of cassini
-	Version = "0.0.5"
+	Version = "0.0.6"
+
 	// GitCommit is the current HEAD set using ldflags.
 	GitCommit string
+
+	// GoVersion is version info of golang
+	GoVersion string
+
+	// BuidDate is compile date and time
+	BuidDate string
 )
 
 var versioner = func(conf *config.Config) (context.CancelFunc, error) {
 
-	fmt.Println("Version: \t", Version,
-		"\nGitCommitID: \t", GitCommit)
+	s := `cassini - the relay of cross-chain
+version:	%s
+revision:	%s
+compile:	%s
+go version:	%s
+`
+
+	fmt.Printf(s, Version, GitCommit, BuidDate, GoVersion)
 
 	return nil, nil
 }
