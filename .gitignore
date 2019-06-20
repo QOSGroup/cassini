@@ -7,6 +7,7 @@
 # Folders
 _obj
 _test
+cmd/test/
 
 # Architecture specific extensions/prefixes
 *.[568vq]
@@ -25,7 +26,7 @@ _testmain.go
 *.prof
 .idea
 .vscode
-
+cover.out
 
 # OS
 .DS_Store
