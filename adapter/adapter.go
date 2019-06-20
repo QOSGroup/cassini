@@ -42,18 +42,21 @@ type RemoteAdapter struct {
 
 // NewRemoteAdapter 创建新的交易广播器
 func NewRemoteAdapter(name, id, listenAddr string, r Receiver, b Broadcaster) (*RemoteAdapter, error) {
-	s, err := NewHandlerService(name, id, listenAddr)
-	if err != nil {
-		return nil, err
-	}
-	a := &RemoteAdapter{
-		HandlerService: s,
-		Receiver:       r}
-	if b == nil {
-		b = &DefaultBroadcaster{adapter: a}
-	}
-	a.Broadcaster = b
-	return a, nil
+	//TODO NewHandlerService
+
+	// s, err := NewHandlerService(name, id, listenAddr)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// a := &RemoteAdapter{
+	// 	HandlerService: s,
+	// 	Receiver:       r}
+	// if b == nil {
+	// 	b = &DefaultBroadcaster{adapter: a}
+	// }
+	// a.Broadcaster = b
+	// return a, nil
+	return nil, nil
 }
 
 // DefaultBroadcaster 实现内存交易广播器。
