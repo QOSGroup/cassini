@@ -16,8 +16,8 @@ mocks:
     rpc:
       nodes: 0.0.0.0:27658
 `)
-	conf := GetConfig()
-	err := conf.parse(buf)
+	conf := &Config{}
+	err := conf.Parse(buf)
 
 	assert.NoError(t, err)
 	assert.Equal(t, int(2), len(conf.Mocks))

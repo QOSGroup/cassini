@@ -1,13 +1,19 @@
 package consensus
 
 import (
+	"testing"
+
 	"github.com/QOSGroup/cassini/config"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestConsensus32(t *testing.T) {
-	conf, _ := config.LoadConfig("../config/config.conf")
+	conf := &config.Config{}
+	conf.ConfigFile = "../cassini.yml"
+	err := conf.Load()
+
+	assert.NoError(t, err)
+
 	c := NewConsEngine("qos", "qqs")
 	c.F.conf = conf
 	N := c.consensus32()

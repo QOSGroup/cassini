@@ -182,19 +182,16 @@ func (a *QosAdapter) subscribeRemote(remote string) <-chan tctypes.ResultEvent {
 func (a *QosAdapter) eventHandle(listener EventsListener, remote string,
 	events <-chan tctypes.ResultEvent) {
 	for ed := range events {
-		// edt := ed.Data
 		log.Debugf("Received event from[%s],'%s'", remote, ed)
 
-		//TODO parse event
-		cassiniEventDataTx := types.CassiniEventDataTx{}
-		// cassiniEventDataTx.Height = ed.Data
-		// cassiniEventDataTx.ConstructFromTags(ed.Tags)
-		log.Debug("ed.Tags: ", len(ed.Tags), " height: ", ed.Tags["height"])
+		ce := types.CassiniEventDataTx{}
+		ce.ConstructFromTags(ed.Tags)
+		log.Debug("event.tags: ", len(ed.Tags), " height: ", ce.Height)
 
-		event := types.Event{
+		event := &types.Event{
 			NodeAddress:        remote,
-			CassiniEventDataTx: cassiniEventDataTx}
+			CassiniEventDataTx: ce}
 
-		listener(&event, a)
+		listener(event, a)
 	}
 }

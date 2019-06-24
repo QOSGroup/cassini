@@ -3,20 +3,19 @@ package types
 import (
 	"testing"
 
+	"strconv"
+
 	"github.com/QOSGroup/qbase/qcp"
 	"github.com/stretchr/testify/assert"
-	"github.com/tendermint/tendermint/libs/common"
-	"strconv"
 )
 
 func TestConstructFromTags(t *testing.T) {
 
-	tags := []common.KVPair{
-		{Key: []byte(qcp.QcpFrom), Value: []byte("qsc")},
-		{Key: []byte(qcp.QcpTo), Value: []byte("qos")},
-		{Key: []byte(qcp.QcpSequence), Value: []byte(strconv.FormatInt(7, 10))},
-		{Key: []byte(qcp.QcpHash), Value: []byte("hashfortest")},
-	}
+	tags := make(map[string]string)
+	tags[qcp.QcpFrom] = "qsc"
+	tags[qcp.QcpTo] = "qos"
+	tags[qcp.QcpSequence] = strconv.FormatInt(7, 10)
+	tags[qcp.QcpHash] = "hashfortest"
 
 	c := CassiniEventDataTx{}
 	err := c.ConstructFromTags(tags)

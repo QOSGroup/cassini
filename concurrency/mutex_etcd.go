@@ -152,7 +152,7 @@ func (e *EtcdMutex) get() int64 {
 	for _, kv := range resp.Kvs {
 		if strings.EqualFold(string(kv.Key), e.chainID) {
 			var seq int64
-			seq, err = types.ParseSequence(kv.Value)
+			seq, err = types.ParseSequence(string(kv.Value))
 			if err != nil {
 				log.Error("Parse key value error: ", err)
 				return -1

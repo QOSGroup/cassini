@@ -97,11 +97,11 @@ func (c *Config) Load() error {
 	if err != nil {
 		return err
 	}
-	return c.parse(bytes)
+	return c.Parse(bytes)
 }
 
-// parse the configure file
-func (c *Config) parse(bytes []byte) error {
+// Parse the configure file
+func (c *Config) Parse(bytes []byte) error {
 	return yaml.UnmarshalStrict(bytes, c)
 }
 
