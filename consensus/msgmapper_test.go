@@ -73,7 +73,9 @@ func newEvent(node, hash string) types.Event {
 }
 
 func newFerry(t *testing.T, from, to string, sequence int64) *Ferry {
-	conf, _ := config.LoadConfig("../config/config.conf")
+	conf := &config.Config{}
+	conf.ConfigFile = "../cassini.yml"
+	_ = conf.Load()
 
 	for _, node := range strings.Split(conf.GetQscConfig(from).NodeAddress, ",") {
 		// if node == "" {

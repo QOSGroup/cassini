@@ -30,6 +30,9 @@ const (
 
 	// CommandVersion cli command "version"
 	CommandVersion = "version"
+
+	// CommandHelp cli command "help"
+	CommandHelp = "help"
 )
 
 const (
@@ -47,10 +50,12 @@ type Runner func(conf *config.Config) (context.CancelFunc, error)
 func NewRootCommand() *cobra.Command {
 	root := &cobra.Command{
 		Use:   "cassini",
-		Short: "relay between blockchains",
+		Short: "the relay of cross-chain",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
-			if strings.EqualFold(cmd.Use, CommandVersion) {
-				return
+			if strings.EqualFold(cmd.Use, CommandVersion) ||
+				strings.HasPrefix(cmd.Use, CommandHelp) {
+				// doesn't need init log and config
+				return nil
 			}
 			// 初始化日志
 			var logger seelog.LoggerInterface
@@ -60,17 +65,29 @@ func NewRootCommand() *cobra.Command {
 			} else {
 				log.Replace(logger)
 			}
-			// 初始化服务配置
-			_, err = config.LoadConfig(config.GetConfig().ConfigFile)
-			if err != nil {
-				log.Error("Run root command error: ", err.Error())
-				return
+			if strings.EqualFold(cmd.Use, CommandEvents) {
+				// doesn't need init config
+				return nil
 			}
-			log.Debug("Init config: ", config.GetConfig().ConfigFile)
+			err = initConfig()
+			if err != nil {
+				return err
+			}
 			return
 		},
 	}
 	return root
+}
+
+func initConfig() error {
+	// init config
+	err := config.GetConfig().Load()
+	if err != nil {
+		log.Error("Init config error: ", err.Error())
+		return err
+	}
+	log.Debug("Init config: ", config.GetConfig().ConfigFile)
+	return nil
 }
 
 func commandRunner(run Runner, isKeepRunning bool) error {

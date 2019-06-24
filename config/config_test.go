@@ -7,23 +7,18 @@ import (
 )
 
 func TestConfigParse(t *testing.T) {
-	buf := []byte(`{
-	"mocks":[
-	    {
-	        "name": "qos",
-	        "rpc": {
-		        "nodes": "0.0.0.0:27657"
-	        }
-	    },
-	    {
-	        "name": "qsc",
-	        "rpc": {
-		         "nodes": "0.0.0.0:27658"
-	        }
-	    }
-	]
-        	}`)
-	conf, err := CreateConfig(buf)
+	buf := []byte(`
+mocks:
+  - name: qos
+    rpc:
+      nodes: 0.0.0.0:27657
+  - name: qsc
+    rpc:
+      nodes: 0.0.0.0:27658
+`)
+	conf := &Config{}
+	err := conf.Parse(buf)
+
 	assert.NoError(t, err)
 	assert.Equal(t, int(2), len(conf.Mocks))
 	assert.Equal(t, "qos", conf.Mocks[0].Name)
@@ -31,16 +26,32 @@ func TestConfigParse(t *testing.T) {
 }
 
 func TestLoadConfig(t *testing.T) {
-	conf, err := LoadConfig("./config.conf")
+	conf := GetConfig()
+	conf.ConfigFile = "./../cassini.yml"
+	err := conf.Load()
 	assert.NoError(t, err)
 
 	assert.Equal(t, true, conf.Consensus)
 	assert.Equal(t, "nats://127.0.0.1:4222", conf.Nats)
+	assert.Equal(t, int64(2000), conf.EventWaitMillitime)
+	assert.Equal(t, true, conf.UseEtcd)
+	assert.Equal(t, "etcd://127.0.0.1:2379", conf.Lock)
+	assert.Equal(t, int64(5000), conf.LockTTL)
+	assert.Equal(t, true, conf.EmbedEtcd)
+
+	assert.Equal(t, "dev-cassini", conf.Etcd.Name)
+	assert.Equal(t, "http://127.0.0.1:2379", conf.Etcd.Advertise)
+	assert.Equal(t, "http://127.0.0.1:2380", conf.Etcd.AdvertisePeer)
+	assert.Equal(t, "dev-cassini-cluster", conf.Etcd.ClusterToken)
+	assert.Equal(t, "dev-cassini=http://127.0.0.1:2380", conf.Etcd.Cluster)
+
 	assert.Equal(t, int(2), len(conf.Qscs))
 	assert.Equal(t, "fromChain", conf.Qscs[0].Name)
+	assert.Equal(t, "qstars", conf.Qscs[0].Type)
+	assert.Equal(t, "127.0.0.1:26657", conf.Qscs[0].NodeAddress)
 	assert.Equal(t, "toChain", conf.Qscs[1].Name)
 	assert.Equal(t, "qos", conf.Qscs[1].Type)
-	assert.Equal(t, "127.0.0.1:26657", conf.Qscs[0].NodeAddress)
+	assert.Equal(t, "127.0.0.1:27657", conf.Qscs[1].NodeAddress)
 
 	assert.Equal(t, int(2), len(conf.Mocks))
 	assert.Equal(t, "qos", conf.Mocks[0].Name)

@@ -29,10 +29,14 @@ func Int64Bytes(in int64) []byte {
 	return ret.Bytes()
 }
 
-// ParseSequence parse sequence in []byte to int64
-func ParseSequence(seq []byte) (int64, error) {
+// ParseHeight parse height in string to int64
+func ParseHeight(height string) (int64, error) {
+	return strconv.ParseInt(height, 10, 64)
+}
 
-	return strconv.ParseInt(string(seq), 10, 64)
+// ParseSequence parse sequence in string to int64
+func ParseSequence(seq string) (int64, error) {
+	return strconv.ParseInt(seq, 10, 64)
 }
 
 // Key4OutChainSequence 输出队列交易序号查询接口key值组装方法

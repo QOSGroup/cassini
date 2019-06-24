@@ -13,21 +13,20 @@ import (
 
 func TestEtcdMutex(t *testing.T) {
 	confStr := `
-{
-    "embedEtcd":true,
-    "etcd":{
-        "name": "test-cassini",
-        "advertise":"http://127.0.0.1:2379",
-        "advertisePeer":"http://127.0.0.1:2380",
-        "clusterToken":"test-cassini-cluster",
-        "cluster":"test-cassini=http://127.0.0.1:2380"
-    },
-    "useEtcd":true,
-    "lock":"etcd://127.0.0.1:2379"
-}
+embedEtcd:	true
+useEtcd:	true
+lock:		etcd://127.0.0.1:2379
+etcd:
+  name:				test-cassini
+  advertise:		http://127.0.0.1:2379
+  advertisePeer:	http://127.0.0.1:2380
+  clusterToken:		test-cassini-cluster
+  cluster:			test-cassini=http://127.0.0.1:2380
 `
 
-	conf, err := config.CreateConfig([]byte(confStr))
+	// conf, err := config.CreateConfig([]byte(confStr))
+	conf := &config.Config{}
+	err := conf.Parse([]byte(confStr))
 
 	assert.NoError(t, err)
 	assert.Equal(t, true, conf.UseEtcd)

@@ -17,6 +17,11 @@ import (
 // Transform 将交易转换为交易事件
 func Transform(tx *txs.TxQcp) (*tmtypes.EventDataTx, error) {
 	hash := HashTx(tx)
+	// tags := make(map[string]string)
+	// tags[qcp.QcpTo] = tx.To
+	// tags[qcp.QcpFrom] = tx.From
+	// tags[qcp.QcpSequence] = strconv.FormatInt(tx.Sequence, 10)
+	// tags[qcp.QcpHash] = string(hash)
 	result := abcitypes.ResponseDeliverTx{
 		Data: []byte("mock"),
 		Tags: []cmn.KVPair{

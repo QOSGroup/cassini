@@ -13,13 +13,17 @@ import (
 func main() {
 	defer log.Flush()
 
+	dev := commands.NewDevelopCommand()
+	dev.AddCommand(
+		commands.NewEventsCommand(events, true),
+		commands.NewMockCommand(mocker, true),
+		commands.NewResetCommand(resetHandler, false),
+		commands.NewTxCommand(txHandler, false))
+
 	root := commands.NewRootCommand()
 	root.AddCommand(
 		commands.NewStartCommand(starter, true),
-		commands.NewMockCommand(mocker, true),
-		commands.NewEventsCommand(events, true),
-		commands.NewTxCommand(txHandler, false),
-		commands.NewResetCommand(resetHandler, false),
+		dev,
 		commands.NewVersionCommand(versioner, false))
 
 	if err := root.Execute(); err != nil {

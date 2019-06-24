@@ -10,9 +10,12 @@ import (
 
 //TODO local nats server
 func TestEvent2queue(t *testing.T) {
-	conf, err := config.LoadConfig("../config/config.conf")
+	conf := config.GetConfig()
+	conf.ConfigFile = "../cassini.yml"
+	err := conf.Load()
 
-	cEventDatatx := types.CassiniEventDataTx{From: "QSC1", To: "QOS", Sequence: 1, HashBytes: []byte("sha256")}
+	cEventDatatx := types.CassiniEventDataTx{
+		From: "QSC1", To: "QOS", Sequence: 1, HashBytes: []byte("sha256")}
 	event := types.Event{CassiniEventDataTx: cEventDatatx, NodeAddress: "127.0.0.1:26657"}
 	subject, err := Event2queue(conf.Nats, &event)
 	assert.Nil(t, err)
@@ -24,7 +27,8 @@ func TestEvent2queue(t *testing.T) {
 	assert.Equal(t, err.Error(), "event data is empty", "couldn't route empty event")
 	assert.Equal(t, subject, "")
 
-	cEventDatatx = types.CassiniEventDataTx{From: "QSC1", To: "", Sequence: 1, HashBytes: []byte("sha256")}
+	cEventDatatx = types.CassiniEventDataTx{
+		From: "QSC1", To: "", Sequence: 1, HashBytes: []byte("sha256")}
 	event = types.Event{CassiniEventDataTx: cEventDatatx, NodeAddress: "127.0.0.1:26657"}
 	subject, err = Event2queue(conf.Nats, &event)
 	assert.Equal(t, err.Error(), "event data is empty", "couldn't route Incomplete event")

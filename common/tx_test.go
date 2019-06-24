@@ -6,6 +6,7 @@ import (
 
 	motx "github.com/QOSGroup/cassini/mock/tx"
 	"github.com/QOSGroup/cassini/types"
+
 	//catypes "github.com/QOSGroup/cassini/types"
 	"github.com/QOSGroup/qbase/example/basecoin/app"
 	"github.com/QOSGroup/qbase/qcp"
@@ -24,7 +25,10 @@ func TestTransform(t *testing.T) {
 	assert.Equal(t, tx.TxIndex, int64(e.Index), "!!! Transform Tx error !!!")
 
 	ca := types.CassiniEventDataTx{}
-	err = ca.ConstructFromTags(e.Result.Tags)
+	var tags map[string]string
+	tags, err = types.KV2map(e.Result.Tags)
+	assert.NoError(t, err)
+	err = ca.ConstructFromTags(tags)
 
 	assert.NoError(t, err)
 

@@ -1,15 +1,27 @@
 // Package commands is a set of libraries for cassini commands.
 //
-// Root $> cassini # default command: help for cassini
+// help: show help for cassini
+//      $ cassini help [commands] [flags]
+//      $ cassini -h
+//      $ cassini --hrlp
 //
-// start $> cassini start # start command: start relay serivce
+// start: start the relay serivce
+//      $ cassini start
 //
-// mock $> cassini mock # mock command: start mocking relay service for test.
+// version: show version info
+//      $ cassini version
 //
-// wsclient $> cassini wsclient
-// # wsclient command: start web socket client for tx event listen testing.
+// dev mock: start mocking relay service
+//      $ cassini dev mock -h
+//
+// dev events: subscribe and show the events
+//      $ cassini dev events -h
+//
+// dev tx: query tx
+//      $ cassini dev tx -h
 //
 // !!!WARN It's DANGER!!!
 //
-// reset $> cassini reset # reset command: reset(cleaning up) data for cssini.
+// dev reset: reset(cleaning up) data for cssini
+//      $ cassini dev reset -h
 package commands

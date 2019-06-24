@@ -2,14 +2,13 @@ package ports
 
 import (
 	"context"
-	"os"
 
 	"github.com/QOSGroup/cassini/event"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/restclient"
 	"github.com/QOSGroup/cassini/types"
 	"github.com/QOSGroup/qbase/txs"
-	tmttypes "github.com/tendermint/tendermint/types"
+	tctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 func init() {
@@ -109,9 +108,8 @@ func (a *QosAdapter) Subscribe(listener EventsListener) {
 	log.Infof("Starting event subscribe: %s", GetAdapterKey(a))
 	remote := "tcp://" + GetNodeAddress(a)
 	// go event.EventsSubscribe(remote)
-	txs := make(chan interface{})
-	go a.subscribeRemote(remote, txs)
-	go a.eventHandle(listener, remote, txs)
+	events := a.subscribeRemote(remote)
+	go a.eventHandle(listener, remote, events)
 }
 
 // SubmitTx submit Tx to qos chain
@@ -166,32 +164,33 @@ func (a *QosAdapter) GetPort() int {
 	return a.config.Port
 }
 
-func (a *QosAdapter) subscribeRemote(remote string, txs chan<- interface{}) {
+func (a *QosAdapter) subscribeRemote(remote string) <-chan tctypes.ResultEvent {
 	log.Debug("Event subscribe remote: ", remote)
 	//TODO query 条件?? "tm.event = 'Tx' AND qcp.to != '' AND qcp.sequence > 0"
-	cancel, err := event.SubscribeRemote(remote,
-		a.config.ChainName, a.config.Query, txs)
+	cancel, events, err := event.SubscribeRemote(remote,
+		a.config.ChainName, a.config.Query)
 	if err != nil {
 		log.Errorf("Subscibe events failed - remote [%s] : '%s'", remote, err)
-		log.Flush()
-		os.Exit(1)
+		// log.Flush()
+		// os.Exit(1)
 	}
 	a.cancels = append(a.cancels, cancel)
+	return events
 }
 
-func (a *QosAdapter) eventHandle(listener EventsListener, remote string, txs <-chan interface{}) {
-	for ed := range txs {
-		edt := ed.(tmttypes.EventDataTx)
-		log.Debugf("Received event from[%s],'%s'", remote, edt)
+func (a *QosAdapter) eventHandle(listener EventsListener, remote string,
+	events <-chan tctypes.ResultEvent) {
+	for ed := range events {
+		log.Debugf("Received event from[%s],'%s'", remote, ed)
 
-		cassiniEventDataTx := types.CassiniEventDataTx{}
-		cassiniEventDataTx.Height = edt.Height
-		cassiniEventDataTx.ConstructFromTags(edt.Result.Tags)
+		ce := types.CassiniEventDataTx{}
+		ce.ConstructFromTags(ed.Tags)
+		log.Debug("event.tags: ", len(ed.Tags), " height: ", ce.Height)
 
-		event := types.Event{
+		event := &types.Event{
 			NodeAddress:        remote,
-			CassiniEventDataTx: cassiniEventDataTx}
+			CassiniEventDataTx: ce}
 
-		listener(&event, a)
+		listener(event, a)
 	}
 }
