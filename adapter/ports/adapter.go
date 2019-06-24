@@ -2,7 +2,6 @@ package ports
 
 import (
 	"context"
-	"os"
 
 	"github.com/QOSGroup/cassini/event"
 	"github.com/QOSGroup/cassini/log"
@@ -172,8 +171,8 @@ func (a *QosAdapter) subscribeRemote(remote string) <-chan tctypes.ResultEvent {
 		a.config.ChainName, a.config.Query)
 	if err != nil {
 		log.Errorf("Subscibe events failed - remote [%s] : '%s'", remote, err)
-		log.Flush()
-		os.Exit(1)
+		// log.Flush()
+		// os.Exit(1)
 	}
 	a.cancels = append(a.cancels, cancel)
 	return events
