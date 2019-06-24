@@ -35,6 +35,7 @@ require (
 	go.uber.org/zap v1.9.1 // indirect
 	golang.org/x/net v0.0.0-20190125091013-d26f9f9a57f3
 	golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2 // indirect
+	gopkg.in/yaml.v2 v2.2.2
 )
 
 replace github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8 => github.com/ugorji/go/codec v0.0.0-20181018023622-b30ce92d500b

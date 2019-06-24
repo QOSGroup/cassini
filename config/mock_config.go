@@ -4,23 +4,23 @@ package config
 type MockConfig struct {
 
 	// Name 链名称，mock 时，交易事件的qcp.from
-	Name string `json:"name,omitempty"`
+	Name string `yaml:"name,omitempty"`
 
 	// To 目标链名称，mock 时，交易事件的qcp.to
-	To string `json:"to,omitempty"`
+	To string `yaml:"to,omitempty"`
 
 	// Subscribe 交易事件订阅条件，为空时通过To 参数自动拼装
-	Subscribe string `json:"subscribe,omitempty"`
+	Subscribe string `yaml:"subscribe,omitempty"`
 
 	// Sequence 交易序列号
-	Sequence int64 `json:"sequence,omitempty"`
+	Sequence int64 `yaml:"sequence,omitempty"`
 
 	// RPC RPC相关配置
-	RPC *RPCConfig `json:"rpc,omitempty"`
+	RPC *RPCConfig `yaml:"rpc,omitempty"`
 }
 
 // RPCConfig 相关配置
 type RPCConfig struct {
 	// 监听地址端口
-	NodeAddress string `json:"nodes,omitempty"`
+	NodeAddress string `yaml:"nodes,omitempty"`
 }

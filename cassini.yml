@@ -1,0 +1,43 @@
+# cassini config
+
+nats: nats://127.0.0.1:4222
+
+prikey: qhip/qi69q0rFQI5GWkyQljshWIWOt9OE464Pg29Y7YPNSHo39E9UzuQGqra7YYYYYYYYY/V/XXXXXXXXX/vgQ==
+
+consensus: true
+
+eventWaitMillitime: 2000
+
+useEtcd: true
+
+lock: etcd://127.0.0.1:2379
+
+lockTTL: 5000
+
+embedEtcd: true
+
+etcd:
+  name:           dev-cassini
+  advertise:      http://127.0.0.1:2379
+  advertisePeer:  http://127.0.0.1:2380
+  clusterToken:   dev-cassini-cluster
+  cluster:        dev-cassini=http://127.0.0.1:2380
+
+qscs:
+  - name: fromChain
+    type: qstars
+    nodes: 127.0.0.1:26657
+  - name: toChain
+    type: qos
+    nodes: 127.0.0.1:27657
+
+mocks:
+  - name: qos
+    to:   qqs
+    rpc:
+      nodes: 0.0.0.0:26657
+  - name: qqs
+    to:   qos
+    rpc:
+      nodes: 0.0.0.0:27657,0.0.0.0:28657
+

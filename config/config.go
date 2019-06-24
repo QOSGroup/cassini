@@ -1,75 +1,73 @@
 package config
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"strings"
+
+	yaml "gopkg.in/yaml.v2"
 )
 
 // Config wraps all configure data of cassini
 type Config struct {
 
 	// ConfigFile is configure file path of cassini
-	ConfigFile string `json:"config,omitempty"`
+	ConfigFile string
 
 	// LogConfigFile is configure file path of log
-	LogConfigFile string `json:"log,omitempty"`
-
-	// Consensus setting the consensus for cassini
-	// "no"    - no consensus
-	// default - 2/3 consensus
-	Consensus bool `json:"consensus,omitempty"`
-
-	// EventWaitMillitime 交易事件被监听到后需要等待的事件，
-	// <=0 不等待
-	// >0 等待相应毫秒数
-	EventWaitMillitime int64 `json:"eventWaitMillitime,omitempty"`
-
-	// Prikey Cassini relay's private key
-	Prikey string `json:"prikey,omitempty"`
+	LogConfigFile string `yaml:"log,omitempty"`
 
 	// 消息队列服务配置
 	// 如果既没配置Kafka也没配置Nats，则认为配置内部队列模式，仅建议用于测试环境下。
 
 	// Nats 集群配置，以逗号分割
-	Nats string `json:"nats,omitempty"`
+	Nats string `yaml:"nats,omitempty"`
 
-	// Kafka 集群配置，以逗号分割
-	Kafka string `json:"kafka,omitempty"`
+	// Prikey Cassini relay's private key
+	Prikey string `yaml:"prikey,omitempty"`
+
+	// Consensus setting the consensus for cassini
+	// "no"    - no consensus
+	// default - 2/3 consensus
+	Consensus bool `yaml:"consensus,omitempty"`
+
+	// EventWaitMillitime 交易事件被监听到后需要等待的事件，
+	// <=0 不等待
+	// >0 等待相应毫秒数
+	EventWaitMillitime int64 `yaml:"eventWaitMillitime,omitempty"`
 
 	// Mocks 所有需要Mock的服务配置
-	Mocks []*MockConfig `json:"mocks,omitempty"`
+	Mocks []*MockConfig `yaml:"mocks,omitempty"`
 
 	// Qscs 与relay连接的区块链相关配置
-	Qscs []*QscConfig `json:"qscs,omitempty"`
+	Qscs []*QscConfig `yaml:"qscs,omitempty"`
 
 	// UseEtcd Whether to use etcd or not
-	UseEtcd bool `json:"useEtcd,omitempty"`
+	UseEtcd bool `yaml:"useEtcd,omitempty"`
 
 	// Lock config the lock
 	//
 	// "etcd://192.168.1.100:2379,192.168.1.101:2379,192.168.1.102:2379"
-	Lock string `json:"lock,omitempty"`
+	Lock string `yaml:"lock,omitempty"`
 
 	// LockTTL timeout for lock
 	//
 	// 5 - the lock will be auto-unlock with 5s when lose session
-	LockTTL int `json:"lockTTL,omitempty"`
+	LockTTL int64 `yaml:"lockTTL,omitempty"`
 
 	// EmbedEtcd Whether to start embed etcd or not
-	EmbedEtcd bool `json:"embedEtcd,omitempty"`
+	EmbedEtcd bool `yaml:"embedEtcd,omitempty"`
 
 	// Etcd Embed-etcd config
-	Etcd *EtcdConfig `json:"etcd,omitempty"`
+	Etcd *EtcdConfig `yaml:"etcd,omitempty"`
 }
 
 // QscConfig qsc 配置封装
 type QscConfig struct {
 	// Name 链名称
-	Name string `json:"name,omitempty"`
+	Name string `yaml:"name,omitempty"`
 
 	// Type 链类型
-	Type string `json:"type,omitempty"`
+	Type string `yaml:"type,omitempty"`
 
 	// Signature if need sign tx data for this chain
 	// true - required
@@ -83,7 +81,7 @@ type QscConfig struct {
 	Certificate string `json:"certificate,omitempty"`
 
 	// NodeAddress 区块链节点地址，多个之间用“，”分割
-	NodeAddress string `json:"nodes,omitempty"`
+	NodeAddress string `yaml:"nodes,omitempty"`
 }
 
 var conf = &Config{}
@@ -104,11 +102,7 @@ func (c *Config) Load() error {
 
 // parse the configure file
 func (c *Config) parse(bytes []byte) error {
-	err := json.Unmarshal(bytes, conf)
-	if err != nil {
-		return err
-	}
-	return nil
+	return yaml.UnmarshalStrict(bytes, c)
 }
 
 // GetQscConfig 获取指定 ChainID 的 QSC 配置
@@ -127,9 +121,8 @@ func (c *Config) GetQscConfig(chainID string) (qsc QscConfig) {
 // DefaultConfig returns a default configuration for a Tendermint node
 func DefaultConfig() *Config {
 	return &Config{
-		Nats:  "nats://127.0.0.1:4222",
-		Kafka: "",
-		Qscs:  DefaultQscConfig(),
+		Nats: "nats://127.0.0.1:4222",
+		Qscs: DefaultQscConfig(),
 	}
 }
 
@@ -160,9 +153,8 @@ func DefaultQscConfig() []*QscConfig {
 // TestConfig returns a configuration that can be used for testing
 func TestConfig() *Config {
 	return &Config{
-		Nats:  "nats://127.0.0.1:4222",
-		Kafka: "",
-		Qscs:  TestQscConfig(),
+		Nats: "nats://127.0.0.1:4222",
+		Qscs: TestQscConfig(),
 	}
 }
 
