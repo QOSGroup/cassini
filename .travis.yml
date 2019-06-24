@@ -3,7 +3,7 @@ sudo: false
 dist: trusty
 os: centos
 go:
-  - 1.11
+  - 1.12
 
 before_install:
   - go mod download
