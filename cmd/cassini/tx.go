@@ -18,9 +18,10 @@ import (
 	bctypes "github.com/QOSGroup/qbase/types"
 	amino "github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto/ed25519"
+
 	// ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	// cmn "github.com/QOSGroup/cassini/common"
-	// "github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto"
 )
 
 // 命令行 tx 命令执行方法
@@ -35,8 +36,10 @@ var txHandler = func(conf *config.Config) (context.CancelFunc, error) {
 		tx, err := client.GetTxQcp(mockConf.Name, mockConf.Sequence)
 		if err == nil {
 			fmt.Printf("Get TxQcp: %s\n", cmn.StringTx(tx))
+			fmt.Println("Tx hash: ", cmn.Bytes2HexStr(crypto.Sha256(tx.BuildSignatureBytes())))
+			// //////////////
 			// hash := cmn.Bytes2HexStr(crypto.Sha256(tx.GetSigData()))
-			// log.Debugf("Tx hash: %s", hash)
+			// fmt.Printf("Tx hash: %s", hash)
 		} else {
 			fmt.Printf("Get no TxQcp on error: %s\n", err)
 		}

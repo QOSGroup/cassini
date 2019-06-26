@@ -53,7 +53,8 @@ func NewRootCommand() *cobra.Command {
 		Short: "the relay of cross-chain",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
 			if strings.EqualFold(cmd.Use, CommandVersion) ||
-				strings.HasPrefix(cmd.Use, CommandHelp) {
+				strings.HasPrefix(cmd.Use, CommandHelp) ||
+				strings.HasPrefix(cmd.Use, CommandTx) {
 				// doesn't need init log and config
 				return nil
 			}
