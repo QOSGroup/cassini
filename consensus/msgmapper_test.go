@@ -88,7 +88,8 @@ func newFerry(t *testing.T, from, to string, sequence int64) *Ferry {
 			ChainType: "qos",
 			IP:        ip,
 			Port:      port}
-		err = ports.RegisterAdapter(conf)
+
+		err = RegisterAdapterWithoutPanic(conf, t)
 		assert.NoError(t, err)
 
 	}
@@ -103,7 +104,7 @@ func newFerry(t *testing.T, from, to string, sequence int64) *Ferry {
 			ChainType: "qos",
 			IP:        ip,
 			Port:      port}
-		err = ports.RegisterAdapter(conf)
+		err = RegisterAdapterWithoutPanic(conf, t)
 		assert.NoError(t, err)
 	}
 
@@ -114,4 +115,14 @@ func newFerry(t *testing.T, from, to string, sequence int64) *Ferry {
 	f.sequence = sequence
 
 	return f
+}
+
+func RegisterAdapterWithoutPanic(config *ports.AdapterConfig,
+	t *testing.T) error {
+	defer func() {
+		if err := recover(); err != nil {
+			t.Logf("recover error: %v", err)
+		}
+	}()
+	return ports.RegisterAdapter(config)
 }

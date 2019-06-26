@@ -2,6 +2,7 @@ package ports
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/QOSGroup/cassini/event"
 	"github.com/QOSGroup/cassini/log"
@@ -14,9 +15,6 @@ import (
 func init() {
 	builder := func(config AdapterConfig) (AdapterService, error) {
 		a := &QosAdapter{config: &config}
-		a.Start()
-		a.Sync()
-		a.Subscribe(config.Listener)
 		return a, nil
 	}
 	GetPortsIncetance().RegisterBuilder("qos", builder)
@@ -170,9 +168,10 @@ func (a *QosAdapter) subscribeRemote(remote string) <-chan tctypes.ResultEvent {
 	cancel, events, err := event.SubscribeRemote(remote,
 		a.config.ChainName, a.config.Query)
 	if err != nil {
-		log.Errorf("Subscibe events failed - remote [%s] : '%s'", remote, err)
+		// log.Errorf("Subscibe events failed - remote [%s] : '%s'", remote, err)
 		// log.Flush()
 		// os.Exit(1)
+		panic(fmt.Errorf("subscibe events failed: %s", err))
 	}
 	a.cancels = append(a.cancels, cancel)
 	return events

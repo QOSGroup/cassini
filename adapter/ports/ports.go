@@ -77,7 +77,8 @@ func (p *defaultPorts) Register(conf *AdapterConfig) (err error) {
 	var ok bool
 	if ads, ok = p.adapters[conf.ChainName]; ok {
 		if a, ok = ads[adapterKey]; ok {
-			return fmt.Errorf("adapter already registered: %s", adapterKey)
+			err = fmt.Errorf("adapter already registered: %s", adapterKey)
+			return
 		}
 	}
 	if builder, ok := p.builders[conf.ChainType]; ok {
@@ -93,7 +94,9 @@ func (p *defaultPorts) Register(conf *AdapterConfig) (err error) {
 		if conf.Query == "" {
 			conf.Query = "tm.event = 'Tx'  AND qcp.sequence > 0"
 		}
-		a, err = builder(*conf)
+		if a, err = builder(*conf); err != nil {
+			panic(err)
+		}
 	} else {
 		msg := fmt.Sprintf("no adapter builder found: %s", conf.ChainType)
 		log.Warnf(msg)
@@ -104,7 +107,14 @@ func (p *defaultPorts) Register(conf *AdapterConfig) (err error) {
 		p.adapters[conf.ChainName] = ads
 	}
 	ads[GetAdapterKey(a)] = a
-	return nil
+	if err = a.Start(); err != nil {
+		panic(err)
+	}
+	if err = a.Sync(); err != nil {
+		panic(err)
+	}
+	a.Subscribe(conf.Listener)
+	return
 }
 
 // Count Returns the total number of Adapter for the specified chain-name.
