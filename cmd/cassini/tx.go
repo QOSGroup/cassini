@@ -36,10 +36,7 @@ var txHandler = func(conf *config.Config) (context.CancelFunc, error) {
 		tx, err := client.GetTxQcp(mockConf.Name, mockConf.Sequence)
 		if err == nil {
 			fmt.Printf("Get TxQcp: %s\n", cmn.StringTx(tx))
-			fmt.Println("Tx hash: ", cmn.Bytes2HexStr(crypto.Sha256(tx.BuildSignatureBytes())))
-			// //////////////
-			// hash := cmn.Bytes2HexStr(crypto.Sha256(tx.GetSigData()))
-			// fmt.Printf("Tx hash: %s", hash)
+			fmt.Println("Qcp hash: ", cmn.Bytes2HexStr(crypto.Sha256(tx.BuildSignatureBytes())))
 		} else {
 			fmt.Printf("Get no TxQcp on error: %s\n", err)
 		}

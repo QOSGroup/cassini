@@ -24,11 +24,18 @@ func TestCreateAdapter(t *testing.T) {
 		ChainType: chain,
 		IP:        ip,
 		Port:      port}
-	err := RegisterAdapter(conf)
+
+	err := RegisterAdapterWithoutPanic(conf, t)
+
+	assert.NoError(t, err)
+
 	conf.Port++
-	err = RegisterAdapter(conf)
+	err = RegisterAdapterWithoutPanic(conf, t)
+
+	assert.NoError(t, err)
+
 	conf.Port++
-	err = RegisterAdapter(conf)
+	err = RegisterAdapterWithoutPanic(conf, t)
 
 	assert.NoError(t, err)
 
@@ -60,26 +67,36 @@ func TestRegisterAdapter(t *testing.T) {
 		ChainType: chainType,
 		IP:        ip,
 		Port:      port}
-	err := RegisterAdapter(conf)
+	err := RegisterAdapterWithoutPanic(conf, t)
 	assert.NoError(t, err)
 
 	c := GetPortsIncetance().Count(chainName)
 	assert.Equal(t, 1, c)
 
-	err = RegisterAdapter(conf)
+	err = RegisterAdapterWithoutPanic(conf, t)
 	assert.Error(t, err)
-	err = RegisterAdapter(conf)
+	err = RegisterAdapterWithoutPanic(conf, t)
 	assert.Error(t, err)
 
 	conf.Port++
-	err = RegisterAdapter(conf)
+	err = RegisterAdapterWithoutPanic(conf, t)
 	assert.NoError(t, err)
 	conf.Port++
-	err = RegisterAdapter(conf)
+	err = RegisterAdapterWithoutPanic(conf, t)
 	assert.NoError(t, err)
 
 	var ads map[string]Adapter
 	ads, err = GetPortsIncetance().Get(chainName)
 	assert.NoError(t, err)
 	assert.Equal(t, 3, len(ads))
+}
+
+func RegisterAdapterWithoutPanic(config *AdapterConfig,
+	t *testing.T) error {
+	defer func() {
+		if err := recover(); err != nil {
+			t.Logf("recover error: %v", err)
+		}
+	}()
+	return RegisterAdapter(config)
 }
