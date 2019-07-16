@@ -1,6 +1,12 @@
 # cassini config
 
-nats: nats://127.0.0.1:4222
+# Queue define message queue service type, IP and port addresses.
+# Multiple addresses should be separated by comma.
+# Example:
+#     nats://192.168.1.100:4222,192.168.1.101:4222,192.168.1.102:4222
+# default:
+#	    local
+queue: local
 
 prikey: qhip/qi69q0rFQI5GWkyQljshWIWOt9OE464Pg29Y7YPNSHo39E9UzuQGqra7YYYYYYYYY/V/XXXXXXXXX/vgQ==
 

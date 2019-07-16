@@ -32,7 +32,7 @@ func TestLoadConfig(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, true, conf.Consensus)
-	assert.Equal(t, "nats://127.0.0.1:4222", conf.Nats)
+	assert.Equal(t, "nats://127.0.0.1:4222", conf.Queue)
 	assert.Equal(t, int64(2000), conf.EventWaitMillitime)
 	assert.Equal(t, true, conf.UseEtcd)
 	assert.Equal(t, "etcd://127.0.0.1:2379", conf.Lock)
