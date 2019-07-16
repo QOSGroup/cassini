@@ -27,6 +27,7 @@ require (
 	github.com/prometheus/client_golang v0.9.3-0.20190313112143-fa4aa9000d28 // indirect
 	github.com/soheilhy/cmux v0.1.4 // indirect
 	github.com/spf13/cobra v0.0.3
+	github.com/spf13/viper v1.3.1
 	github.com/stretchr/testify v1.3.0
 	github.com/tendermint/go-amino v0.15.0
 	github.com/tendermint/tendermint v0.31.5

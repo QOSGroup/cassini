@@ -16,11 +16,13 @@ type Config struct {
 	// LogConfigFile is configure file path of log
 	LogConfigFile string `yaml:"log,omitempty"`
 
-	// 消息队列服务配置
-	// 如果既没配置Kafka也没配置Nats，则认为配置内部队列模式，仅建议用于测试环境下。
-
-	// Nats 集群配置，以逗号分割
-	Nats string `yaml:"nats,omitempty"`
+	// Queue define message queue service type, IP and port addresses.
+	// Multiple addresses should be separated by comma.
+	// Example:
+	//     nats://192.168.1.100:4222,192.168.1.101:4222,192.168.1.102:4222
+	// default:
+	//	   local
+	Queue string `yaml:"queue,omitempty"`
 
 	// Prikey Cassini relay's private key
 	Prikey string `yaml:"prikey,omitempty"`
@@ -121,8 +123,8 @@ func (c *Config) GetQscConfig(chainID string) (qsc QscConfig) {
 // DefaultConfig returns a default configuration for a Tendermint node
 func DefaultConfig() *Config {
 	return &Config{
-		Nats: "nats://127.0.0.1:4222",
-		Qscs: DefaultQscConfig(),
+		Queue: "nats://127.0.0.1:4222",
+		Qscs:  DefaultQscConfig(),
 	}
 }
 
@@ -153,8 +155,8 @@ func DefaultQscConfig() []*QscConfig {
 // TestConfig returns a configuration that can be used for testing
 func TestConfig() *Config {
 	return &Config{
-		Nats: "nats://127.0.0.1:4222",
-		Qscs: TestQscConfig(),
+		Queue: "nats://127.0.0.1:4222",
+		Qscs:  TestQscConfig(),
 	}
 }
 
