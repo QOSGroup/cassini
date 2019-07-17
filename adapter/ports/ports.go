@@ -83,7 +83,7 @@ func (p *defaultPorts) Register(conf *AdapterConfig) (err error) {
 	}
 	if builder, ok := p.builders[conf.ChainType]; ok {
 		if conf.Listener == nil {
-			nats := config.GetConfig().Nats
+			nats := config.GetConfig().Queue
 			conf.Listener = func(event *types.Event, adapter Adapter) {
 				_, err := route.Event2queue(nats, event)
 				if err != nil {
