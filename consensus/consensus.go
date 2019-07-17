@@ -11,8 +11,8 @@ import (
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/cassini/msgqueue"
 	"github.com/QOSGroup/cassini/types"
-	"github.com/nats-io/go-nats"
-	"github.com/tendermint/go-amino"
+	nats "github.com/nats-io/go-nats"
+	amino "github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto"
 
 	"github.com/QOSGroup/cassini/restclient"
@@ -148,7 +148,7 @@ func qcpConsume(ce *ConsEngine, from, to string, conf *config.Config, e chan<- e
 	}
 
 	consummer := msgqueue.NATSConsumer{
-		ServerUrls: conf.Nats,
+		ServerUrls: conf.Queue,
 		Subject:    from + "2" + to,
 		CallBack:   cb}
 
