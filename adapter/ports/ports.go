@@ -71,6 +71,7 @@ func (p *defaultPorts) RegisterBuilder(chainName string, builder Builder) error 
 // Create Check if there is a AdapterService for the specified ip, port and chain-name exist,
 // otherwise create one and cache it.
 func (p *defaultPorts) Register(conf *AdapterConfig) (err error) {
+	log.Infof("Register: %s, %s", conf.ChainName, conf.ChainType)
 	var a AdapterService
 	adapterKey := GetAdapterKeyByConfig(conf)
 	var ads map[string]AdapterService
