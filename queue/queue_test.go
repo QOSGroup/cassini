@@ -33,8 +33,8 @@ func Test_NewComsumer(t *testing.T) {
 	assert.NoError(t, err)
 
 	if c != nil {
-		c.Subscribe(func(data []byte) {
-			t.Logf("get: %s", string(data))
+		c.Subscribe(func(subject string, data []byte) {
+			t.Logf("queue %s get: %s", subject, string(data))
 			wg.Done()
 		})
 	}
@@ -58,8 +58,8 @@ func Test_Subscribe(t *testing.T) {
 	assert.NoError(t, err)
 	t.Log("waiting")
 	if c != nil {
-		c.Subscribe(func(data []byte) {
-			t.Logf("get: %s", string(data))
+		c.Subscribe(func(subject string, data []byte) {
+			t.Logf("queue %s get: %s", subject, string(data))
 			wg.Done()
 			// t.Log("done")
 		})
@@ -75,7 +75,7 @@ func Benchmark_Parallel_LocalQueue(b *testing.B) {
 	var counter int
 	c, err2 := NewComsumer("test_parallel")
 	if err2 == nil && c != nil {
-		c.Subscribe(func(data []byte) {
+		c.Subscribe(func(subject string, data []byte) {
 			counter++
 		})
 	}
