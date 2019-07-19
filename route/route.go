@@ -4,9 +4,9 @@ import (
 	"errors"
 
 	"github.com/QOSGroup/cassini/log"
-	mq "github.com/QOSGroup/cassini/msgqueue"
+	"github.com/QOSGroup/cassini/queue"
 	"github.com/QOSGroup/cassini/types"
-	"github.com/tendermint/go-amino"
+	amino "github.com/tendermint/go-amino"
 )
 
 //type route struct{}
@@ -24,24 +24,32 @@ func Event2queue(nats string, event *types.Event) (subject string, err error) {
 		return "", errors.New("event data is empty")
 	}
 
-	eventbytes, _ := amino.MarshalBinaryLengthPrefixed(*event)
+	data, err := amino.MarshalBinaryLengthPrefixed(*event)
+	if err != nil {
+		return "", err
+	}
 
 	subject = event.From + "2" + event.To
 
-	producer := mq.NATSProducer{ServerUrls: nats, Subject: subject}
+	// producer := mq.NATSProducer{ServerUrls: nats, Subject: subject}
 
-	np, err := producer.Connect() //TODO don't connect every time
+	// np, err := producer.Connect() //TODO don't connect every time
 
+	// if err != nil {
+
+	// 	return "", errors.New("couldn't connect to msg server")
+	// }
+
+	// defer np.Close()
+
+	// if err := producer.Produce(np, eventbytes); err != nil {
+	// 	return "", err
+	// }
+	producer, err := queue.NewProducer(subject)
 	if err != nil {
-
-		return "", errors.New("couldn't connect to msg server")
-	}
-
-	defer np.Close()
-
-	if err := producer.Produce(np, eventbytes); err != nil {
 		return "", err
 	}
+	producer.Produce(data)
 
 	log.Infof("routed event from[%s] sequence[#%d] to subject [%s] ", event.NodeAddress, event.Sequence, subject)
 

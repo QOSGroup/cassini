@@ -23,7 +23,7 @@ func TestConsensus32(t *testing.T) {
 
 func TestGetAddressFromUrl(t *testing.T) {
 
-	assert.Equal(t, GetAddressFromUrl("nats://127.0.0.1"), "127.0.0.1")
-	assert.Equal(t, GetAddressFromUrl("tcp://127.0.0.1:26657"), "127.0.0.1:26657")
-	assert.Equal(t, GetAddressFromUrl("http://127.0.0.1:8080"), "127.0.0.1:8080")
+	assert.Equal(t, GetAddress("nats://127.0.0.1"), "127.0.0.1")
+	assert.Equal(t, GetAddress("tcp://127.0.0.1:26657"), "127.0.0.1:26657")
+	assert.Equal(t, GetAddress("http://127.0.0.1:8080"), "127.0.0.1:8080")
 }

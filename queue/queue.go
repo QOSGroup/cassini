@@ -52,7 +52,7 @@ type Producer interface {
 }
 
 // Listener for message listening
-type Listener func([]byte)
+type Listener func(string, []byte)
 
 // Comsumer define the comsumer of message queue service
 type Comsumer interface {
@@ -84,18 +84,19 @@ func (q *LocalQueue) Init() {
 // NewProducer returns a new producer for the message queue
 func (q *LocalQueue) NewProducer() (p Producer, err error) {
 	q.Init()
-	return &LocalProducer{out: q.ch}, nil
+	return &LocalProducer{queue: q, out: q.ch}, nil
 }
 
 // NewComsumer returns a new comsumer for the message queue
 func (q *LocalQueue) NewComsumer() (c Comsumer, err error) {
 	q.Init()
-	return &LocalComsumer{in: q.ch}, nil
+	return &LocalComsumer{queue: q, in: q.ch}, nil
 }
 
 // LocalProducer define the producer for local message queue based on channel
 type LocalProducer struct {
-	out chan<- []byte
+	queue *LocalQueue
+	out   chan<- []byte
 }
 
 // Produce sends data to local message queue
@@ -106,7 +107,8 @@ func (p *LocalProducer) Produce(data []byte) error {
 
 // LocalComsumer define the comsumer for local message queue based on channel
 type LocalComsumer struct {
-	in <-chan []byte
+	queue *LocalQueue
+	in    <-chan []byte
 }
 
 // Subscribe sets the listener for local message queue based on channel
@@ -114,7 +116,7 @@ func (c *LocalComsumer) Subscribe(listener Listener) error {
 	go func() {
 		for {
 			data := <-c.in
-			listener(data)
+			listener(c.queue.Subject, data)
 		}
 	}()
 	return nil

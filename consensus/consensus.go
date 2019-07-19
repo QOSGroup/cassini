@@ -9,9 +9,8 @@ import (
 
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/log"
-	"github.com/QOSGroup/cassini/msgqueue"
+	"github.com/QOSGroup/cassini/queue"
 	"github.com/QOSGroup/cassini/types"
-	nats "github.com/nats-io/go-nats"
 	amino "github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto"
 
@@ -127,14 +126,14 @@ func qcpConsume(ce *ConsEngine, from, to string, conf *config.Config, e chan<- e
 
 	defer wg.Done()
 
-	cb := func(m *nats.Msg) {
+	listener := func(subject string, data []byte) {
 
 		i++
 
 		tx := types.Event{}
-		amino.UnmarshalBinaryLengthPrefixed(m.Data, &tx)
+		amino.UnmarshalBinaryLengthPrefixed(data, &tx)
 
-		log.Infof("[#%d] Consume subject [%s] sequence [#%d] nodeAddress '%s'", i, m.Subject, tx.Sequence, tx.NodeAddress)
+		log.Infof("[#%d] Consume subject [%s] sequence [#%d] nodeAddress '%s'", i, subject, tx.Sequence, tx.NodeAddress)
 
 		// 监听到交易事件后立即查询需要等待一段时间才能查询到交易数据；
 		//TODO 优化
@@ -144,25 +143,32 @@ func qcpConsume(ce *ConsEngine, from, to string, conf *config.Config, e chan<- e
 		//	time.Sleep(time.Duration(conf.EventWaitMillitime) * time.Millisecond)
 		//}
 
-		ce.Add2Engine(m)
+		ce.Add2Engine(data)
 	}
 
-	consummer := msgqueue.NATSConsumer{
-		ServerUrls: conf.Queue,
-		Subject:    from + "2" + to,
-		CallBack:   cb}
+	// consummer := msgqueue.NATSConsumer{
+	// 	ServerUrls: conf.Queue,
+	// 	Subject:    from + "2" + to,
+	// 	CallBack:   cb}
 
-	nc, err := consummer.Connect()
+	// nc, err := consummer.Connect()
+	// if err != nil {
+	// 	e <- err
+	// 	return
+	// }
+
+	// if err = consummer.Consume(nc); err != nil {
+	// 	e <- err
+	// 	return
+	// }
+
+	subject := from + "2" + to
+
+	comsumer, err := queue.NewComsumer(subject)
 	if err != nil {
 		e <- err
-		return
 	}
-
-	if err = consummer.Consume(nc); err != nil {
-		e <- err
-		return
-	}
-
+	comsumer.Subscribe(listener)
 	return
 }
 
@@ -178,10 +184,10 @@ func NewConsEngine(from, to string) *ConsEngine {
 }
 
 // Add2Engine Add a message to consensus engine
-func (c *ConsEngine) Add2Engine(msg *nats.Msg) error {
+func (c *ConsEngine) Add2Engine(data []byte) error {
 	event := types.Event{}
 
-	if amino.UnmarshalBinaryLengthPrefixed(msg.Data, &event) != nil {
+	if amino.UnmarshalBinaryLengthPrefixed(data, &event) != nil {
 
 		return errors.New("the event Unmarshal error")
 	}
@@ -230,7 +236,7 @@ func (c *ConsEngine) StartEngine() error {
 			c.SetSequence(c.from, c.to, c.sequence)
 		}
 
-		cresult := c.ConSequence()
+		cresult := c.conSequence()
 		if cresult == success {
 			c.SetSequence(c.from, c.to, c.sequence)
 		}
@@ -245,11 +251,10 @@ func (c *ConsEngine) StartEngine() error {
 			//panic(s)
 		}
 	}
-
-	return nil
 }
 
-func (c *ConsEngine) ConSequence() consResult { //交易还没产生和共识出错区别开
+// conSequence 交易还没产生和共识出错区别开
+func (c *ConsEngine) conSequence() consResult {
 
 	log.Debugf("Start consensus engine f.t.s[%s %s #%d]", c.from, c.to, c.sequence)
 
@@ -302,7 +307,7 @@ func (c *ConsEngine) SetSequence(from, to string, s int64) {
 	log.Infof("f.t[%s %s] ConsEngine sequence set to [#%d]", from, to, c.sequence)
 }
 
-//在to chain上查询 来自/要去 from chain 的 sequence
+// GetSequenceFromChain 在to chain上查询 来自/要去 from chain 的 sequence
 func (c *ConsEngine) GetSequenceFromChain(from, to, inout string) (int64, error) {
 	//qsc := c.F.conf.GetQscConfig(to)
 	//
@@ -315,7 +320,8 @@ func (c *ConsEngine) GetSequenceFromChain(from, to, inout string) (int64, error)
 	return c.F.GetSequenceFromChain(from, to, inout)
 }
 
-func GetAddressFromUrl(url string) string {
+// GetAddress returns address
+func GetAddress(url string) string {
 	n := strings.Index(url, "://")
 	if n < 0 {
 		return url
@@ -323,23 +329,27 @@ func GetAddressFromUrl(url string) string {
 	return url[n+3:]
 }
 
+// Setfrom set from value
 func (c *ConsEngine) Setfrom(from string) {
 	c.from = from
 }
 
+// Setto set to value
 func (c *ConsEngine) Setto(to string) {
 	c.to = to
 }
 
+// Getfrom return from value
 func (c *ConsEngine) Getfrom() string {
 	return c.from
 }
 
+// Getto returns to value
 func (c *ConsEngine) Getto() string {
 	return c.to
 }
 
-//roomKeeper 清理 EngineMap,ConsensusMap过时k-v;校正sequence
+// RoomKeeper 清理 EngineMap,ConsensusMap过时k-v;校正sequence
 func (c *ConsEngine) RoomKeeper() {
 	c.cleanMap()
 	c.ajustSequence()
@@ -351,13 +361,13 @@ func (c *ConsEngine) cleanMap() {
 	c.F.mtx.Lock()
 	defer c.F.mtx.Unlock()
 
-	for k, _ := range c.M.MsgMap {
+	for k := range c.M.MsgMap {
 		if k < c.F.sequence {
 			delete(c.M.MsgMap, k)
 			log.Debugf("delete c.sequence[#%d]", k)
 		}
 	}
-	for k, _ := range c.F.ConsMap.ConsMap {
+	for k := range c.F.ConsMap.ConsMap {
 		if k < c.F.sequence {
 			delete(c.F.ConsMap.ConsMap, k)
 			log.Debugf("delete f.sequence[#%d]", k)
