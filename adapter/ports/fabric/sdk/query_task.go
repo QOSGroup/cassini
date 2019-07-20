@@ -1,12 +1,10 @@
 package sdk
 
 import (
+	"github.com/QOSGroup/cassini/adapter/ports/fabric/sdk/utils"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/channel"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/fab"
-	"github.com/securekey/fabric-examples/fabric-cli/cmd/fabric-cli/action"
-	"github.com/securekey/fabric-examples/fabric-cli/cmd/fabric-cli/chaincode/utils"
-	"github.com/securekey/fabric-examples/fabric-cli/cmd/fabric-cli/printer"
 )
 
 // QueryTask is the query task
@@ -15,17 +13,16 @@ type QueryTask struct {
 	targets       []fab.Peer
 	id            string
 	ccID          string
-	args          *action.ArgStruct
+	args          *Args
 	callback      func(err error)
-	printer       printer.Printer
 	verbose       bool
 	payloadOnly   bool
 }
 
 // NewQueryTask creates a new query Task
 func NewQueryTask(id string, channelClient *channel.Client, targets []fab.Peer,
-	chaincodeID string, args *action.ArgStruct,
-	printer printer.Printer, verbose bool, payloadOnly bool, callback func(err error)) *QueryTask {
+	chaincodeID string, args *Args,
+	verbose bool, payloadOnly bool, callback func(err error)) *QueryTask {
 	return &QueryTask{
 		id:            id,
 		channelClient: channelClient,
@@ -33,7 +30,6 @@ func NewQueryTask(id string, channelClient *channel.Client, targets []fab.Peer,
 		ccID:          chaincodeID,
 		args:          args,
 		callback:      callback,
-		printer:       printer,
 		verbose:       verbose,
 		payloadOnly:   payloadOnly,
 	}
@@ -58,9 +54,7 @@ func (t *QueryTask) Invoke() {
 	} else {
 		log.Debugf("(%s) - Chaincode query was successful\n", t.id)
 
-		if t.verbose {
-			t.printer.PrintTxProposalResponses(response.Responses, t.payloadOnly)
-		}
+		log.Debugf("response payload: %s", response.Payload)
 
 		t.callback(nil)
 	}

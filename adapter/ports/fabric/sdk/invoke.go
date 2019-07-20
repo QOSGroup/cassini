@@ -3,13 +3,12 @@ package sdk
 import (
 	"time"
 
+	"github.com/QOSGroup/cassini/adapter/ports/fabric/sdk/utils"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/channel"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/fab"
 	pb "github.com/hyperledger/fabric-sdk-go/third_party/github.com/hyperledger/fabric/protos/peer"
 	"github.com/pkg/errors"
-	"github.com/securekey/fabric-examples/fabric-cli/cmd/fabric-cli/chaincode/invokeerror"
-	"github.com/securekey/fabric-examples/fabric-cli/cmd/fabric-cli/chaincode/utils"
 )
 
 type chaincodeInvokeAction struct {
@@ -171,7 +170,7 @@ func (a *chaincodeInvokeAction) invoke(channelID, chaincodeID string, argsArray 
 			opts...,
 		)
 		if err != nil {
-			return "", invokeerror.Errorf(invokeerror.TransientError, "SendTransactionProposal return error: %v", err)
+			return "", utils.Errorf(utils.TransientError, "SendTransactionProposal return error: %v", err)
 		}
 
 		txID := string(response.TransactionID)
@@ -182,10 +181,10 @@ func (a *chaincodeInvokeAction) invoke(channelID, chaincodeID string, argsArray 
 			log.Infof("(%s) - Successfully committed transaction [%s] ...\n", txID, response.TransactionID)
 		case pb.TxValidationCode_DUPLICATE_TXID, pb.TxValidationCode_MVCC_READ_CONFLICT, pb.TxValidationCode_PHANTOM_READ_CONFLICT:
 			log.Infof("(%s) - Transaction commit failed for [%s] with code [%s]. This is most likely a transient error.\n", txID, response.TransactionID, response.TxValidationCode)
-			return "", invokeerror.Wrapf(invokeerror.TransientError, errors.New("Duplicate TxID"), "invoke Error received from eventhub for TxID [%s]. Code: %s", response.TransactionID, response.TxValidationCode)
+			return "", utils.Wrapf(utils.TransientError, errors.New("Duplicate TxID"), "invoke Error received from eventhub for TxID [%s]. Code: %s", response.TransactionID, response.TxValidationCode)
 		default:
 			log.Infof("(%s) - Transaction commit failed for [%s] with code [%s].\n", txID, response.TransactionID, response.TxValidationCode)
-			return "", invokeerror.Wrapf(invokeerror.PersistentError, errors.New("error"), "invoke Error received from eventhub for TxID [%s]. Code: %s", response.TransactionID, response.TxValidationCode)
+			return "", utils.Wrapf(utils.PersistentError, errors.New("error"), "invoke Error received from eventhub for TxID [%s]. Code: %s", response.TransactionID, response.TxValidationCode)
 		}
 	}
 	if len(resp) > 0 {

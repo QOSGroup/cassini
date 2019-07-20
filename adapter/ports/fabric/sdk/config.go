@@ -5,12 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/QOSGroup/cassini/log"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/core"
 	sdkconfig "github.com/hyperledger/fabric-sdk-go/pkg/core/config"
-	secAction "github.com/securekey/fabric-examples/fabric-cli/cmd/fabric-cli/action"
-	cliconfig "github.com/securekey/fabric-examples/fabric-cli/cmd/fabric-cli/config"
-	"github.com/spf13/pflag"
 )
 
 const (
@@ -83,10 +79,6 @@ func Config() *FabConfig {
 		urls = parse(orgIDsStr, ",")
 		config.OrgIDs = urls
 		config.ConfigProvider = sdkconfig.FromFile(config.ConfigFile)
-
-		if err := cliconfig.InitConfig(&pflag.FlagSet{}); err != nil {
-			log.Errorf("init config error: ", err)
-		}
 	})
 	return config
 }
@@ -100,9 +92,4 @@ func parse(str, splitter string) []string {
 		}
 	}
 	return strs
-}
-
-func transform(args *Args) *secAction.ArgStruct {
-	return &secAction.ArgStruct{
-		Func: args.Func, Args: args.Args}
 }

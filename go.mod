@@ -50,7 +50,6 @@ require (
 	github.com/prometheus/client_golang v0.9.3-0.20190313112143-fa4aa9000d28 // indirect
 	github.com/prometheus/prometheus v0.0.0-20170814170113-3101606756c5 // indirect
 	github.com/rjeczalik/notify v0.9.2 // indirect
-	github.com/securekey/fabric-examples v0.0.0-20190128153140-4d03d1c1e50f
 	github.com/soheilhy/cmux v0.1.4 // indirect
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/pflag v1.0.3

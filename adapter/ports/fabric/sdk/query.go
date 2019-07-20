@@ -1,11 +1,11 @@
 package sdk
 
 import (
+	"github.com/QOSGroup/cassini/adapter/ports/fabric/sdk/utils"
 	"github.com/QOSGroup/cassini/log"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/channel"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/fab"
 	"github.com/pkg/errors"
-	"github.com/securekey/fabric-examples/fabric-cli/cmd/fabric-cli/chaincode/utils"
 )
 
 type queryAction struct {

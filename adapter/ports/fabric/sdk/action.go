@@ -27,7 +27,6 @@ import (
 	cryptosuiteimpl "github.com/hyperledger/fabric-sdk-go/pkg/core/cryptosuite/bccsp/multisuite"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fab/orderer"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
-	"github.com/securekey/fabric-examples/fabric-cli/cmd/fabric-cli/printer"
 
 	"github.com/QOSGroup/cassini/log"
 )
@@ -50,7 +49,6 @@ type Action struct {
 	peersByOrg     map[string][]fab.Peer
 	peers          []fab.Peer
 	orgIDByPeer    map[string]string
-	printer        printer.Printer
 	initError      error
 	Writer         io.Writer
 	sessions       map[string]context.ClientProvider
@@ -153,11 +151,6 @@ func (action *Action) Initialize() error {
 	action.peers = peers
 	action.peersByOrg = peersByOrg
 
-	action.printer = printer.NewBlockPrinterWithOpts(
-		printer.AsOutputFormat(Config().PrintFormat),
-		printer.AsWriterType(Config().Writer),
-		&printer.FormatterOpts{Base64Encode: Config().Base64})
-
 	return nil
 }
 
@@ -211,11 +204,6 @@ func (action *Action) OrgAdminChannelClient(orgID string) (*channel.Client, erro
 // AdminChannelClient creates a new channel client for performing administrative functions
 func (action *Action) AdminChannelClient() (*channel.Client, error) {
 	return action.OrgAdminChannelClient(action.OrgID())
-}
-
-// Printer returns the Printer
-func (action *Action) Printer() printer.Printer {
-	return action.printer
 }
 
 // LocalContext creates a new local context
