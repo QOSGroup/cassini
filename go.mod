@@ -33,7 +33,7 @@ require (
 	github.com/hyperledger/fabric v1.4.0
 	github.com/hyperledger/fabric-amcl v0.0.0-20181230093703-5ccba6eab8d6 // indirect
 	github.com/hyperledger/fabric-lib-go v1.0.0 // indirect
-	github.com/hyperledger/fabric-sdk-go v1.0.0-alpha4.0.20190222013545-ce2814e74c57
+	github.com/hyperledger/fabric-sdk-go v1.0.0-alpha4
 	github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6 // indirect
 	github.com/jackpal/go-nat-pmp v1.0.1 // indirect
 	github.com/jonboulle/clockwork v0.1.0 // indirect
