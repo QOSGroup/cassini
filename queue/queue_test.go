@@ -22,6 +22,20 @@ func Test_getLocalQueue(t *testing.T) {
 
 var wg sync.WaitGroup
 
+func Test_NewProducer(t *testing.T) {
+	viper.Set(commands.FlagQueue, "local")
+
+	p, err := NewProducer("test")
+	assert.NoError(t, err)
+
+	assert.Equal(t, "local", p.Config(), "get wrong producer")
+
+	if p != nil {
+		p.Produce([]byte("test"))
+		wg.Add(1)
+	}
+}
+
 func Test_NewComsumer(t *testing.T) {
 	viper.Set(commands.FlagQueue, "local")
 
@@ -35,20 +49,6 @@ func Test_NewComsumer(t *testing.T) {
 		})
 	}
 	wg.Wait()
-}
-
-func Test_NewProducer(t *testing.T) {
-	viper.Set(commands.FlagQueue, "local")
-
-	p, err := NewProducer("test")
-	assert.NoError(t, err)
-
-	assert.Equal(t, "local", p.Config(), "get wrong producer")
-
-	if p != nil {
-		p.Produce([]byte("test"))
-		wg.Add(1)
-	}
 }
 
 func Test_Subscribe(t *testing.T) {
