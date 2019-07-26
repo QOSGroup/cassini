@@ -4,6 +4,8 @@
 package main
 
 import (
+	_ "github.com/QOSGroup/cassini/adapter/ports/ethereum"
+	_ "github.com/QOSGroup/cassini/adapter/ports/fabric"
 	"github.com/QOSGroup/cassini/commands"
 	"github.com/QOSGroup/cassini/log"
 )

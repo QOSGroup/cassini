@@ -81,8 +81,8 @@ func StartQcpConsume(conf *config.Config) (err error) {
 	log.Infof("listening on subjects %s", subjects)
 
 	for _, ce := range engines {
-		go ce.StartEngine()
-		go ce.F.StartFerry()
+		ce.StartEngine()
+		ce.F.StartFerry()
 	}
 
 	ticker := func(engines []*ConsEngine) {
@@ -126,19 +126,19 @@ func qcpConsume(ce *ConsEngine, from, to string, conf *config.Config, e chan<- e
 
 	defer wg.Done()
 
-	listener := func(subject string, data []byte) {
-
+	listener := func(data []byte, comsumer queue.Comsumer) {
 		i++
 
 		tx := types.Event{}
 		amino.UnmarshalBinaryLengthPrefixed(data, &tx)
 
-		log.Infof("[#%d] Consume subject [%s] sequence [#%d] nodeAddress '%s'", i, subject, tx.Sequence, tx.NodeAddress)
+		log.Infof("[#%d] Consume subject [%s] sequence [#%d] nodeAddress '%s'",
+			i, comsumer.Subject(), tx.Sequence, tx.NodeAddress)
 
 		// 监听到交易事件后立即查询需要等待一段时间才能查询到交易数据；
 		//TODO 优化
 		// 需要监听下一个块的New Block 事件以确认交易数据入块，abci query 接口才能够查询出交易；
-		// 同时提供定时出发机制，以保证共识模块在交易事件丢失或网络错误等问题出现时仍然能够正常运行。
+		// 同时提供定时触发机制，以保证共识模块在交易事件丢失或网络错误等问题出现时仍然能够正常运行。
 		//if conf.EventWaitMillitime > 0 {
 		//	time.Sleep(time.Duration(conf.EventWaitMillitime) * time.Millisecond)
 		//}
@@ -217,40 +217,31 @@ func (c *ConsEngine) consensus32() (N int) {
 
 // StartEngine 启动共识引擎尝试处理下一个交易
 func (c *ConsEngine) StartEngine() error {
+	go func() {
+		for {
+			_, err := c.F.ConsMap.GetConsFromMap(c.sequence)
+			if err == nil { //已有共识
+				c.SetSequence(c.from, c.to, c.sequence)
+			}
 
-	for {
-		//seqDes, _ := c.F.GetSequenceFromChain(c.from, c.to, "in")
-		//seqSou, _ := c.F.GetSequenceFromChain(c.to, c.from, "out")
-		//
-		//if seqDes >= seqSou || c.sequence > seqSou {
-		//	time.Sleep(time.Duration(c.F.conf.EventWaitMillitime) * time.Millisecond)
-		//	continue
-		//}
-		//
-		//if seqDes >= c.sequence {
-		//	c.SetSequence(c.from, c.to, seqDes)
-		//}
+			cresult := c.conSequence()
+			if cresult == success {
+				c.SetSequence(c.from, c.to, c.sequence)
+			}
+			if cresult == empty {
+				time.Sleep(time.Duration(c.F.conf.EventWaitMillitime) * time.Millisecond)
+				continue
+			}
+			if cresult == fail { //TODO 不能达成共识 继续下一sequence？
+				log.Errorf("MsgMap%v", c.M.MsgMap[c.sequence])
+				time.Sleep(time.Duration(c.F.conf.EventWaitMillitime) * time.Millisecond * 10)
+				//s := fmt.Sprintf("consensusEngine f.t.s[%s %s #%d] failed.", c.from, c.to, c.sequence)
+				//panic(s)
+			}
+		}
+	}()
 
-		_, err := c.F.ConsMap.GetConsFromMap(c.sequence)
-		if err == nil { //已有共识
-			c.SetSequence(c.from, c.to, c.sequence)
-		}
-
-		cresult := c.conSequence()
-		if cresult == success {
-			c.SetSequence(c.from, c.to, c.sequence)
-		}
-		if cresult == empty {
-			time.Sleep(time.Duration(c.F.conf.EventWaitMillitime) * time.Millisecond)
-			continue
-		}
-		if cresult == fail { //TODO 不能达成共识 继续下一sequence？
-			log.Errorf("MsgMap%v", c.M.MsgMap[c.sequence])
-			time.Sleep(time.Duration(c.F.conf.EventWaitMillitime) * time.Millisecond * 10)
-			//s := fmt.Sprintf("consensusEngine f.t.s[%s %s #%d] failed.", c.from, c.to, c.sequence)
-			//panic(s)
-		}
-	}
+	return nil
 }
 
 // conSequence 交易还没产生和共识出错区别开
@@ -267,8 +258,8 @@ func (c *ConsEngine) conSequence() consResult {
 
 		qcp, err := c.F.queryTxQcpFromNode(c.from, c.to, node, c.sequence) // be (c.to, node, c.sequence)
 
-		if err != nil || qcp == nil {
-			if strings.Contains(err.Error(), restclient.ERR_emptyqcp) {
+		if qcp == nil {
+			if err != nil && strings.Contains(err.Error(), restclient.ERR_emptyqcp) {
 				bempty = true //交易还没产生
 			}
 			continue

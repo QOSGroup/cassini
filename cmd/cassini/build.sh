@@ -9,5 +9,3 @@ go build --ldflags "-X main.Version=v0.0.6 \
     -X 'main.BuidDate=$buildDate' \
     -X 'main.GoVersion=$goVersion'" \
     -o ./cassini
-
-

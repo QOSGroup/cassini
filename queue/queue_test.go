@@ -5,10 +5,14 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/QOSGroup/cassini/commands"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_getQueue(t *testing.T) {
+func Test_getLocalQueue(t *testing.T) {
+	viper.Set(commands.FlagQueue, "local")
+
 	q := getQueue("test")
 
 	q2 := getQueue("test")
@@ -19,8 +23,12 @@ func Test_getQueue(t *testing.T) {
 var wg sync.WaitGroup
 
 func Test_NewProducer(t *testing.T) {
+	viper.Set(commands.FlagQueue, "local")
+
 	p, err := NewProducer("test")
 	assert.NoError(t, err)
+
+	assert.Equal(t, "local", p.Config(), "get wrong producer")
 
 	if p != nil {
 		p.Produce([]byte("test"))
@@ -29,12 +37,14 @@ func Test_NewProducer(t *testing.T) {
 }
 
 func Test_NewComsumer(t *testing.T) {
+	viper.Set(commands.FlagQueue, "local")
+
 	c, err := NewComsumer("test")
 	assert.NoError(t, err)
 
 	if c != nil {
-		c.Subscribe(func(subject string, data []byte) {
-			t.Logf("queue %s get: %s", subject, string(data))
+		c.Subscribe(func(data []byte, comsumer Comsumer) {
+			t.Logf("queue %s get: %s", comsumer.Subject(), string(data))
 			wg.Done()
 		})
 	}
@@ -42,6 +52,8 @@ func Test_NewComsumer(t *testing.T) {
 }
 
 func Test_Subscribe(t *testing.T) {
+	viper.Set(commands.FlagQueue, "local")
+
 	var wg sync.WaitGroup
 
 	p, err := NewProducer("test2")
@@ -58,8 +70,8 @@ func Test_Subscribe(t *testing.T) {
 	assert.NoError(t, err)
 	t.Log("waiting")
 	if c != nil {
-		c.Subscribe(func(subject string, data []byte) {
-			t.Logf("queue %s get: %s", subject, string(data))
+		c.Subscribe(func(data []byte, comsumer Comsumer) {
+			t.Logf("queue %s get: %s", comsumer.Subject(), string(data))
 			wg.Done()
 			// t.Log("done")
 		})
@@ -71,11 +83,13 @@ func Test_Subscribe(t *testing.T) {
 // }
 
 func Benchmark_Parallel_LocalQueue(b *testing.B) {
+	viper.Set(commands.FlagQueue, "local")
+
 	b.ReportAllocs()
 	var counter int
 	c, err2 := NewComsumer("test_parallel")
 	if err2 == nil && c != nil {
-		c.Subscribe(func(subject string, data []byte) {
+		c.Subscribe(func(data []byte, comsumer Comsumer) {
 			counter++
 		})
 	}
@@ -85,8 +99,10 @@ func Benchmark_Parallel_LocalQueue(b *testing.B) {
 			p, err := NewProducer("test_parallel")
 			if err == nil {
 				if p != nil {
+					i := 0
 					for pb.Next() {
-						p.Produce([]byte("testing"))
+						i++
+						p.Produce([]byte(fmt.Sprintf("testing-%d", i)))
 					}
 				}
 			}
