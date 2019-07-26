@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"strings"
 	"sync"
 
 	"github.com/QOSGroup/cassini/commands"
@@ -36,49 +37,58 @@ func getQueue(subject string) Queue {
 }
 
 func newQueue(subject, conf string) Queue {
-	return &LocalQueue{Subject: subject}
+	if strings.HasPrefix(conf, "nats://") {
+		return &NatsQueue{Subject: subject, Config: conf}
+	}
+	return &LocalQueue{Subject: subject, Config: conf}
 }
 
 // Queue define the queue of message queue service
 type Queue interface {
-	Init()
+	Init() error
 	NewProducer() (Producer, error)
 	NewComsumer() (Comsumer, error)
 }
 
 // Producer define the producer of message queue service
 type Producer interface {
+	Subject() string
+	Config() string
 	Produce([]byte) error
 }
 
 // Listener for message listening
-type Listener func(string, []byte)
+type Listener func([]byte, Comsumer)
 
 // Comsumer define the comsumer of message queue service
 type Comsumer interface {
+	Subject() string
+	Config() string
 	Subscribe(Listener) error
 }
 
 // LocalQueue implements a inner version of message queue
 type LocalQueue struct {
 	Subject       string
+	Config        string
 	isInitialized bool
+	ch            chan []byte
 	sync.Mutex
-	ch chan []byte
 }
 
 // Init message queue
-func (q *LocalQueue) Init() {
+func (q *LocalQueue) Init() error {
 	if q.isInitialized {
-		return
+		return nil
 	}
 	q.Lock()
 	defer q.Unlock()
 	if q.isInitialized {
-		return
+		return nil
 	}
 	q.ch = make(chan []byte, 100)
 	q.isInitialized = true
+	return nil
 }
 
 // NewProducer returns a new producer for the message queue
@@ -105,6 +115,16 @@ func (p *LocalProducer) Produce(data []byte) error {
 	return nil
 }
 
+// Subject returns subject of local message queue
+func (p *LocalProducer) Subject() string {
+	return p.queue.Subject
+}
+
+// Config returns config of local message queue
+func (p *LocalProducer) Config() string {
+	return p.queue.Config
+}
+
 // LocalComsumer define the comsumer for local message queue based on channel
 type LocalComsumer struct {
 	queue *LocalQueue
@@ -116,8 +136,18 @@ func (c *LocalComsumer) Subscribe(listener Listener) error {
 	go func() {
 		for {
 			data := <-c.in
-			listener(c.queue.Subject, data)
+			listener(data, c)
 		}
 	}()
 	return nil
+}
+
+// Subject returns subject of local message queue
+func (c *LocalComsumer) Subject() string {
+	return c.queue.Subject
+}
+
+// Config returns config of local message queue
+func (c *LocalComsumer) Config() string {
+	return c.queue.Config
 }
