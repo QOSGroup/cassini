@@ -99,6 +99,8 @@ func initConfig() error {
 		return err
 	}
 
+	config.GetConfig().Load()
+
 	return nil
 }
 

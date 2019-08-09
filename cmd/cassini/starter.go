@@ -49,7 +49,7 @@ var starter = func() (cancel context.CancelFunc, err error) {
 
 	log.Tracef("Qscs: %d", len(conf.Qscs))
 	for _, qsc := range conf.Qscs {
-		log.Tracef("qsc: %s %s", qsc.Name, qsc.NodeAddress)
+		log.Tracef("qsc: %s %s", qsc.Name, qsc.Nodes)
 	}
 
 	log.Info("Starting adapter ports...")
@@ -88,7 +88,7 @@ func startAdapterPorts(conf *config.Config) {
 	// 	os.Exit(1)
 	// }
 	for _, qsc := range conf.Qscs {
-		for _, nodeAddr := range strings.Split(qsc.NodeAddress, ",") {
+		for _, nodeAddr := range strings.Split(qsc.Nodes, ",") {
 			// go EventsSubscribe(conf.Nats, "tcp://"+nodeAddr, es)
 			// subEventFrom += fmt.Sprintf("[%s] ", nodeAddr)
 			registerAdapter(nodeAddr, qsc)

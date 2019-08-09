@@ -45,7 +45,7 @@ func StartQcpConsume(conf *config.Config) (err error) {
 	qsconfigs := conf.Qscs
 
 	if len(qsconfigs) < 2 {
-		return errors.New("config error , at least two chain names ")
+		return errors.New("config error , at least two chain targets ")
 	}
 
 	var subjects string
@@ -205,7 +205,7 @@ func (c *ConsEngine) Add2Engine(data []byte) error {
 }
 
 func (c *ConsEngine) consensus32() (N int) {
-	nodes := c.F.conf.GetQscConfig(c.from).NodeAddress
+	nodes := c.F.conf.GetQscConfig(c.from).Nodes
 
 	n := len(strings.Split(nodes, ","))
 
@@ -249,7 +249,7 @@ func (c *ConsEngine) conSequence() consResult {
 
 	log.Debugf("Start consensus engine f.t.s[%s %s #%d]", c.from, c.to, c.sequence)
 
-	nodes := c.F.conf.GetQscConfig(c.from).NodeAddress
+	nodes := c.F.conf.GetQscConfig(c.from).Nodes
 
 	N := c.consensus32()
 

@@ -1,7 +1,6 @@
 package config
 
 import (
-	"io/ioutil"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -76,8 +75,8 @@ type QscConfig struct {
 	// Certificate 链给relay颁发的证书文件
 	Certificate string `json:"certificate,omitempty"`
 
-	// NodeAddress 区块链节点地址，多个之间用“，”分割
-	NodeAddress string `yaml:"nodes,omitempty"`
+	// Nodes 区块链节点地址，多个之间用“，”分割
+	Nodes string `yaml:"nodes,omitempty"`
 }
 
 var conf = &Config{}
@@ -88,12 +87,30 @@ func GetConfig() *Config {
 }
 
 // Load the configure file
-func (c *Config) Load() error {
-	bytes, err := ioutil.ReadFile(viper.GetString("log"))
-	if err != nil {
-		return err
+func (c *Config) Load() (err error) {
+	if err = viper.Unmarshal(c); err != nil {
+		return
 	}
-	return c.Parse(bytes)
+
+	var qscs []*QscConfig
+	if err = viper.UnmarshalKey("qscs", &qscs); err != nil {
+		return
+	}
+	c.Qscs = qscs
+
+	// var mocks []*MockConfig
+	// if err = viper.UnmarshalKey("mocks", &mocks); err != nil {
+	// 	return
+	// }
+	// c.Mocks = mocks
+
+	var etcd EtcdConfig
+	if err = viper.UnmarshalKey("etcd", &etcd); err != nil {
+		return
+	}
+	c.Etcd = &etcd
+
+	return
 }
 
 // Parse the configure file
@@ -132,7 +149,7 @@ func DefaultQscConfig() []*QscConfig {
 			//链给relay颁发的证书文件
 			Certificate: "",
 			//区块链节点地址，多个之间用“，”分割
-			NodeAddress: "127.0.0.1:26657",
+			Nodes: "127.0.0.1:26657",
 		},
 		&QscConfig{
 			Name: "qos",
@@ -141,7 +158,7 @@ func DefaultQscConfig() []*QscConfig {
 			//链给relay颁发的证书文件
 			Certificate: "",
 			//区块链节点地址，多个之间用“，”分割
-			NodeAddress: "120.0.0.1:27657,127.0.0.1:28657",
+			Nodes: "120.0.0.1:27657,127.0.0.1:28657",
 		},
 	}
 }
@@ -164,7 +181,7 @@ func TestQscConfig() []*QscConfig {
 			//链给relay颁发的证书文件
 			Certificate: "",
 			//区块链节点地址，多个之间用“，”分割
-			NodeAddress: "127.0.0.1",
+			Nodes: "127.0.0.1",
 		},
 		&QscConfig{
 			Name: "qqs",
@@ -173,7 +190,7 @@ func TestQscConfig() []*QscConfig {
 			//链给relay颁发的证书文件
 			Certificate: "",
 			//区块链节点地址，多个之间用“，”分割
-			NodeAddress: "127.0.0.1",
+			Nodes: "127.0.0.1",
 		},
 	}
 }
