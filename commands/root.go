@@ -103,6 +103,7 @@ func initConfig() error {
 }
 
 func initLogger() {
+	log.Debug("Init log: ", viper.GetString(FlagLog))
 	logger, err := log.LoadLogger(viper.GetString(FlagLog))
 	if err != nil {
 		log.Warn("Used the default logger because error: ", err)
