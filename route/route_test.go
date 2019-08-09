@@ -5,14 +5,19 @@ import (
 
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/types"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
 //TODO local nats server
 func TestEvent2queue(t *testing.T) {
+	viper.SetConfigFile("./../cassini.yml")
+	err := viper.ReadInConfig()
+	assert.NoError(t, err)
+
 	conf := config.GetConfig()
-	conf.ConfigFile = "../cassini.yml"
-	err := conf.Load()
+	err = conf.Load()
+	assert.NoError(t, err)
 
 	cEventDatatx := types.CassiniEventDataTx{
 		From: "QSC1", To: "QOS", Sequence: 1, HashBytes: []byte("sha256")}
