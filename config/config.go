@@ -4,18 +4,12 @@ import (
 	"io/ioutil"
 	"strings"
 
+	"github.com/spf13/viper"
 	yaml "gopkg.in/yaml.v2"
 )
 
 // Config wraps all configure data of cassini
 type Config struct {
-
-	// ConfigFile is configure file path of cassini
-	ConfigFile string
-
-	// LogConfigFile is configure file path of log
-	LogConfigFile string `yaml:"log,omitempty"`
-
 	// Queue define message queue service type, IP and port addresses.
 	// Multiple addresses should be separated by comma.
 	// Example:
@@ -95,7 +89,7 @@ func GetConfig() *Config {
 
 // Load the configure file
 func (c *Config) Load() error {
-	bytes, err := ioutil.ReadFile(c.ConfigFile)
+	bytes, err := ioutil.ReadFile(viper.GetString("log"))
 	if err != nil {
 		return err
 	}

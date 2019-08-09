@@ -4,6 +4,9 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
+
 	_ "github.com/QOSGroup/cassini/adapter/ports/ethereum"
 	_ "github.com/QOSGroup/cassini/adapter/ports/fabric"
 	"github.com/QOSGroup/cassini/commands"
@@ -15,18 +18,25 @@ import (
 func main() {
 	defer log.Flush()
 
-	dev := commands.NewDevelopCommand()
-	dev.AddCommand(
+	root := commands.NewRootCommand(versioner)
+	root.AddCommand(
+		commands.NewStartCommand(starter, true),
 		commands.NewEventsCommand(events, true),
 		commands.NewMockCommand(mocker, true),
 		commands.NewResetCommand(resetHandler, false),
-		commands.NewTxCommand(txHandler, false))
-
-	root := commands.NewRootCommand()
-	root.AddCommand(
-		commands.NewStartCommand(starter, true),
-		dev,
+		commands.NewTxCommand(txHandler, false),
 		commands.NewVersionCommand(versioner, false))
+
+	defaultHome := os.ExpandEnv("$HOME/.cassini")
+	defaultConfig := filepath.Join(defaultHome, "config/config.yml")
+	defaultLog := filepath.Join(defaultHome, "config/log.conf")
+
+	root.PersistentFlags().String(commands.FlagHome,
+		defaultHome, "Directory for config and data")
+	root.PersistentFlags().String(commands.FlagConfig,
+		defaultConfig, "Config file path")
+	root.PersistentFlags().String(commands.FlagLog,
+		defaultLog, "Log config file path")
 
 	if err := root.Execute(); err != nil {
 		log.Error("Exit by error: ", err)

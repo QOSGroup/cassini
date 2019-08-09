@@ -16,9 +16,11 @@ import (
 )
 
 // 命令行 start 命令执行方法
-var starter = func(conf *config.Config) (cancel context.CancelFunc, err error) {
+var starter = func() (cancel context.CancelFunc, err error) {
 
 	log.Info("Starting cassini...")
+
+	conf := config.GetConfig()
 
 	var w sync.WaitGroup
 	w.Add(1)

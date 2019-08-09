@@ -1,5 +1,9 @@
 package commands
 
+// nolint
 const (
-	FlagQueue = "queue"
+	FlagHome   = "home"
+	FlagConfig = "config"
+	FlagLog    = "log"
+	FlagQueue  = "queue"
 )

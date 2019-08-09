@@ -18,7 +18,7 @@ func addTxFlags(cmd *cobra.Command) {
 func NewTxCommand(run Runner, isKeepRunning bool) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "tx",
-		Short: "query or broadcast tx",
+		Short: "Query or broadcast tx",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			mock := reconfigMock(txNode)
 			mock.Name = txChainName

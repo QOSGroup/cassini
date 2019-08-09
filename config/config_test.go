@@ -3,6 +3,8 @@ package config
 import (
 	"testing"
 
+	"github.com/spf13/viper"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -26,8 +28,9 @@ mocks:
 }
 
 func TestLoadConfig(t *testing.T) {
+	viper.Set("log", "./../cassini.yml")
+
 	conf := GetConfig()
-	conf.ConfigFile = "./../cassini.yml"
 	err := conf.Load()
 	assert.NoError(t, err)
 

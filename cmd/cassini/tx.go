@@ -25,7 +25,8 @@ import (
 )
 
 // 命令行 tx 命令执行方法
-var txHandler = func(conf *config.Config) (context.CancelFunc, error) {
+var txHandler = func() (context.CancelFunc, error) {
+	conf := config.GetConfig()
 	for _, mockConf := range conf.Mocks {
 		// "127.0.0.1:26657"
 		log.Debugf("new client: %s, sequence: %d",
