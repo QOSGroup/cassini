@@ -8,25 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestConfigParse(t *testing.T) {
-	buf := []byte(`
-mocks:
-  - name: qos
-    rpc:
-      nodes: 0.0.0.0:27657
-  - name: qsc
-    rpc:
-      nodes: 0.0.0.0:27658
-`)
-	conf := &Config{}
-	err := conf.Parse(buf)
-
-	assert.NoError(t, err)
-	assert.Equal(t, int(2), len(conf.Mocks))
-	assert.Equal(t, "qos", conf.Mocks[0].Name)
-	assert.Equal(t, "0.0.0.0:27658", conf.Mocks[1].RPC.NodeAddress)
-}
-
 func TestLoadConfig(t *testing.T) {
 	viper.SetConfigFile("./../cassini.yml")
 	err := viper.ReadInConfig()

@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/spf13/viper"
-	yaml "gopkg.in/yaml.v2"
 )
 
 // Config wraps all configure data of cassini
@@ -104,6 +103,13 @@ func (c *Config) Load() (err error) {
 	// }
 	// c.Mocks = mocks
 
+	// TODO ??? whats wrong ???
+	// var etcd *EtcdConfig
+	// if err = viper.UnmarshalKey("etcd", etcd); err != nil {
+	// 	return
+	// }
+	// c.Etcd = etcd
+
 	var etcd EtcdConfig
 	if err = viper.UnmarshalKey("etcd", &etcd); err != nil {
 		return
@@ -111,11 +117,6 @@ func (c *Config) Load() (err error) {
 	c.Etcd = &etcd
 
 	return
-}
-
-// Parse the configure file
-func (c *Config) Parse(bytes []byte) error {
-	return yaml.UnmarshalStrict(bytes, c)
 }
 
 // GetQscConfig 获取指定 ChainID 的 QSC 配置
@@ -134,8 +135,9 @@ func (c *Config) GetQscConfig(chainID string) (qsc QscConfig) {
 // DefaultConfig returns a default configuration for a Tendermint node
 func DefaultConfig() *Config {
 	return &Config{
-		Queue: "nats://127.0.0.1:4222",
-		Qscs:  DefaultQscConfig(),
+		Queue:              "nats://127.0.0.1:4222",
+		EventWaitMillitime: 2000,
+		Qscs:               DefaultQscConfig(),
 	}
 }
 

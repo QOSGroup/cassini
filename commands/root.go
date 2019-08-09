@@ -2,7 +2,9 @@ package commands
 
 import (
 	"context"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/QOSGroup/cassini/common"
@@ -10,6 +12,8 @@ import (
 	"github.com/QOSGroup/cassini/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	cmn "github.com/tendermint/tendermint/libs/common"
+	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -50,23 +54,16 @@ func NewRootCommand(versioner Runner) *cobra.Command {
 				return nil
 			}
 
+			// init logger
+
+			initLogger()
+
 			// init & binding config
 
 			err = initConfig()
 			if err != nil {
-				if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-					log.Warn(err.Error())
-					// create & write default config
-
-				} else {
-					log.Error("Load config error: ", err.Error())
-				}
 				return
 			}
-
-			// init logger
-
-			initLogger()
 
 			return
 		},
@@ -95,13 +92,41 @@ func initConfig() error {
 	viper.SetConfigFile(viper.GetString(FlagConfig))
 
 	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err != nil {
+	if err := viper.ReadInConfig(); err == nil {
+	} else if _, ok := err.(viper.ConfigFileNotFoundError); ok ||
+		os.IsNotExist(err) {
+		log.Warn(err.Error())
+		if !strings.HasPrefix(
+			viper.GetString(FlagConfig), viper.GetString(FlagHome)) {
+			return err
+		}
+		if err := cmn.EnsureDir(
+			viper.GetString(FlagHome), 0700); err != nil {
+			cmn.PanicSanity(err.Error())
+		}
+		if err := cmn.EnsureDir(
+			filepath.Join(viper.GetString(FlagHome), "config"),
+			0700); err != nil {
+			cmn.PanicSanity(err.Error())
+		}
+		// create & write default config
+		var bytes []byte
+		bytes, err = yaml.Marshal(config.DefaultConfig())
+		if err != nil {
+			log.Error("Marshal config error: ", err.Error())
+			return err
+		}
+		err = ioutil.WriteFile(viper.GetString(FlagConfig), bytes, 0644)
+		if err != nil {
+			log.Error("write config file error: ", err.Error())
+			return err
+		}
+	} else {
+		log.Error("Load config error: ", err.Error())
 		return err
 	}
 
-	config.GetConfig().Load()
-
-	return nil
+	return config.GetConfig().Load()
 }
 
 func initLogger() {
