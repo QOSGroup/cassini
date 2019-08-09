@@ -28,7 +28,7 @@ func main() {
 		commands.NewVersionCommand(versioner, false))
 
 	defaultHome := os.ExpandEnv("$HOME/.cassini")
-	defaultConfig := filepath.Join(defaultHome, "config/config.yml")
+	defaultConfig := filepath.Join(defaultHome, "config/cassini.yml")
 	defaultLog := filepath.Join(defaultHome, "config/log.conf")
 
 	root.PersistentFlags().String(commands.FlagHome,
