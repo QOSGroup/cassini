@@ -132,20 +132,26 @@ func (r *RestClient) GetSequence(chainID string, outin string) (int64, error) {
 func (r *RestClient) PostTxQcp(chainID string, qcp *txs.TxQcp) error {
 	tx, err := r.cdc.MarshalBinaryBare(qcp)
 	if err != nil {
-		log.Errorf("remote[%s] Marshal TxQcp error: %v", r.remote, err)
+		log.Errorf("remote %s[%s] Marshal TxQcp error: %v", chainID, r.remote, err)
 		return err
 	}
 	var result *ctypes.ResultBroadcastTx
 	result, err = r.BroadcastTxSync(tx)
 
 	if err == nil && result.Code != abci.CodeTypeOK {
+		log.Warnf("abci result code: %d, log: %s", result.Code, result.Log)
+		json, err := r.cdc.MarshalJSON(qcp)
+		if err != nil {
+			log.Errorf("TxQcp mashal json error: %v", err)
+		}
+		log.Warnf("TxQcp: %s", string(json))
 		err = errors.New(result.Log)
 	}
 	if err != nil {
-		log.Errorf("remote[%s] Post TxQcp error: %v", r.remote, err)
-		log.Debugf("qcp:%v", qcp)
+		log.Errorf("remote %s[%s] Post TxQcp error: %v", chainID, r.remote, err)
+		log.Infof("qcp: %v", qcp)
 		return err
 	}
-	log.Debugf("remote[%s] Post TxQcp successful. %v", r.remote, qcp)
+	log.Debugf("remote %s[%s] Post TxQcp successful. %v", chainID, r.remote, qcp)
 	return nil
 }

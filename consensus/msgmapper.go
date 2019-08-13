@@ -1,6 +1,7 @@
 package consensus
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 
@@ -127,7 +128,7 @@ func (c *ConsensusMap) GetConsFromMap(sequence int64) (*Consensus, error) {
 	hashNode, ok := c.ConsMap[sequence]
 
 	if !ok || hashNode == nil {
-		return nil, errors.New("not found consensus")
+		return nil, fmt.Errorf("not found consensus, sequence: %d", sequence)
 	}
 	for k, v := range hashNode {
 		cons.Hash = k

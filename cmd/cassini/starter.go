@@ -60,6 +60,8 @@ var starter = func() (cancel context.CancelFunc, err error) {
 		w.Done()
 	}()
 
+	w.Wait()
+
 	log.Info("Starting qcp consumer...")
 	//启动nats 消费
 	w.Add(1)
