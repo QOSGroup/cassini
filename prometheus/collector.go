@@ -153,6 +153,10 @@ func StartMetrics() {
 	// 	LabelValues: []string{"192.168.1.179:9090"}})
 	// Set(KeyAdaptors, metrics)
 
+	// metric := &CassiniMetric{
+	// 	Value: 111}
+	// Set(KeyErrors, metric)
+
 	prometheus.MustRegister(Collector())
 
 	http.Handle("/metrics", promhttp.Handler())
