@@ -13,6 +13,7 @@ import (
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/consensus"
 	"github.com/QOSGroup/cassini/log"
+	"github.com/QOSGroup/cassini/prometheus"
 )
 
 // 命令行 start 命令执行方法
@@ -21,6 +22,11 @@ var starter = func() (cancel context.CancelFunc, err error) {
 	log.Info("Starting cassini...")
 
 	conf := config.GetConfig()
+
+	go func() {
+		prometheus.StartMetrics()
+	}()
+	log.Info("Prometheus exporter(:39099/metrics) started")
 
 	var w sync.WaitGroup
 	w.Add(1)

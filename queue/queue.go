@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/QOSGroup/cassini/commands"
+	"github.com/QOSGroup/cassini/prometheus"
 	"github.com/spf13/viper"
 )
 
@@ -88,6 +89,7 @@ func (q *LocalQueue) Init() error {
 	}
 	q.ch = make(chan []byte, 100)
 	q.isInitialized = true
+	prometheus.Set(prometheus.KeyQueueSize, 100, "local")
 	return nil
 }
 
