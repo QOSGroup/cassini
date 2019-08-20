@@ -31,7 +31,7 @@ func init() {
 	collector.descs[KeyQueueSize] = prometheus.NewDesc(
 		fmt.Sprint(KeyPrefix, KeyQueueSize),
 		"Size of queue",
-		nil, nil)
+		[]string{"type"}, nil)
 	collector.descs[KeyQueue] = prometheus.NewDesc(
 		fmt.Sprint(KeyPrefix, KeyQueue),
 		"Current size of tx in queue",
@@ -51,7 +51,7 @@ func init() {
 	collector.descs[KeyAdaptors] = prometheus.NewDesc(
 		fmt.Sprint(KeyPrefix, KeyAdaptors),
 		"Number of available adaptors",
-		nil, nil)
+		[]string{"node"}, nil)
 	// []string{"from", "to"}, nil)
 	collector.descs[KeyErrors] = prometheus.NewDesc(
 		fmt.Sprint(KeyPrefix, KeyErrors),
@@ -63,6 +63,12 @@ type cassiniCollector struct {
 	descs map[string]*prometheus.Desc
 
 	mapper sync.Map
+}
+
+// CassiniMetric wraps prometheus export data
+type CassiniMetric struct {
+	Value       float64
+	LabelValues []string
 }
 
 // Collector returns a collector
@@ -86,40 +92,66 @@ func (c *cassiniCollector) Collect(ch chan<- prometheus.Metric) {
 			log.Error("Collect error: can not convert key into a string")
 			return false
 		}
-		var value float64
-		value, ok = v.(float64)
+		var metric *CassiniMetric
+		metric, ok = v.(*CassiniMetric)
 		if !ok {
-			log.Error("Collect error: can not convert value into a float64")
-			return false
+			log.Warn("Collect error: can not convert value into a *cassiniMetric")
+			var metrics []*CassiniMetric
+			metrics, ok = v.([]*CassiniMetric)
+			if !ok {
+				log.Error("Collect error: can not convert value into a []*cassiniMetric")
+				return false
+			}
+			for _, metric = range metrics {
+				c.export(ch, key, metric)
+			}
+		} else {
+			c.export(ch, key, metric)
 		}
-		log.Debugf("collect: %s, %d", key, value)
-		var desc *prometheus.Desc
-		desc, ok = c.descs[key]
-		if !ok {
-			log.Errorf("Collect error: can not find desc - %s", key)
-			return false
-		}
-		ch <- prometheus.MustNewConstMetric(
-			desc,
-			prometheus.GaugeValue,
-			value)
 		return true
 	}
 	c.mapper.Range(exports)
 }
 
-func (c *cassiniCollector) Set(key string, value interface{},
-	labelValue ...string) {
+func (c *cassiniCollector) export(ch chan<- prometheus.Metric,
+	key string, metric *CassiniMetric) {
+	log.Debugf("collect: %s, %d", key, metric.Value)
+	desc, ok := c.descs[key]
+	if !ok {
+		log.Errorf("Collect error: can not find desc - %s", key)
+		return
+	}
+	ch <- prometheus.MustNewConstMetric(
+		desc,
+		prometheus.GaugeValue,
+		metric.Value, metric.LabelValues...)
+}
+
+func (c *cassiniCollector) Set(key string, value interface{}) {
 	c.mapper.Store(key, value)
 }
 
 // Set key and value to the collector mapper
-func Set(key string, value interface{}, labelValue ...string) {
-	collector.Set(key, value, labelValue...)
+func Set(key string, value interface{}) {
+	collector.Set(key, value)
 }
 
 // StartMetrics prometheus exporter("/metrics") service
 func StartMetrics() {
+
+	// metric := &CassiniMetric{
+	// 	Value:       0,
+	// 	LabelValues: []string{"nats"}}
+	// Set(KeyQueueSize, metric)
+
+	// metrics := make([]*CassiniMetric, 0)
+	// metrics = append(metrics, &CassiniMetric{
+	// 	Value:       0,
+	// 	LabelValues: []string{"127.0.0.1:9090"}})
+	// metrics = append(metrics, &CassiniMetric{
+	// 	Value:       0,
+	// 	LabelValues: []string{"192.168.1.179:9090"}})
+	// Set(KeyAdaptors, metrics)
 
 	prometheus.MustRegister(Collector())
 

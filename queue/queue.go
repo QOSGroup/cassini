@@ -87,9 +87,13 @@ func (q *LocalQueue) Init() error {
 	if q.isInitialized {
 		return nil
 	}
-	q.ch = make(chan []byte, 100)
+	queueSize := 100
+	q.ch = make(chan []byte, queueSize)
 	q.isInitialized = true
-	prometheus.Set(prometheus.KeyQueueSize, 100, "local")
+	metric := &prometheus.CassiniMetric{
+		Value:       float64(queueSize),
+		LabelValues: []string{"local"}}
+	prometheus.Set(prometheus.KeyQueueSize, metric)
 	return nil
 }
 

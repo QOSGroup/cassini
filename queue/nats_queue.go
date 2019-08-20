@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/QOSGroup/cassini/log"
+	"github.com/QOSGroup/cassini/prometheus"
 	"github.com/nats-io/go-nats"
 )
 
@@ -16,6 +17,10 @@ type NatsQueue struct {
 
 // Init message queue
 func (q *NatsQueue) Init() error {
+	metric := &prometheus.CassiniMetric{
+		Value:       0,
+		LabelValues: []string{"nats"}}
+	prometheus.Set(prometheus.KeyQueueSize, metric)
 	return nil
 }
 
