@@ -199,6 +199,7 @@ func StartMetrics(ch chan<- error) {
 
 	// testing _error metric
 	// Set(KeyAdaptors, "panic test")
+	Count(KeyErrors, 0)
 
 	prometheus.MustRegister(Collector(ch))
 
