@@ -1,6 +1,7 @@
 package consensus
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 
@@ -23,7 +24,7 @@ func (m *EngineMap) AddMsgToMap(f *Ferry, event types.Event, N int) (sequence in
 	// 关闭共识，收到第一份即共识
 	if !f.conf.Consensus {
 		h := common.Bytes2HexStr(event.HashBytes)
-		n := f.conf.GetQscConfig(event.From).NodeAddress
+		n := f.conf.GetQscConfig(event.From).Nodes
 		err = f.ConsMap.AddConsToMap(event.Sequence, h, n)
 		if err != nil {
 			log.Errorf("duplicate AddConsToMap. f.t.s[%s %s #%d] hash [%s]", event.From, event.To, event.Sequence, h[:10])
@@ -127,7 +128,7 @@ func (c *ConsensusMap) GetConsFromMap(sequence int64) (*Consensus, error) {
 	hashNode, ok := c.ConsMap[sequence]
 
 	if !ok || hashNode == nil {
-		return nil, errors.New("not found consensus")
+		return nil, fmt.Errorf("not found consensus, sequence: %d", sequence)
 	}
 	for k, v := range hashNode {
 		cons.Hash = k

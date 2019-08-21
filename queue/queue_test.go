@@ -36,15 +36,15 @@ func Test_NewProducer(t *testing.T) {
 	}
 }
 
-func Test_NewComsumer(t *testing.T) {
+func Test_NewConsumer(t *testing.T) {
 	viper.Set(commands.FlagQueue, "local")
 
-	c, err := NewComsumer("test")
+	c, err := NewConsumer("test")
 	assert.NoError(t, err)
 
 	if c != nil {
-		c.Subscribe(func(data []byte, comsumer Comsumer) {
-			t.Logf("queue %s get: %s", comsumer.Subject(), string(data))
+		c.Subscribe(func(data []byte, consumer Consumer) {
+			t.Logf("queue %s get: %s", consumer.Subject(), string(data))
 			wg.Done()
 		})
 	}
@@ -66,12 +66,12 @@ func Test_Subscribe(t *testing.T) {
 		}
 	}
 
-	c, err := NewComsumer("test2")
+	c, err := NewConsumer("test2")
 	assert.NoError(t, err)
 	t.Log("waiting")
 	if c != nil {
-		c.Subscribe(func(data []byte, comsumer Comsumer) {
-			t.Logf("queue %s get: %s", comsumer.Subject(), string(data))
+		c.Subscribe(func(data []byte, consumer Consumer) {
+			t.Logf("queue %s get: %s", consumer.Subject(), string(data))
 			wg.Done()
 			// t.Log("done")
 		})
@@ -87,9 +87,9 @@ func Benchmark_Parallel_LocalQueue(b *testing.B) {
 
 	b.ReportAllocs()
 	var counter int
-	c, err2 := NewComsumer("test_parallel")
+	c, err2 := NewConsumer("test_parallel")
 	if err2 == nil && c != nil {
-		c.Subscribe(func(data []byte, comsumer Comsumer) {
+		c.Subscribe(func(data []byte, consumer Consumer) {
 			counter++
 		})
 	}

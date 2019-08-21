@@ -16,7 +16,7 @@ func addEventsFlags(cmd *cobra.Command) {
 func NewEventsCommand(run Runner, isKeepRunning bool) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "events",
-		Short: "start web socket client and subscribe tx event",
+		Short: "Start web socket client and subscribe tx event",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			mock := reconfigMock(eventNode)
 			mock.Subscribe = eventSubscribe

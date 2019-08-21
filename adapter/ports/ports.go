@@ -3,6 +3,7 @@ package ports
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/QOSGroup/cassini/config"
@@ -61,6 +62,7 @@ func (p *defaultPorts) Init() {
 func (p *defaultPorts) RegisterBuilder(chainName string, builder Builder) error {
 	if _, ok := p.builders[chainName]; !ok {
 		p.builders[chainName] = builder
+		log.Infof("Register adapter: %s", chainName)
 		return nil
 	}
 	msg := fmt.Sprintf("builder exist: %s", chainName)
@@ -71,6 +73,13 @@ func (p *defaultPorts) RegisterBuilder(chainName string, builder Builder) error 
 // Create Check if there is a AdapterService for the specified ip, port and chain-name exist,
 // otherwise create one and cache it.
 func (p *defaultPorts) Register(conf *AdapterConfig) (err error) {
+	if strings.EqualFold("", conf.ChainName) ||
+		strings.EqualFold("", conf.ChainType) {
+		err = fmt.Errorf(
+			"no name or type, name=%s, type=%s",
+			conf.ChainName, conf.ChainType)
+		return
+	}
 	log.Infof("Register: %s, %s", conf.ChainName, conf.ChainType)
 	var a AdapterService
 	adapterKey := GetAdapterKeyByConfig(conf)

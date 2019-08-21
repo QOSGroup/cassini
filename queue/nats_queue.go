@@ -5,7 +5,9 @@ import (
 	"fmt"
 
 	"github.com/QOSGroup/cassini/log"
+	exporter "github.com/QOSGroup/cassini/prometheus"
 	"github.com/nats-io/go-nats"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // NatsQueue wraps nats client as a message queue service
@@ -16,6 +18,11 @@ type NatsQueue struct {
 
 // Init message queue
 func (q *NatsQueue) Init() error {
+	metric := &exporter.CassiniMetric{
+		Type:        prometheus.GaugeValue,
+		LabelValues: []string{"nats"}}
+	metric.Set(0)
+	exporter.Set(exporter.KeyQueueSize, metric)
 	return nil
 }
 
@@ -29,14 +36,14 @@ func (q *NatsQueue) NewProducer() (p Producer, err error) {
 	return &NatsProducer{queue: q, conn: conn}, nil
 }
 
-// NewComsumer returns a new comsumer for the message queue
-func (q *NatsQueue) NewComsumer() (c Comsumer, err error) {
+// NewConsumer returns a new consumer for the message queue
+func (q *NatsQueue) NewConsumer() (c Consumer, err error) {
 	conn, err := connect2Nats(q.Config)
 	if err != nil {
 		log.Errorf("Connect error: %v", err)
 		return nil, err
 	}
-	return &NatsComsumer{queue: q, conn: conn}, nil
+	return &NatsConsumer{queue: q, conn: conn}, nil
 }
 
 // NatsProducer define the producer for local message queue based on channel
@@ -90,14 +97,14 @@ func (p *NatsProducer) Config() string {
 	return p.queue.Config
 }
 
-// NatsComsumer define the comsumer for local message queue based on channel
-type NatsComsumer struct {
+// NatsConsumer define the consumer for local message queue based on channel
+type NatsConsumer struct {
 	queue *NatsQueue
 	conn  *nats.Conn
 }
 
 // Subscribe sets the listener for local message queue based on channel
-func (c *NatsComsumer) Subscribe(listener Listener) (err error) {
+func (c *NatsConsumer) Subscribe(listener Listener) (err error) {
 	if c.conn == nil {
 		return fmt.Errorf("the nats.Conn is nil - %s, %s", c.Config(), c.Subject())
 	}
@@ -132,12 +139,12 @@ func (c *NatsComsumer) Subscribe(listener Listener) (err error) {
 }
 
 // Subject returns subject of local message queue
-func (c *NatsComsumer) Subject() string {
+func (c *NatsConsumer) Subject() string {
 	return c.queue.Subject
 }
 
 // Config returns config of local message queue
-func (c *NatsComsumer) Config() string {
+func (c *NatsConsumer) Config() string {
 	return c.queue.Config
 }
 

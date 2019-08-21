@@ -69,7 +69,7 @@ func (f *Ferry) StartFerry() error {
 			cons, err := f.ConsMap.GetConsFromMap(seq)
 
 			if err != nil {
-				log.Errorf("consensus sequence: [#%d] error: %v", seq, err)
+				log.Warnf("consensus sequence: [#%d] error: %v", seq, err)
 				time.Sleep(time.Duration(f.conf.EventWaitMillitime) * time.Millisecond)
 			} else if cons != nil { //已有该sequence 共识
 				if err = f.ferryQCP(cons.Hash, cons.Nodes, seq); err != nil {

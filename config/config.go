@@ -1,21 +1,14 @@
 package config
 
 import (
-	"io/ioutil"
 	"strings"
 
-	yaml "gopkg.in/yaml.v2"
+	"github.com/spf13/viper"
+	"gopkg.in/yaml.v2"
 )
 
 // Config wraps all configure data of cassini
 type Config struct {
-
-	// ConfigFile is configure file path of cassini
-	ConfigFile string
-
-	// LogConfigFile is configure file path of log
-	LogConfigFile string `yaml:"log,omitempty"`
-
 	// Queue define message queue service type, IP and port addresses.
 	// Multiple addresses should be separated by comma.
 	// Example:
@@ -82,8 +75,8 @@ type QscConfig struct {
 	// Certificate 链给relay颁发的证书文件
 	Certificate string `json:"certificate,omitempty"`
 
-	// NodeAddress 区块链节点地址，多个之间用“，”分割
-	NodeAddress string `yaml:"nodes,omitempty"`
+	// Nodes 区块链节点地址，多个之间用“，”分割
+	Nodes string `yaml:"nodes,omitempty"`
 }
 
 var conf = &Config{}
@@ -94,12 +87,37 @@ func GetConfig() *Config {
 }
 
 // Load the configure file
-func (c *Config) Load() error {
-	bytes, err := ioutil.ReadFile(c.ConfigFile)
-	if err != nil {
-		return err
+func (c *Config) Load() (err error) {
+	if err = viper.Unmarshal(c); err != nil {
+		return
 	}
-	return c.Parse(bytes)
+
+	var qscs []*QscConfig
+	if err = viper.UnmarshalKey("qscs", &qscs); err != nil {
+		return
+	}
+	c.Qscs = qscs
+
+	// var mocks []*MockConfig
+	// if err = viper.UnmarshalKey("mocks", &mocks); err != nil {
+	// 	return
+	// }
+	// c.Mocks = mocks
+
+	// TODO ??? whats wrong ???
+	// var etcd *EtcdConfig
+	// if err = viper.UnmarshalKey("etcd", etcd); err != nil {
+	// 	return
+	// }
+	// c.Etcd = etcd
+
+	var etcd EtcdConfig
+	if err = viper.UnmarshalKey("etcd", &etcd); err != nil {
+		return
+	}
+	c.Etcd = &etcd
+
+	return
 }
 
 // Parse the configure file
@@ -123,8 +141,9 @@ func (c *Config) GetQscConfig(chainID string) (qsc QscConfig) {
 // DefaultConfig returns a default configuration for a Tendermint node
 func DefaultConfig() *Config {
 	return &Config{
-		Queue: "nats://127.0.0.1:4222",
-		Qscs:  DefaultQscConfig(),
+		Queue:              "nats://127.0.0.1:4222",
+		EventWaitMillitime: 2000,
+		Qscs:               DefaultQscConfig(),
 	}
 }
 
@@ -133,21 +152,23 @@ func DefaultQscConfig() []*QscConfig {
 	return []*QscConfig{
 		&QscConfig{
 			Name: "qsc",
+			Type: "qos",
 			//链的公钥
 			Pubkey: "",
 			//链给relay颁发的证书文件
 			Certificate: "",
 			//区块链节点地址，多个之间用“，”分割
-			NodeAddress: "127.0.0.1:26657",
+			Nodes: "127.0.0.1:26657",
 		},
 		&QscConfig{
 			Name: "qos",
+			Type: "qos",
 			//链的公钥
 			Pubkey: "",
 			//链给relay颁发的证书文件
 			Certificate: "",
 			//区块链节点地址，多个之间用“，”分割
-			NodeAddress: "120.0.0.1:27657,127.0.0.1:28657",
+			Nodes: "120.0.0.1:27657,127.0.0.1:28657",
 		},
 	}
 }
@@ -170,7 +191,7 @@ func TestQscConfig() []*QscConfig {
 			//链给relay颁发的证书文件
 			Certificate: "",
 			//区块链节点地址，多个之间用“，”分割
-			NodeAddress: "127.0.0.1",
+			Nodes: "127.0.0.1",
 		},
 		&QscConfig{
 			Name: "qqs",
@@ -179,7 +200,7 @@ func TestQscConfig() []*QscConfig {
 			//链给relay颁发的证书文件
 			Certificate: "",
 			//区块链节点地址，多个之间用“，”分割
-			NodeAddress: "127.0.0.1",
+			Nodes: "127.0.0.1",
 		},
 	}
 }

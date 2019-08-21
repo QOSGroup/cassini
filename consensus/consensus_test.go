@@ -4,13 +4,17 @@ import (
 	"testing"
 
 	"github.com/QOSGroup/cassini/config"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestConsensus32(t *testing.T) {
+	viper.SetConfigFile("./../cassini.yml")
+	err := viper.ReadInConfig()
+	assert.NoError(t, err)
+
 	conf := &config.Config{}
-	conf.ConfigFile = "../cassini.yml"
-	err := conf.Load()
+	err = conf.Load()
 
 	assert.NoError(t, err)
 

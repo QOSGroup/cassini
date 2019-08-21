@@ -45,7 +45,7 @@ func StartQcpConsume(conf *config.Config) (err error) {
 	qsconfigs := conf.Qscs
 
 	if len(qsconfigs) < 2 {
-		return errors.New("config error , at least two chain names ")
+		return errors.New("config error , at least two chain targets ")
 	}
 
 	var subjects string
@@ -126,14 +126,14 @@ func qcpConsume(ce *ConsEngine, from, to string, conf *config.Config, e chan<- e
 
 	defer wg.Done()
 
-	listener := func(data []byte, comsumer queue.Comsumer) {
+	listener := func(data []byte, consumer queue.Consumer) {
 		i++
 
 		tx := types.Event{}
 		amino.UnmarshalBinaryLengthPrefixed(data, &tx)
 
 		log.Infof("[#%d] Consume subject [%s] sequence [#%d] nodeAddress '%s'",
-			i, comsumer.Subject(), tx.Sequence, tx.NodeAddress)
+			i, consumer.Subject(), tx.Sequence, tx.NodeAddress)
 
 		// 监听到交易事件后立即查询需要等待一段时间才能查询到交易数据；
 		//TODO 优化
@@ -164,11 +164,15 @@ func qcpConsume(ce *ConsEngine, from, to string, conf *config.Config, e chan<- e
 
 	subject := from + "2" + to
 
-	comsumer, err := queue.NewComsumer(subject)
+	consumer, err := queue.NewConsumer(subject)
 	if err != nil {
 		e <- err
 	}
-	comsumer.Subscribe(listener)
+	if consumer == nil {
+		e <- fmt.Errorf("New consumer error: get nil")
+		return
+	}
+	consumer.Subscribe(listener)
 	return
 }
 
@@ -205,7 +209,7 @@ func (c *ConsEngine) Add2Engine(data []byte) error {
 }
 
 func (c *ConsEngine) consensus32() (N int) {
-	nodes := c.F.conf.GetQscConfig(c.from).NodeAddress
+	nodes := c.F.conf.GetQscConfig(c.from).Nodes
 
 	n := len(strings.Split(nodes, ","))
 
@@ -249,7 +253,7 @@ func (c *ConsEngine) conSequence() consResult {
 
 	log.Debugf("Start consensus engine f.t.s[%s %s #%d]", c.from, c.to, c.sequence)
 
-	nodes := c.F.conf.GetQscConfig(c.from).NodeAddress
+	nodes := c.F.conf.GetQscConfig(c.from).Nodes
 
 	N := c.consensus32()
 

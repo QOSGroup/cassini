@@ -5,6 +5,8 @@ import (
 	"sync"
 
 	"github.com/QOSGroup/cassini/commands"
+	exporter "github.com/QOSGroup/cassini/prometheus"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/viper"
 )
 
@@ -16,10 +18,10 @@ func NewProducer(subject string) (Producer, error) {
 	return queue.NewProducer()
 }
 
-// NewComsumer returns a new comsumer of message queue service
-func NewComsumer(subject string) (Comsumer, error) {
+// NewConsumer returns a new consumer of message queue service
+func NewConsumer(subject string) (Consumer, error) {
 	queue := getQueue(subject)
-	return queue.NewComsumer()
+	return queue.NewConsumer()
 }
 
 func getQueue(subject string) Queue {
@@ -47,7 +49,7 @@ func newQueue(subject, conf string) Queue {
 type Queue interface {
 	Init() error
 	NewProducer() (Producer, error)
-	NewComsumer() (Comsumer, error)
+	NewConsumer() (Consumer, error)
 }
 
 // Producer define the producer of message queue service
@@ -58,10 +60,10 @@ type Producer interface {
 }
 
 // Listener for message listening
-type Listener func([]byte, Comsumer)
+type Listener func([]byte, Consumer)
 
-// Comsumer define the comsumer of message queue service
-type Comsumer interface {
+// Consumer define the consumer of message queue service
+type Consumer interface {
 	Subject() string
 	Config() string
 	Subscribe(Listener) error
@@ -86,8 +88,14 @@ func (q *LocalQueue) Init() error {
 	if q.isInitialized {
 		return nil
 	}
-	q.ch = make(chan []byte, 100)
+	queueSize := 100
+	q.ch = make(chan []byte, queueSize)
 	q.isInitialized = true
+	metric := &exporter.CassiniMetric{
+		Type:        prometheus.GaugeValue,
+		LabelValues: []string{"local"}}
+	metric.Set(float64(queueSize))
+	exporter.Set(exporter.KeyQueueSize, metric)
 	return nil
 }
 
@@ -97,10 +105,10 @@ func (q *LocalQueue) NewProducer() (p Producer, err error) {
 	return &LocalProducer{queue: q, out: q.ch}, nil
 }
 
-// NewComsumer returns a new comsumer for the message queue
-func (q *LocalQueue) NewComsumer() (c Comsumer, err error) {
+// NewConsumer returns a new consumer for the message queue
+func (q *LocalQueue) NewConsumer() (c Consumer, err error) {
 	q.Init()
-	return &LocalComsumer{queue: q, in: q.ch}, nil
+	return &LocalConsumer{queue: q, in: q.ch}, nil
 }
 
 // LocalProducer define the producer for local message queue based on channel
@@ -125,14 +133,14 @@ func (p *LocalProducer) Config() string {
 	return p.queue.Config
 }
 
-// LocalComsumer define the comsumer for local message queue based on channel
-type LocalComsumer struct {
+// LocalConsumer define the comsumer for local message queue based on channel
+type LocalConsumer struct {
 	queue *LocalQueue
 	in    <-chan []byte
 }
 
 // Subscribe sets the listener for local message queue based on channel
-func (c *LocalComsumer) Subscribe(listener Listener) error {
+func (c *LocalConsumer) Subscribe(listener Listener) error {
 	go func() {
 		for {
 			data := <-c.in
@@ -143,11 +151,11 @@ func (c *LocalComsumer) Subscribe(listener Listener) error {
 }
 
 // Subject returns subject of local message queue
-func (c *LocalComsumer) Subject() string {
+func (c *LocalConsumer) Subject() string {
 	return c.queue.Subject
 }
 
 // Config returns config of local message queue
-func (c *LocalComsumer) Config() string {
+func (c *LocalConsumer) Config() string {
 	return c.queue.Config
 }

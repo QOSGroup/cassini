@@ -4,37 +4,32 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/QOSGroup/cassini/config"
+	"github.com/QOSGroup/cassini/commands"
 )
 
 /**
  * go build --ldflags "-X main.GitCommit=$(git rev-parse HEAD) -X main.Version=0.0.0 " -o ./cassini
  */
 
+// nolint
 var (
-	// Version of cassini
-	Version = "0.0.6"
-
-	// GitCommit is the current HEAD set using ldflags.
+	Version   = "0.0.6"
 	GitCommit string
-
-	// GoVersion is version info of golang
 	GoVersion string
-
-	// BuidDate is compile date and time
-	BuidDate string
+	BuidDate  string
 )
 
-var versioner = func(conf *config.Config) (context.CancelFunc, error) {
+var versioner = func() (context.CancelFunc, error) {
 
-	s := `cassini - the relay of cross-chain
+	s := `cassini - %s
 version:	%s
 revision:	%s
 compile:	%s
 go version:	%s
 `
 
-	fmt.Printf(s, Version, GitCommit, BuidDate, GoVersion)
+	fmt.Printf(s, commands.ShortDescription,
+		Version, GitCommit, BuidDate, GoVersion)
 
 	return nil, nil
 }

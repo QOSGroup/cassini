@@ -13,17 +13,57 @@ import (
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/consensus"
 	"github.com/QOSGroup/cassini/log"
+	"github.com/QOSGroup/cassini/prometheus"
 )
 
 // 命令行 start 命令执行方法
-var starter = func(conf *config.Config) (cancel context.CancelFunc, err error) {
+var starter = func() (cancel context.CancelFunc, err error) {
 
 	log.Info("Starting cassini...")
 
 	var w sync.WaitGroup
+	errChannel := make(chan error, 1)
+	startLog(errChannel)
+	startPrometheus(errChannel)
+	startEtcd(&w)
+	startAdapterPorts(&w)
+	w.Wait()
+	startConsensus(&w)
+
+	go func() {
+		w.Wait()
+		log.Info("Cassini started ")
+	}()
+	return
+}
+
+func startLog(errChannel <-chan error) {
+	go func() {
+		for {
+			select {
+			case e, ok := <-errChannel:
+				{
+					if ok && e != nil {
+						log.Error(e)
+					}
+				}
+			}
+		}
+	}()
+}
+
+func startPrometheus(errChannel chan<- error) {
+	log.Info("Starting prometheus exporter...")
+	go func() {
+		prometheus.StartMetrics(errChannel)
+	}()
+	log.Info("Prometheus exporter(:39099/metrics) started")
+}
+
+func startEtcd(w *sync.WaitGroup) {
 	w.Add(1)
 	go func() {
-		etcd, e := concurrency.StartEmbedEtcd(conf)
+		etcd, e := concurrency.StartEmbedEtcd(config.GetConfig())
 		if e != nil {
 			log.Error("Etcd server start error: ", e)
 			log.Flush()
@@ -44,54 +84,25 @@ var starter = func(conf *config.Config) (cancel context.CancelFunc, err error) {
 		e = <-etcd.Err()
 		log.Error("Etcd running error: ", e)
 	}()
-
-	log.Tracef("Qscs: %d", len(conf.Qscs))
-	for _, qsc := range conf.Qscs {
-		log.Tracef("qsc: %s %s", qsc.Name, qsc.NodeAddress)
-	}
-
-	log.Info("Starting adapter ports...")
-	//启动事件监听 chain node
-	w.Add(1)
-	go func() {
-		startAdapterPorts(conf)
-		w.Done()
-	}()
-
-	log.Info("Starting qcp consumer...")
-	//启动nats 消费
-	w.Add(1)
-	go func() {
-		err = consensus.StartQcpConsume(conf)
-		if err != nil {
-			log.Errorf("Start qcp consume error: %s", err)
-			log.Flush()
-			os.Exit(1)
-		}
-		w.Done()
-	}()
-
-	go func() {
-		w.Wait()
-		log.Info("Cassini started ")
-	}()
-	return
 }
 
-func startAdapterPorts(conf *config.Config) {
-	// _, err = event.StartEventSubscibe(conf)
-	// if err != nil {
-	// 	log.Errorf("Start event subscribe error: %s", err)
-	// 	log.Flush()
-	// 	os.Exit(1)
-	// }
-	for _, qsc := range conf.Qscs {
-		for _, nodeAddr := range strings.Split(qsc.NodeAddress, ",") {
-			// go EventsSubscribe(conf.Nats, "tcp://"+nodeAddr, es)
-			// subEventFrom += fmt.Sprintf("[%s] ", nodeAddr)
-			registerAdapter(nodeAddr, qsc)
+func startAdapterPorts(w *sync.WaitGroup) {
+	log.Info("Starting adapter ports...")
+	w.Add(1)
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				log.Error("Recover panic error: ", err)
+			}
+		}()
+		conf := config.GetConfig()
+		for _, qsc := range conf.Qscs {
+			for _, nodeAddr := range strings.Split(qsc.Nodes, ",") {
+				registerAdapter(nodeAddr, qsc)
+			}
 		}
-	}
+		w.Done()
+	}()
 }
 
 func registerAdapter(nodeAddr string, qsc *config.QscConfig) {
@@ -104,7 +115,9 @@ func registerAdapter(nodeAddr string, qsc *config.QscConfig) {
 				ChainType: qsc.Type,
 				IP:        addrs[0],
 				Port:      port}
-			ports.RegisterAdapter(conf)
+			if err := ports.RegisterAdapter(conf); err != nil {
+				log.Errorf("Register adapter error: %v", err)
+			}
 			return
 		}
 		log.Errorf("Chain[%s] node address parse error: %s, %v",
@@ -114,5 +127,19 @@ func registerAdapter(nodeAddr string, qsc *config.QscConfig) {
 		qsc.Name, nodeAddr)
 	log.Flush()
 	os.Exit(1)
+}
 
+func startConsensus(w *sync.WaitGroup) {
+	log.Info("Starting qcp consumer...")
+	//启动nats 消费
+	w.Add(1)
+	go func() {
+		err := consensus.StartQcpConsume(config.GetConfig())
+		if err != nil {
+			log.Errorf("Start qcp consume error: %s", err)
+			log.Flush()
+			os.Exit(1)
+		}
+		w.Done()
+	}()
 }

@@ -14,7 +14,8 @@ import (
 )
 
 // 命令行 events 命令执行方法
-var events = func(conf *config.Config) (cancel context.CancelFunc, err error) {
+var events = func() (cancel context.CancelFunc, err error) {
+	conf := config.GetConfig()
 	var cancels []context.CancelFunc
 	var cancelFunc context.CancelFunc
 	for _, mockConf := range conf.Mocks {

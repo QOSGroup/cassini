@@ -47,7 +47,7 @@ require (
 	github.com/pborman/uuid v1.2.0
 	github.com/petar/GoLLRB v0.0.0-20130427215148-53be0d36a84c // indirect
 	github.com/pkg/errors v0.8.0
-	github.com/prometheus/client_golang v0.9.3-0.20190313112143-fa4aa9000d28 // indirect
+	github.com/prometheus/client_golang v0.9.3-0.20190313112143-fa4aa9000d28
 	github.com/prometheus/prometheus v0.0.0-20170814170113-3101606756c5 // indirect
 	github.com/rjeczalik/notify v0.9.2 // indirect
 	github.com/soheilhy/cmux v0.1.4 // indirect

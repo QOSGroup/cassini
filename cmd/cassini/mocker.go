@@ -9,7 +9,7 @@ import (
 )
 
 // 命令行 mock 命令执行方法
-var mocker = func(conf *config.Config) (cancel context.CancelFunc, err error) {
+var mocker = func() (cancel context.CancelFunc, err error) {
 	log.Debug("Load mocks: ", len(config.GetConfig().Mocks))
 	var cancels []context.CancelFunc
 	var cancelFunc context.CancelFunc

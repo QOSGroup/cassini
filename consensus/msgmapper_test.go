@@ -7,6 +7,7 @@ import (
 	"github.com/QOSGroup/cassini/adapter/ports"
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/types"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -73,11 +74,14 @@ func newEvent(node, hash string) types.Event {
 }
 
 func newFerry(t *testing.T, from, to string, sequence int64) *Ferry {
+	viper.SetConfigFile("./../cassini.yml")
+	err := viper.ReadInConfig()
+	assert.NoError(t, err)
+
 	conf := &config.Config{}
-	conf.ConfigFile = "../cassini.yml"
 	_ = conf.Load()
 
-	for _, node := range strings.Split(conf.GetQscConfig(from).NodeAddress, ",") {
+	for _, node := range strings.Split(conf.GetQscConfig(from).Nodes, ",") {
 		// if node == "" {
 		// 	continue
 		// }
@@ -93,7 +97,7 @@ func newFerry(t *testing.T, from, to string, sequence int64) *Ferry {
 		assert.NoError(t, err)
 
 	}
-	for _, node := range strings.Split(conf.GetQscConfig(to).NodeAddress, ",") {
+	for _, node := range strings.Split(conf.GetQscConfig(to).Nodes, ",") {
 		// if node == "" {
 		// 	continue
 		// }
