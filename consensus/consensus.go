@@ -168,10 +168,10 @@ func qcpConsume(ce *ConsEngine, from, to string, conf *config.Config, e chan<- e
 	if err != nil {
 		e <- err
 	}
-	// if consumer == nil {
-	// 	e <- fmt.Errorf("New consumer error: get nil")
-	// 	return
-	// }
+	if consumer == nil {
+		e <- fmt.Errorf("New consumer error: get nil")
+		return
+	}
 	consumer.Subscribe(listener)
 	return
 }

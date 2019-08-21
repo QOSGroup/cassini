@@ -1,7 +1,6 @@
 package prometheus
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"sync"
@@ -60,9 +59,9 @@ func init() {
 }
 
 type cassiniCollector struct {
-	descs map[string]*prometheus.Desc
-
+	descs  map[string]*prometheus.Desc
 	mapper sync.Map
+	ch     chan<- error
 }
 
 // CassiniMetric wraps prometheus export data
@@ -98,8 +97,14 @@ func (m *CassiniMetric) Count(increase float64) {
 
 // Collector returns a collector
 // which exports metrics about status code of network service response
-func Collector() prometheus.Collector {
+func Collector(ch chan<- error) prometheus.Collector {
+	collector.SetErrorChannel(ch)
 	return collector
+}
+
+// SetErrorChannel set a channel for error
+func (c *cassiniCollector) SetErrorChannel(ch chan<- error) {
+	c.ch = ch
 }
 
 // Describe returns all descriptions of the collector.
@@ -114,8 +119,10 @@ func (c *cassiniCollector) Collect(ch chan<- prometheus.Metric) {
 	exports := func(k, v interface{}) bool {
 		key, ok := k.(string)
 		if !ok {
-			panic(errors.New("Collect error: can not convert key into a string"))
-			// return false
+			c.ch <- fmt.Errorf("%s%s%s",
+				"Collect error: can not convert key(",
+				key, ") into a string")
+			return true
 		}
 		var metric *CassiniMetric
 		metric, ok = v.(*CassiniMetric)
@@ -123,10 +130,10 @@ func (c *cassiniCollector) Collect(ch chan<- prometheus.Metric) {
 			var metrics []*CassiniMetric
 			metrics, ok = v.([]*CassiniMetric)
 			if !ok {
-				panic(fmt.Errorf("%s %s %s", "Collect error:",
-					"can not convert value into a *cassiniMetric",
-					"or a []*cassiniMetric"))
-				// return false
+				c.ch <- fmt.Errorf("%s%s%s",
+					"Collect error: can not convert value(", key,
+					") into a *cassiniMetric or a []*cassiniMetric")
+				return true
 			}
 			for _, metric = range metrics {
 				c.export(ch, key, metric)
@@ -143,7 +150,8 @@ func (c *cassiniCollector) export(ch chan<- prometheus.Metric,
 	key string, metric *CassiniMetric) {
 	desc, ok := c.descs[key]
 	if !ok {
-		panic(fmt.Errorf("Collect error: can not find desc - %s", key))
+		c.ch <- fmt.Errorf("Collect error: can not find desc(%s)", key)
+		return
 	}
 	ch <- prometheus.MustNewConstMetric(
 		desc,
@@ -166,8 +174,10 @@ func (c *cassiniCollector) Count(key string, increase float64) {
 	}
 	metric, ok := v.(*CassiniMetric)
 	if !ok {
-		panic(fmt.Errorf("Count error: can not convert value into a *cassiniMetric"))
-		// return
+		c.ch <- fmt.Errorf("%s%s%s",
+			"Count error: can not convert value(",
+			key, ") into a *cassiniMetric")
+		return
 	}
 	metric.Count(increase)
 }
@@ -183,11 +193,12 @@ func Count(key string, increase float64) {
 }
 
 // StartMetrics prometheus exporter("/metrics") service
-func StartMetrics() {
+func StartMetrics(ch chan<- error) {
 
-	prometheus.MustRegister(Collector())
+	Set(KeyAdaptors, "panic test")
+
+	prometheus.MustRegister(Collector(ch))
 
 	http.Handle("/metrics", promhttp.Handler())
-	err := http.ListenAndServe(":39099", nil)
-	panic(fmt.Errorf("Prometheus metrics running error: %v", err))
+	ch <- http.ListenAndServe(":39099", nil)
 }
