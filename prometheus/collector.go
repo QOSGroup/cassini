@@ -195,7 +195,8 @@ func Count(key string, increase float64) {
 // StartMetrics prometheus exporter("/metrics") service
 func StartMetrics(ch chan<- error) {
 
-	Set(KeyAdaptors, "panic test")
+	// testing _error metric
+	// Set(KeyAdaptors, "panic test")
 
 	prometheus.MustRegister(Collector(ch))
 

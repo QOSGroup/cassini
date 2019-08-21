@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	_ "github.com/QOSGroup/cassini/adapter/ports"
 	_ "github.com/QOSGroup/cassini/adapter/ports/ethereum"
 	_ "github.com/QOSGroup/cassini/adapter/ports/fabric"
 	"github.com/QOSGroup/cassini/commands"

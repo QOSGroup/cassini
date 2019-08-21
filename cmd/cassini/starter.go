@@ -53,6 +53,7 @@ func startLog(errChannel <-chan error) {
 }
 
 func startPrometheus(errChannel chan<- error) {
+	log.Info("Starting prometheus exporter...")
 	go func() {
 		prometheus.StartMetrics(errChannel)
 	}()
@@ -86,14 +87,14 @@ func startEtcd(w *sync.WaitGroup) {
 }
 
 func startAdapterPorts(w *sync.WaitGroup) {
-	// defer func() {
-	// 	if err := recover(); err != nil {
-	// 		fmt.Println("Recover panic error: ", err)
-	// 	}
-	// }()
 	log.Info("Starting adapter ports...")
 	w.Add(1)
 	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				log.Error("Recover panic error: ", err)
+			}
+		}()
 		conf := config.GetConfig()
 		for _, qsc := range conf.Qscs {
 			for _, nodeAddr := range strings.Split(qsc.Nodes, ",") {

@@ -146,6 +146,7 @@ func DefaultQscConfig() []*QscConfig {
 	return []*QscConfig{
 		&QscConfig{
 			Name: "qsc",
+			Type: "qos",
 			//链的公钥
 			Pubkey: "",
 			//链给relay颁发的证书文件
@@ -155,6 +156,7 @@ func DefaultQscConfig() []*QscConfig {
 		},
 		&QscConfig{
 			Name: "qos",
+			Type: "qos",
 			//链的公钥
 			Pubkey: "",
 			//链给relay颁发的证书文件
