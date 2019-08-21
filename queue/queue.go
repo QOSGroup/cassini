@@ -6,7 +6,6 @@ import (
 
 	"github.com/QOSGroup/cassini/commands"
 	exporter "github.com/QOSGroup/cassini/prometheus"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/viper"
 )
 
@@ -91,11 +90,8 @@ func (q *LocalQueue) Init() error {
 	queueSize := 100
 	q.ch = make(chan []byte, queueSize)
 	q.isInitialized = true
-	metric := &exporter.CassiniMetric{
-		Type:        prometheus.GaugeValue,
-		LabelValues: []string{"local"}}
-	metric.Set(float64(queueSize))
-	exporter.Set(exporter.KeyQueueSize, metric)
+	exporter.SetGauge(exporter.KeyQueueSize,
+		float64(queueSize), "local")
 	return nil
 }
 

@@ -7,7 +7,6 @@ import (
 	"github.com/QOSGroup/cassini/log"
 	exporter "github.com/QOSGroup/cassini/prometheus"
 	"github.com/nats-io/go-nats"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 // NatsQueue wraps nats client as a message queue service
@@ -18,11 +17,7 @@ type NatsQueue struct {
 
 // Init message queue
 func (q *NatsQueue) Init() error {
-	metric := &exporter.CassiniMetric{
-		Type:        prometheus.GaugeValue,
-		LabelValues: []string{"nats"}}
-	metric.Set(0)
-	exporter.Set(exporter.KeyQueueSize, metric)
+	exporter.SetGauge(exporter.KeyQueueSize, 0, "nats")
 	return nil
 }
 

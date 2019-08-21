@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -11,17 +12,18 @@ import (
 
 // nolint
 const (
-	KeyPrefix    = "cassini_"
-	KeyQueueSize = "queue_size"
-	KeyQueue     = "queue"
-	KeyTxs       = "txs"
-	KeyTxWait    = "tx_wait"
-	KeyTxCost    = "tx_cost"
-	KeyErrors    = "errors"
-	KeyAdaptors  = "adaptors"
+	KeyPrefix       = "cassini_"
+	KeyQueueSize    = "queue_size"
+	KeyQueue        = "queue"
+	KeyAdaptors     = "adaptors"
+	KeyTxsWait      = "txs_wait"
+	KeyTxCost       = "tx_cost"
+	KeyTxsPerSecond = "txs_per_second"
+	KeyErrors       = "errors"
 )
 
 var collector *cassiniCollector
+var txsSecMetric *CassiniMetric
 
 func init() {
 	collector = &cassiniCollector{
@@ -35,12 +37,12 @@ func init() {
 		fmt.Sprint(KeyPrefix, KeyQueue),
 		"Current size of tx in queue",
 		nil, nil)
-	collector.descs[KeyTxs] = prometheus.NewDesc(
-		fmt.Sprint(KeyPrefix, KeyTxs),
-		"Number of relayed tx last minute",
+	collector.descs[KeyTxsPerSecond] = prometheus.NewDesc(
+		fmt.Sprint(KeyPrefix, KeyTxsPerSecond),
+		"Number of relayed tx per second",
 		nil, nil)
-	collector.descs[KeyTxWait] = prometheus.NewDesc(
-		fmt.Sprint(KeyPrefix, KeyTxWait),
+	collector.descs[KeyTxsWait] = prometheus.NewDesc(
+		fmt.Sprint(KeyPrefix, KeyTxsWait),
 		"Number of tx waiting to be relayed",
 		nil, nil)
 	collector.descs[KeyTxCost] = prometheus.NewDesc(
@@ -56,6 +58,44 @@ func init() {
 		fmt.Sprint(KeyPrefix, KeyErrors),
 		"Count of running errors",
 		nil, nil)
+
+	txsSecMetric = &CassiniMetric{
+		value: 0,
+		Type:  prometheus.GaugeValue}
+
+	// testing _error metric
+	// Set(KeyAdaptors, "panic test")
+	SetGauge(KeyQueue, 0)
+	// SetGauge(KeyAdaptors, 0)
+	SetGauge(KeyTxsWait, 0)
+	SetGauge(KeyTxCost, 0)
+	Set(KeyTxsPerSecond, txsSecMetric)
+	Count(KeyErrors, 0)
+
+	t := time.NewTicker(time.Duration(1) * time.Second)
+
+	go func() {
+		for {
+			select {
+			case <-t.C:
+				{
+					txsSecMetric.Set(0)
+				}
+			}
+		}
+	}()
+
+	// go func() {
+	// 	t := time.NewTicker(time.Duration(100) * time.Millisecond)
+	// 	for {
+	// 		select {
+	// 		case <-t.C:
+	// 			{
+	// 				TxCount(3)
+	// 			}
+	// 		}
+	// 	}
+	// }()
 }
 
 // CassiniMetric wraps prometheus export data
@@ -189,17 +229,27 @@ func Set(key string, value interface{}) {
 	collector.Set(key, value)
 }
 
+// SetGauge set a single gauge value
+func SetGauge(key string, value float64, labelValues ...string) {
+	metric := &CassiniMetric{
+		Type:        prometheus.GaugeValue,
+		LabelValues: labelValues}
+	metric.Set(value)
+	Set(key, metric)
+}
+
 // Count the value to the collector mapper
 func Count(key string, increase float64) {
 	collector.Count(key, increase)
 }
 
+// TxCount the number of relayed tx
+func TxCount(increase float64) {
+	txsSecMetric.Count(increase)
+}
+
 // StartMetrics prometheus exporter("/metrics") service
 func StartMetrics(ch chan<- error) {
-
-	// testing _error metric
-	// Set(KeyAdaptors, "panic test")
-	Count(KeyErrors, 0)
 
 	prometheus.MustRegister(Collector(ch))
 
