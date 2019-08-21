@@ -24,14 +24,14 @@ func Test_getNatsQueue(t *testing.T) {
 
 var wgNats sync.WaitGroup
 
-func Test_NatsNewComsumer(t *testing.T) {
+func Test_NatsNewConsumer(t *testing.T) {
 	viper.Set(commands.FlagQueue, "nats://127.0.0.1:4222")
 
-	c, err := NewComsumer("nats-test1")
+	c, err := NewConsumer("nats-test1")
 	assert.NoError(t, err)
 
 	if c != nil {
-		c.Subscribe(func(data []byte, comsumer Comsumer) {
+		c.Subscribe(func(data []byte, consumer Consumer) {
 			t.Logf("queue %s get: %s", c.Subject(), string(data))
 			wgNats.Done()
 		})
@@ -70,17 +70,17 @@ func Benchmark_NatsProducer(b *testing.B) {
 	}
 }
 
-func Benchmark_NatsComsumer(b *testing.B) {
+func Benchmark_NatsConsumer(b *testing.B) {
 	viper.Set(commands.FlagQueue, "nats://127.0.0.1:4222")
 
-	c, err := NewComsumer("Benchmark_NatsComsumer")
+	c, err := NewConsumer("Benchmark_NatsConsumer")
 	if err != nil {
 		b.Errorf("connect to nats error: %v", err)
 	}
 
-	DEFAULTMSG := "message for Benchmark_NatsComsumer"
+	DEFAULTMSG := "message for Benchmark_NatsConsumer"
 	i := 0
-	listener := func(data []byte, _ Comsumer) {
+	listener := func(data []byte, _ Consumer) {
 		i++
 		// log.Infof("[#%d] Received on [%s]: '%s'\n", i, m.Subject, string(m.Data))
 		if !strings.EqualFold(string(data), DEFAULTMSG) {
@@ -89,14 +89,14 @@ func Benchmark_NatsComsumer(b *testing.B) {
 	}
 	c.Subscribe(listener)
 
-	p, err := NewProducer("Benchmark_NatsComsumer")
+	p, err := NewProducer("Benchmark_NatsConsumer")
 	if err != nil {
 		b.Errorf("connect to nats error: %v", err)
 	}
 	for i := 0; i < b.N; i++ { //30000	     51369 ns/op
 		p.Produce([]byte(DEFAULTMSG))
 	}
-	b.Logf("comsumer message: %d", i)
+	b.Logf("consumer message: %d", i)
 }
 
 func Benchmark_Parallel_NatsQueue(b *testing.B) {
@@ -104,9 +104,9 @@ func Benchmark_Parallel_NatsQueue(b *testing.B) {
 
 	b.ReportAllocs()
 	var counter int
-	c, err2 := NewComsumer("nats-test_parallel")
+	c, err2 := NewConsumer("nats-test_parallel")
 	if err2 == nil && c != nil {
-		c.Subscribe(func(data []byte, comsumer Comsumer) {
+		c.Subscribe(func(data []byte, consumer Consumer) {
 			counter++
 		})
 	}

@@ -114,9 +114,18 @@ func registerAdapter(nodeAddr string, qsc *config.QscConfig) {
 				ChainType: qsc.Type,
 				IP:        addrs[0],
 				Port:      port}
-			ports.RegisterAdapter(conf)
+			defer func() {
+				if err := recover(); err != nil {
+					log.Errorf("Recover panic error: %v", err)
+				}
+			}()
+			if err := ports.RegisterAdapter(conf); err != nil {
+				prometheus.Count(prometheus.KeyErrors, 1)
+				log.Errorf("Register adapter error: %v", err)
+			}
 			return
 		}
+		prometheus.Count(prometheus.KeyErrors, 1)
 		log.Errorf("Chain[%s] node address parse error: %s, %v",
 			qsc.Name, nodeAddr, err)
 	}
@@ -124,5 +133,4 @@ func registerAdapter(nodeAddr string, qsc *config.QscConfig) {
 		qsc.Name, nodeAddr)
 	log.Flush()
 	os.Exit(1)
-
 }

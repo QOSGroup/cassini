@@ -1,11 +1,11 @@
 package prometheus
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"sync"
 
-	"github.com/QOSGroup/cassini/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -67,8 +67,33 @@ type cassiniCollector struct {
 
 // CassiniMetric wraps prometheus export data
 type CassiniMetric struct {
-	Value       float64
+	value       float64
 	LabelValues []string
+	mux         sync.RWMutex
+}
+
+// Value returns the metric's value
+func (m *CassiniMetric) Value() float64 {
+	m.mux.RLock()
+	defer m.mux.RUnlock()
+
+	return m.value
+}
+
+// Set the metric's value
+func (m *CassiniMetric) Set(v float64) {
+	m.mux.Lock()
+	defer m.mux.Unlock()
+
+	m.value = v
+}
+
+// Count the value to the collector mapper
+func (m *CassiniMetric) Count(increase float64) {
+	m.mux.Lock()
+	defer m.mux.Unlock()
+
+	m.value += increase
 }
 
 // Collector returns a collector
@@ -89,18 +114,19 @@ func (c *cassiniCollector) Collect(ch chan<- prometheus.Metric) {
 	exports := func(k, v interface{}) bool {
 		key, ok := k.(string)
 		if !ok {
-			log.Error("Collect error: can not convert key into a string")
-			return false
+			panic(errors.New("Collect error: can not convert key into a string"))
+			// return false
 		}
 		var metric *CassiniMetric
 		metric, ok = v.(*CassiniMetric)
 		if !ok {
-			log.Warn("Collect error: can not convert value into a *cassiniMetric")
 			var metrics []*CassiniMetric
 			metrics, ok = v.([]*CassiniMetric)
 			if !ok {
-				log.Error("Collect error: can not convert value into a []*cassiniMetric")
-				return false
+				panic(fmt.Errorf("%s %s %s", "Collect error:",
+					"can not convert value into a *cassiniMetric",
+					"or a []*cassiniMetric"))
+				// return false
 			}
 			for _, metric = range metrics {
 				c.export(ch, key, metric)
@@ -115,51 +141,53 @@ func (c *cassiniCollector) Collect(ch chan<- prometheus.Metric) {
 
 func (c *cassiniCollector) export(ch chan<- prometheus.Metric,
 	key string, metric *CassiniMetric) {
-	log.Debugf("collect: %s, %d", key, metric.Value)
 	desc, ok := c.descs[key]
 	if !ok {
-		log.Errorf("Collect error: can not find desc - %s", key)
-		return
+		panic(fmt.Errorf("Collect error: can not find desc - %s", key))
 	}
 	ch <- prometheus.MustNewConstMetric(
 		desc,
 		prometheus.GaugeValue,
-		metric.Value, metric.LabelValues...)
+		metric.Value(), metric.LabelValues...)
 }
 
 func (c *cassiniCollector) Set(key string, value interface{}) {
 	c.mapper.Store(key, value)
 }
 
-// Set key and value to the collector mapper
+func (c *cassiniCollector) Count(key string, increase float64) {
+	v, loaded := c.mapper.Load(key)
+	if v == nil || !loaded {
+		metric := &CassiniMetric{
+			value: float64(increase)}
+		if v, loaded = c.mapper.LoadOrStore(key, metric); !loaded {
+			return
+		}
+	}
+	metric, ok := v.(*CassiniMetric)
+	if !ok {
+		panic(fmt.Errorf("Count error: can not convert value into a *cassiniMetric"))
+		// return
+	}
+	metric.Count(increase)
+}
+
+// Set the value to the collector mapper
 func Set(key string, value interface{}) {
 	collector.Set(key, value)
+}
+
+// Count the value to the collector mapper
+func Count(key string, increase float64) {
+	collector.Count(key, increase)
 }
 
 // StartMetrics prometheus exporter("/metrics") service
 func StartMetrics() {
 
-	// metric := &CassiniMetric{
-	// 	Value:       0,
-	// 	LabelValues: []string{"nats"}}
-	// Set(KeyQueueSize, metric)
-
-	// metrics := make([]*CassiniMetric, 0)
-	// metrics = append(metrics, &CassiniMetric{
-	// 	Value:       0,
-	// 	LabelValues: []string{"127.0.0.1:9090"}})
-	// metrics = append(metrics, &CassiniMetric{
-	// 	Value:       0,
-	// 	LabelValues: []string{"192.168.1.179:9090"}})
-	// Set(KeyAdaptors, metrics)
-
-	// metric := &CassiniMetric{
-	// 	Value: 111}
-	// Set(KeyErrors, metric)
-
 	prometheus.MustRegister(Collector())
 
 	http.Handle("/metrics", promhttp.Handler())
-	log.Errorf("Prometheus metrics running error: %v",
-		http.ListenAndServe(":39099", nil))
+	err := http.ListenAndServe(":39099", nil)
+	panic(fmt.Errorf("Prometheus metrics running error: %v", err))
 }

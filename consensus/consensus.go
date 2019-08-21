@@ -126,14 +126,14 @@ func qcpConsume(ce *ConsEngine, from, to string, conf *config.Config, e chan<- e
 
 	defer wg.Done()
 
-	listener := func(data []byte, comsumer queue.Comsumer) {
+	listener := func(data []byte, consumer queue.Consumer) {
 		i++
 
 		tx := types.Event{}
 		amino.UnmarshalBinaryLengthPrefixed(data, &tx)
 
 		log.Infof("[#%d] Consume subject [%s] sequence [#%d] nodeAddress '%s'",
-			i, comsumer.Subject(), tx.Sequence, tx.NodeAddress)
+			i, consumer.Subject(), tx.Sequence, tx.NodeAddress)
 
 		// 监听到交易事件后立即查询需要等待一段时间才能查询到交易数据；
 		//TODO 优化
@@ -164,11 +164,15 @@ func qcpConsume(ce *ConsEngine, from, to string, conf *config.Config, e chan<- e
 
 	subject := from + "2" + to
 
-	comsumer, err := queue.NewComsumer(subject)
+	consumer, err := queue.NewConsumer(subject)
 	if err != nil {
 		e <- err
 	}
-	comsumer.Subscribe(listener)
+	// if consumer == nil {
+	// 	e <- fmt.Errorf("New consumer error: get nil")
+	// 	return
+	// }
+	consumer.Subscribe(listener)
 	return
 }
 
