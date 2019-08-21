@@ -58,15 +58,10 @@ func init() {
 		nil, nil)
 }
 
-type cassiniCollector struct {
-	descs  map[string]*prometheus.Desc
-	mapper sync.Map
-	ch     chan<- error
-}
-
 // CassiniMetric wraps prometheus export data
 type CassiniMetric struct {
 	value       float64
+	Type        prometheus.ValueType
 	LabelValues []string
 	mux         sync.RWMutex
 }
@@ -100,6 +95,12 @@ func (m *CassiniMetric) Count(increase float64) {
 func Collector(ch chan<- error) prometheus.Collector {
 	collector.SetErrorChannel(ch)
 	return collector
+}
+
+type cassiniCollector struct {
+	descs  map[string]*prometheus.Desc
+	mapper sync.Map
+	ch     chan<- error
 }
 
 // SetErrorChannel set a channel for error
@@ -155,7 +156,7 @@ func (c *cassiniCollector) export(ch chan<- prometheus.Metric,
 	}
 	ch <- prometheus.MustNewConstMetric(
 		desc,
-		prometheus.GaugeValue,
+		metric.Type,
 		metric.Value(), metric.LabelValues...)
 }
 
@@ -167,7 +168,8 @@ func (c *cassiniCollector) Count(key string, increase float64) {
 	v, loaded := c.mapper.Load(key)
 	if v == nil || !loaded {
 		metric := &CassiniMetric{
-			value: float64(increase)}
+			value: float64(increase),
+			Type:  prometheus.CounterValue}
 		if v, loaded = c.mapper.LoadOrStore(key, metric); !loaded {
 			return
 		}
