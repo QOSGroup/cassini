@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v2"
 )
 
 // Config wraps all configure data of cassini
@@ -117,6 +118,11 @@ func (c *Config) Load() (err error) {
 	c.Etcd = &etcd
 
 	return
+}
+
+// Parse the configure file
+func (c *Config) Parse(bytes []byte) error {
+	return yaml.UnmarshalStrict(bytes, c)
 }
 
 // GetQscConfig 获取指定 ChainID 的 QSC 配置

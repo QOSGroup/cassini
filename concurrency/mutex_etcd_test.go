@@ -8,6 +8,7 @@ import (
 
 	"github.com/QOSGroup/cassini/config"
 	"github.com/etcd-io/etcd/embed"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -24,12 +25,14 @@ etcd:
   cluster:			test-cassini=http://127.0.0.1:2380
 `
 
-	// conf, err := config.CreateConfig([]byte(confStr))
 	conf := &config.Config{}
 	err := conf.Parse([]byte(confStr))
-
 	assert.NoError(t, err)
-	assert.Equal(t, true, conf.UseEtcd)
+
+	viper.Set("useEtcd", true)
+	viper.Set("lock", "etcd://127.0.0.1:2379")
+
+	assert.Equal(t, true, viper.GetBool("useEtcd"))
 
 	var etcd *embed.Etcd
 	etcd, err = StartEmbedEtcd(conf)
@@ -41,7 +44,7 @@ etcd:
 	ms := make([]Mutex, goroutines)
 
 	for i := 0; i < goroutines; i++ {
-		m, err := NewMutex("test", conf.Lock)
+		m, err := NewMutex("test", viper.GetString("lock"))
 		assert.NoError(t, err)
 		ms[i] = m
 		defer m.Close()
