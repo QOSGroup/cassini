@@ -64,11 +64,9 @@ func startPrometheus(errChannel chan<- error) {
 func startEtcd(w *sync.WaitGroup) {
 	w.Add(1)
 	go func() {
-		etcd, e := concurrency.StartEmbedEtcd(config.GetConfig())
-		if e != nil {
-			log.Error("Etcd server start error: ", e)
-			log.Flush()
-			os.Exit(1)
+		etcd, err := concurrency.StartEmbedEtcd(config.GetConfig())
+		if err != nil {
+			panic(fmt.Errorf("Etcd server start error: %v", err))
 		}
 		w.Done()
 		if etcd == nil {
@@ -82,8 +80,8 @@ func startEtcd(w *sync.WaitGroup) {
 			etcd.Server.Stop() // trigger a shutdown
 			log.Info("Etcd server took too long to start!")
 		}
-		e = <-etcd.Err()
-		log.Error("Etcd running error: ", e)
+		err = <-etcd.Err()
+		log.Error("Etcd running error: ", err)
 	}()
 }
 
