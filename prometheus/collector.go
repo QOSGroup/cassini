@@ -3,7 +3,10 @@ package prometheus
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
+
+	"github.com/spf13/viper"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -11,21 +14,66 @@ import (
 
 // nolint
 const (
-	KeyPrefix    = "cassini_"
-	KeyQueueSize = "queue_size"
-	KeyQueue     = "queue"
-	KeyTxs       = "txs"
-	KeyTxWait    = "tx_wait"
-	KeyTxCost    = "tx_cost"
-	KeyErrors    = "errors"
-	KeyAdaptors  = "adaptors"
+	KeyPrefix       = "cassini_"
+	KeyQueueSize    = "queue_size"
+	KeyQueue        = "queue"
+	KeyAdaptors     = "adaptors"
+	KeyTxsWait      = "txs_wait"
+	KeyTxCost       = "tx_cost"
+	KeyTxsPerSecond = "txs_per_second"
+	KeyErrors       = "errors"
 )
 
 var collector *cassiniCollector
 
 func init() {
+
+	initConfig()
+
+	initCollector()
+
+	// Set(KeyQueueSize, 0,"local")
+	Set(KeyQueue, 0)
+	// Set(KeyAdaptors, 0, "?")
+	Set(KeyTxsWait, 0)
+	Set(KeyTxCost, 0)
+	Set(KeyTxsPerSecond, 0)
+	Set(KeyErrors, 0)
+
+	// go func() {
+	// 	t := time.NewTicker(time.Duration(100) * time.Millisecond)
+	// 	for {
+	// 		select {
+	// 		case <-t.C:
+	// 			{
+	// 				Set(KeyTxsPerSecond, 123)
+	// 			}
+	// 		}
+	// 	}
+	// }()
+}
+
+func initConfig() {
+	initMcs := []*MetricConfig{
+		&MetricConfig{
+			Key:  KeyQueueSize,
+			Type: "ImmutableGaugeMetric"},
+		&MetricConfig{
+			Key:  KeyErrors,
+			Type: "CounterMetric"},
+		&MetricConfig{
+			Key:  KeyTxsPerSecond,
+			Type: "TickerGaugeMetric"}}
+	viper.Set(KeyMetricType, initMcs)
+}
+
+func initCollector() {
+	var mcs []*MetricConfig
+	viper.UnmarshalKey(KeyMetricType, &mcs)
+
 	collector = &cassiniCollector{
-		descs: make(map[string]*prometheus.Desc)}
+		metricConfigs: mcs,
+		descs:         make(map[string]*prometheus.Desc)}
 
 	collector.descs[KeyQueueSize] = prometheus.NewDesc(
 		fmt.Sprint(KeyPrefix, KeyQueueSize),
@@ -35,12 +83,12 @@ func init() {
 		fmt.Sprint(KeyPrefix, KeyQueue),
 		"Current size of tx in queue",
 		nil, nil)
-	collector.descs[KeyTxs] = prometheus.NewDesc(
-		fmt.Sprint(KeyPrefix, KeyTxs),
-		"Number of relayed tx last minute",
+	collector.descs[KeyTxsPerSecond] = prometheus.NewDesc(
+		fmt.Sprint(KeyPrefix, KeyTxsPerSecond),
+		"Number of relayed tx per second",
 		nil, nil)
-	collector.descs[KeyTxWait] = prometheus.NewDesc(
-		fmt.Sprint(KeyPrefix, KeyTxWait),
+	collector.descs[KeyTxsWait] = prometheus.NewDesc(
+		fmt.Sprint(KeyPrefix, KeyTxsWait),
 		"Number of tx waiting to be relayed",
 		nil, nil)
 	collector.descs[KeyTxCost] = prometheus.NewDesc(
@@ -58,54 +106,18 @@ func init() {
 		nil, nil)
 }
 
-// CassiniMetric wraps prometheus export data
-type CassiniMetric struct {
-	value       float64
-	Type        prometheus.ValueType
-	LabelValues []string
-	mux         sync.RWMutex
-}
-
-// Value returns the metric's value
-func (m *CassiniMetric) Value() float64 {
-	m.mux.RLock()
-	defer m.mux.RUnlock()
-
-	return m.value
-}
-
-// Set the metric's value
-func (m *CassiniMetric) Set(v float64) {
-	m.mux.Lock()
-	defer m.mux.Unlock()
-
-	m.value = v
-}
-
-// Count the value to the collector mapper
-func (m *CassiniMetric) Count(increase float64) {
-	m.mux.Lock()
-	defer m.mux.Unlock()
-
-	m.value += increase
-}
-
 // Collector returns a collector
 // which exports metrics about status code of network service response
-func Collector(ch chan<- error) prometheus.Collector {
-	collector.SetErrorChannel(ch)
+func Collector(errChannel chan<- error) prometheus.Collector {
+	collector.SetErrorChannel(errChannel)
 	return collector
 }
 
 type cassiniCollector struct {
-	descs  map[string]*prometheus.Desc
-	mapper sync.Map
-	ch     chan<- error
-}
-
-// SetErrorChannel set a channel for error
-func (c *cassiniCollector) SetErrorChannel(ch chan<- error) {
-	c.ch = ch
+	metricConfigs []*MetricConfig
+	descs         map[string]*prometheus.Desc
+	mapper        sync.Map
+	errChannel    chan<- error
 }
 
 // Describe returns all descriptions of the collector.
@@ -120,25 +132,25 @@ func (c *cassiniCollector) Collect(ch chan<- prometheus.Metric) {
 	exports := func(k, v interface{}) bool {
 		key, ok := k.(string)
 		if !ok {
-			c.ch <- fmt.Errorf("%s%s%s",
+			c.errChannel <- fmt.Errorf("%s%s%s",
 				"Collect error: can not convert key(",
 				key, ") into a string")
 			return true
 		}
-		var metric *CassiniMetric
-		metric, ok = v.(*CassiniMetric)
+		var metric ExportMetric
+		metric, ok = v.(ExportMetric)
 		if !ok {
-			var metrics []*CassiniMetric
-			metrics, ok = v.([]*CassiniMetric)
-			if !ok {
-				c.ch <- fmt.Errorf("%s%s%s",
-					"Collect error: can not convert value(", key,
-					") into a *cassiniMetric or a []*cassiniMetric")
-				return true
-			}
-			for _, metric = range metrics {
-				c.export(ch, key, metric)
-			}
+			// var metrics []*CassiniMetric
+			// metrics, ok = v.([]*CassiniMetric)
+			// if !ok {
+			// 	c.ch <- fmt.Errorf("%s%s%s",
+			// 		"Collect error: can not convert value(", key,
+			// 		") into a *cassiniMetric or a []*cassiniMetric")
+			// 	return true
+			// }
+			// for _, metric = range metrics {
+			// 	c.export(ch, key, metric)
+			// }
 		} else {
 			c.export(ch, key, metric)
 		}
@@ -147,61 +159,86 @@ func (c *cassiniCollector) Collect(ch chan<- prometheus.Metric) {
 	c.mapper.Range(exports)
 }
 
-func (c *cassiniCollector) export(ch chan<- prometheus.Metric,
-	key string, metric *CassiniMetric) {
-	desc, ok := c.descs[key]
-	if !ok {
-		c.ch <- fmt.Errorf("Collect error: can not find desc(%s)", key)
-		return
-	}
-	ch <- prometheus.MustNewConstMetric(
-		desc,
-		metric.Type,
-		metric.Value(), metric.LabelValues...)
+// SetErrorChannel set a channel for error
+func (c *cassiniCollector) SetErrorChannel(errChannel chan<- error) {
+	c.errChannel = errChannel
 }
 
-func (c *cassiniCollector) Set(key string, value interface{}) {
-	c.mapper.Store(key, value)
-}
-
-func (c *cassiniCollector) Count(key string, increase float64) {
+func (c *cassiniCollector) Set(key string, value float64,
+	labelValues ...string) {
+	// c.mapper.Store(key, value)
 	v, loaded := c.mapper.Load(key)
 	if v == nil || !loaded {
-		metric := &CassiniMetric{
-			value: float64(increase),
-			Type:  prometheus.CounterValue}
+		metric := c.createMetric(key)
+		if metric == nil {
+			return
+		}
+		metric.SetValue(value)
+		metric.SetLabelValues(labelValues)
 		if v, loaded = c.mapper.LoadOrStore(key, metric); !loaded {
 			return
 		}
 	}
-	metric, ok := v.(*CassiniMetric)
+	metric, ok := v.(ExportMetric)
 	if !ok {
-		c.ch <- fmt.Errorf("%s%s%s",
+		c.errChannel <- fmt.Errorf("%s%s%s",
 			"Count error: can not convert value(",
 			key, ") into a *cassiniMetric")
 		return
 	}
-	metric.Count(increase)
+	metric.SetValue(value)
 }
 
 // Set the value to the collector mapper
-func Set(key string, value interface{}) {
-	collector.Set(key, value)
+func Set(key string, value float64,
+	labelValues ...string) {
+	collector.Set(key, value, labelValues...)
 }
 
-// Count the value to the collector mapper
-func Count(key string, increase float64) {
-	collector.Count(key, increase)
+func (c *cassiniCollector) export(ch chan<- prometheus.Metric,
+	key string, metric ExportMetric) {
+	desc, ok := c.descs[key]
+	if !ok {
+		c.errChannel <- fmt.Errorf("Collect error: can not find desc(%s)", key)
+		return
+	}
+	ch <- prometheus.MustNewConstMetric(
+		desc,
+		metric.GetValueType(),
+		metric.GetValue(), metric.GetLabelValues()...)
+}
+
+func (c *cassiniCollector) createMetric(key string) ExportMetric {
+	mc := c.getMetricConfig(key)
+	if mc != nil {
+		if strings.EqualFold(mc.Type, "ImmutableGaugeMetric") {
+			return &ImmutableGaugeMetric{}
+		} else if strings.EqualFold(mc.Type, "CounterMetric") {
+			return &CounterMetric{}
+		} else if strings.EqualFold(mc.Type, "TickerGaugeMetric") {
+			m := &TickerGaugeMetric{}
+			m.Init()
+			return m
+		}
+
+	}
+	return &GaugeMetric{}
+}
+
+func (c *cassiniCollector) getMetricConfig(key string) *MetricConfig {
+	for _, mc := range c.metricConfigs {
+		if strings.EqualFold(key, mc.Key) {
+			return mc
+		}
+	}
+	return nil
 }
 
 // StartMetrics prometheus exporter("/metrics") service
-func StartMetrics(ch chan<- error) {
+func StartMetrics(errChannel chan<- error) {
 
-	// testing _error metric
-	// Set(KeyAdaptors, "panic test")
-
-	prometheus.MustRegister(Collector(ch))
+	prometheus.MustRegister(Collector(errChannel))
 
 	http.Handle("/metrics", promhttp.Handler())
-	ch <- http.ListenAndServe(":39099", nil)
+	errChannel <- http.ListenAndServe(":39099", nil)
 }
