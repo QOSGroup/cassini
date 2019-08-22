@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -26,7 +27,7 @@ var starter = func() (cancel context.CancelFunc, err error) {
 	startLog(errChannel)
 	startPrometheus(errChannel)
 	startEtcd(&w)
-	startAdapterPorts(&w)
+	startAdapterPorts(errChannel, &w)
 	w.Wait()
 	startConsensus(&w)
 
@@ -86,47 +87,58 @@ func startEtcd(w *sync.WaitGroup) {
 	}()
 }
 
-func startAdapterPorts(w *sync.WaitGroup) {
+func startAdapterPorts(errChannel chan<- error, w *sync.WaitGroup) {
 	log.Info("Starting adapter ports...")
 	w.Add(1)
 	go func() {
-		defer func() {
-			if err := recover(); err != nil {
-				log.Error("Recover panic error: ", err)
-			}
-		}()
 		conf := config.GetConfig()
 		for _, qsc := range conf.Qscs {
 			for _, nodeAddr := range strings.Split(qsc.Nodes, ",") {
-				registerAdapter(nodeAddr, qsc)
+				if err := registerAdapter(
+					nodeAddr, qsc, errChannel); err != nil {
+					errChannel <- err
+				}
 			}
 		}
 		w.Done()
 	}()
 }
 
-func registerAdapter(nodeAddr string, qsc *config.QscConfig) {
-	addrs := strings.Split(nodeAddr, ":")
-	if len(addrs) == 2 {
-		port, err := strconv.Atoi(addrs[1])
-		if err == nil {
-			conf := &ports.AdapterConfig{
-				ChainName: qsc.Name,
-				ChainType: qsc.Type,
-				IP:        addrs[0],
-				Port:      port}
-			if err := ports.RegisterAdapter(conf); err != nil {
-				log.Errorf("Register adapter error: %v", err)
+func registerAdapter(nodeAddr string, qsc *config.QscConfig,
+	errChannel chan<- error) (err error) {
+	defer func() {
+		if o := recover(); o != nil {
+			if err, ok := o.(error); ok {
+				errChannel <- fmt.Errorf(
+					"Register adapter error: %v", err)
 			}
-			return
 		}
-		log.Errorf("Chain[%s] node address parse error: %s, %v",
-			qsc.Name, nodeAddr, err)
+	}()
+	addrs := strings.Split(nodeAddr, ":")
+	if len(addrs) != 2 {
+		err = fmt.Errorf(
+			"Adapter ports start error: can not parse chain[%s] node address %s",
+			qsc.Name, nodeAddr)
+		return
 	}
-	log.Errorf("Adapter ports start error: can not parse chain[%s] node address %s",
-		qsc.Name, nodeAddr)
-	log.Flush()
-	os.Exit(1)
+	var port int
+	port, err = strconv.Atoi(addrs[1])
+	if err != nil {
+		err = fmt.Errorf(
+			"Chain[%s] node address parse error: %s, %v",
+			qsc.Name, nodeAddr, err)
+		return
+	}
+	conf := &ports.AdapterConfig{
+		ChainName: qsc.Name,
+		ChainType: qsc.Type,
+		IP:        addrs[0],
+		Port:      port}
+	if err = ports.RegisterAdapter(conf); err != nil {
+		err = fmt.Errorf(
+			"Register adapter error: %v", err)
+	}
+	return
 }
 
 func startConsensus(w *sync.WaitGroup) {
