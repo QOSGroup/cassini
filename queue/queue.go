@@ -90,8 +90,7 @@ func (q *LocalQueue) Init() error {
 	queueSize := 100
 	q.ch = make(chan []byte, queueSize)
 	q.isInitialized = true
-	exporter.SetGauge(exporter.KeyQueueSize,
-		float64(queueSize), "local")
+	exporter.Set(exporter.KeyQueueSize, float64(queueSize), "local")
 	return nil
 }
 

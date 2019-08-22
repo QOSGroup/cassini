@@ -137,7 +137,6 @@ func (r *RestClient) PostTxQcp(chainID string, qcp *txs.TxQcp) error {
 	}
 	var result *ctypes.ResultBroadcastTx
 	result, err = r.BroadcastTxSync(tx)
-
 	if err == nil && result.Code != abci.CodeTypeOK {
 		log.Warnf("abci result code: %d, log: %s", result.Code, result.Log)
 		json, err := r.cdc.MarshalJSON(qcp)

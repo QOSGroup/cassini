@@ -17,7 +17,7 @@ type NatsQueue struct {
 
 // Init message queue
 func (q *NatsQueue) Init() error {
-	exporter.SetGauge(exporter.KeyQueueSize, 0, "nats")
+	exporter.Set(exporter.KeyQueueSize, 0, "nats")
 	return nil
 }
 

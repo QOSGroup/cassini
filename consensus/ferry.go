@@ -18,7 +18,7 @@ import (
 	"github.com/QOSGroup/cassini/concurrency"
 	"github.com/QOSGroup/cassini/config"
 	"github.com/QOSGroup/cassini/log"
-	"github.com/QOSGroup/cassini/prometheus"
+	exporter "github.com/QOSGroup/cassini/prometheus"
 	"github.com/QOSGroup/cassini/restclient"
 )
 
@@ -341,11 +341,12 @@ func (f *Ferry) postTxQcp(to string, qcp *txs.TxQcp) (err error) {
 	ads, err := ports.GetAdapters(to)
 	if err == nil {
 		for _, a := range ads {
+			log.Debug("post TxQcp to: ", to)
 			err := a.SubmitTx(to, qcp)
 			if err != nil {
 				log.Errorf("post TxQcp error: %v", err)
 			} else {
-				prometheus.TxCount(1)
+				exporter.Set(exporter.KeyTxsPerSecond, 1)
 				return nil
 			}
 		}
