@@ -19,6 +19,7 @@ func HashTx(tx *txs.TxQcp) []byte {
 	return crypto.Sha256(tx.BuildSignatureBytes())
 }
 
+// UnmarshalKey returns the key ed25519.PrivKeyEd25519
 func UnmarshalKey(base64key string) (*ed25519.PrivKeyEd25519, error) {
 	caHex := "{\"type\": \"tendermint/PrivKeyEd25519\",\"value\": \"" + base64key + "\"}"
 	var key ed25519.PrivKeyEd25519

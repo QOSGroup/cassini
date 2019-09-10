@@ -102,12 +102,12 @@ func initConfig() error {
 		}
 		if err := cmn.EnsureDir(
 			viper.GetString(FlagHome), 0700); err != nil {
-			cmn.PanicSanity(err.Error())
+			panic(err.Error())
 		}
 		if err := cmn.EnsureDir(
 			filepath.Join(viper.GetString(FlagHome), "config"),
 			0700); err != nil {
-			cmn.PanicSanity(err.Error())
+			panic(err.Error())
 		}
 		// create & write default config
 		var bytes []byte

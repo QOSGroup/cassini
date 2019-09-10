@@ -62,7 +62,6 @@ func (p *defaultPorts) Init() {
 func (p *defaultPorts) RegisterBuilder(chainName string, builder Builder) error {
 	if _, ok := p.builders[chainName]; !ok {
 		p.builders[chainName] = builder
-		log.Infof("Register adapter builder: %s", chainName)
 		return nil
 	}
 	msg := fmt.Sprintf("builder exist: %s", chainName)

@@ -39,16 +39,16 @@ func (c *CassiniEventDataTx) ConstructFromTags(tags map[string]string) (err erro
 				return err
 			}
 		}
-		if strings.EqualFold(key, qcp.QcpFrom) {
+		if strings.EqualFold(key, qcp.From) {
 			c.From = val
 		}
-		if strings.EqualFold(key, qcp.QcpTo) {
+		if strings.EqualFold(key, qcp.To) {
 			c.To = val
 		}
-		if strings.EqualFold(key, qcp.QcpHash) {
+		if strings.EqualFold(key, qcp.Hash) {
 			c.HashBytes = []byte(val)
 		}
-		if strings.EqualFold(key, qcp.QcpSequence) {
+		if strings.EqualFold(key, qcp.Sequence) {
 			c.Sequence, err = ParseSequence(val)
 			if err != nil {
 				return err
@@ -67,17 +67,17 @@ func KV2map(kvs []common.KVPair) (
 		return tags, errors.New("empty tags")
 	}
 	for _, tag := range kvs {
-		if string(tag.Key) == "qcp.from" {
-			tags[qcp.QcpFrom] = string(tag.Value)
+		if strings.EqualFold(string(tag.Key), qcp.From) {
+			tags[qcp.From] = string(tag.Value)
 		}
-		if string(tag.Key) == "qcp.to" {
-			tags[qcp.QcpTo] = string(tag.Value)
+		if strings.EqualFold(string(tag.Key), qcp.To) {
+			tags[qcp.To] = string(tag.Value)
 		}
-		if string(tag.Key) == "qcp.hash" {
-			tags[qcp.QcpHash] = string(tag.Value)
+		if strings.EqualFold(string(tag.Key), qcp.Hash) {
+			tags[qcp.Hash] = string(tag.Value)
 		}
-		if string(tag.Key) == "qcp.sequence" {
-			tags[qcp.QcpSequence] = string(tag.Value)
+		if strings.EqualFold(string(tag.Key), qcp.Sequence) {
+			tags[qcp.Sequence] = string(tag.Value)
 		}
 	}
 

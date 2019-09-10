@@ -1,8 +1,8 @@
 module github.com/QOSGroup/cassini
 
 require (
-	github.com/QOSGroup/qbase v0.2.1
-	github.com/QOSGroup/qos v0.0.6-0.20190702065552-056d86731230
+	github.com/QOSGroup/qbase v0.2.2
+	github.com/QOSGroup/qos v0.0.7
 	github.com/allegro/bigcache v1.2.0 // indirect
 	github.com/aristanetworks/goarista v0.0.0-20190308231643-e9fb69a13f45 // indirect
 	github.com/cespare/cp v1.1.1 // indirect
@@ -56,11 +56,10 @@ require (
 	github.com/spf13/viper v1.3.1
 	github.com/stretchr/testify v1.3.0
 	github.com/tendermint/go-amino v0.15.0
-	github.com/tendermint/tendermint v0.31.5
+	github.com/tendermint/tendermint v0.32.0
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8 // indirect
 	github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8
 	github.com/xiang90/probing v0.0.0-20160813154853-07dd2e8dfe18 // indirect
-	go.etcd.io/bbolt v1.3.2 // indirect
 	go.uber.org/atomic v1.3.2 // indirect
 	go.uber.org/multierr v1.1.0 // indirect
 	go.uber.org/zap v1.9.1 // indirect

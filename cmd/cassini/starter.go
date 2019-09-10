@@ -115,15 +115,16 @@ func registerAdapter(nodeAddr string, qsc *config.QscConfig,
 	addrs := strings.Split(nodeAddr, ":")
 	if len(addrs) != 2 {
 		err = fmt.Errorf(
-			"Adapter ports start error: can not parse chain[%s] node address %s",
-			qsc.Name, nodeAddr)
+			"Chain(%s) node address(%s) parse error: %s",
+			qsc.Name, nodeAddr,
+			"invalid node address format")
 		return
 	}
 	var port int
 	port, err = strconv.Atoi(addrs[1])
 	if err != nil {
 		err = fmt.Errorf(
-			"Chain[%s] node address parse error: %s, %v",
+			"Chain(%s) node address(%s) parse error: %v",
 			qsc.Name, nodeAddr, err)
 		return
 	}
