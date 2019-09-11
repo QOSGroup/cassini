@@ -26,7 +26,8 @@ func Transform(tx *txs.TxQcp) (*tmtypes.EventDataTx, error) {
 			{Key: []byte(qcp.To), Value: []byte(tx.To)},
 			{Key: []byte(qcp.From), Value: []byte(tx.From)},
 			{Key: []byte(qcp.Sequence), Value: []byte(strconv.FormatInt(tx.Sequence, 10))},
-			{Key: []byte(qcp.Hash), Value: []byte(qcp.GenQcpTxHash(tx))},
+			// {Key: []byte(qcp.Hash), Value: []byte(qcp.GenQcpTxHash(tx))},
+			{Key: []byte(qcp.Hash), Value: HashTx(tx)},
 		}})
 	return &tmtypes.EventDataTx{TxResult: tmtypes.TxResult{
 		Height: tx.BlockHeight,
