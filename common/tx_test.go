@@ -26,7 +26,7 @@ func TestTransform(t *testing.T) {
 
 	ca := types.CassiniEventDataTx{}
 	var tags map[string]string
-	tags, err = types.KV2map(e.Result.Tags)
+	tags, err = types.KV2map(e.Result.Events[0].Attributes)
 	assert.NoError(t, err)
 	err = ca.ConstructFromTags(tags)
 
@@ -59,10 +59,10 @@ func TestSignTxQcp(t *testing.T) {
 }
 
 func TestQcpKey(t *testing.T) {
-	assert.Equal(t, "qcp.to", qcp.QcpTo, "!!! Qcp Key changed !!!")
-	assert.Equal(t, "qcp.from", qcp.QcpFrom, "!!! Qcp Key changed !!!")
-	assert.Equal(t, "qcp.sequence", qcp.QcpSequence, "!!! Qcp Key changed !!!")
-	assert.Equal(t, "qcp.hash", qcp.QcpHash, "!!! Qcp Key changed !!!")
+	assert.Equal(t, "qcp-to", qcp.To, "!!! Qcp Key changed !!!")
+	assert.Equal(t, "qcp-from", qcp.From, "!!! Qcp Key changed !!!")
+	assert.Equal(t, "qcp-sequence", qcp.Sequence, "!!! Qcp Key changed !!!")
+	assert.Equal(t, "qcp-hash", qcp.Hash, "!!! Qcp Key changed !!!")
 }
 
 func TestGetTxQcpHashCheck(t *testing.T) {
@@ -70,7 +70,7 @@ func TestGetTxQcpHashCheck(t *testing.T) {
 	event, err := Transform(tx)
 	assert.NoError(t, err)
 
-	hashStr := getHashStr(event, qcp.QcpHash)
+	hashStr := getHashStr(event, qcp.Hash)
 
 	txo := motx.NewTxQcpMock("abc", "xyz", 1, 99)
 	hashTxoStr := Bytes2HexStr(HashTx(txo))
@@ -82,7 +82,7 @@ func TestGetTxQcpHashCheckHeight(t *testing.T) {
 	event, err := Transform(tx)
 	assert.NoError(t, err)
 
-	hashStr := getHashStr(event, qcp.QcpHash)
+	hashStr := getHashStr(event, qcp.Hash)
 
 	txo := motx.NewTxQcpMock("abc", "xyz", 2, 99)
 	hashTxoStr := Bytes2HexStr(HashTx(txo))
@@ -94,7 +94,7 @@ func TestGetTxQcpHashCheckFrom(t *testing.T) {
 	event, err := Transform(tx)
 	assert.NoError(t, err)
 
-	hashStr := getHashStr(event, qcp.QcpHash)
+	hashStr := getHashStr(event, qcp.Hash)
 
 	txo := motx.NewTxQcpMock("abcd", "xyz", 1, 99)
 	hashTxoStr := Bytes2HexStr(HashTx(txo))
@@ -106,7 +106,7 @@ func TestGetTxQcpHashCheckTo(t *testing.T) {
 	event, err := Transform(tx)
 	assert.NoError(t, err)
 
-	hashStr := getHashStr(event, qcp.QcpHash)
+	hashStr := getHashStr(event, qcp.Hash)
 
 	txo := motx.NewTxQcpMock("abc", "axyz", 1, 99)
 	hashTxoStr := Bytes2HexStr(HashTx(txo))
@@ -118,7 +118,7 @@ func TestGetTxQcpHashCheckSequence(t *testing.T) {
 	event, err := Transform(tx)
 	assert.NoError(t, err)
 
-	hashStr := getHashStr(event, qcp.QcpHash)
+	hashStr := getHashStr(event, qcp.Hash)
 
 	txo := motx.NewTxQcpMock("abc", "xyz", 1, 11)
 	hashTxoStr := Bytes2HexStr(HashTx(txo))
@@ -126,7 +126,7 @@ func TestGetTxQcpHashCheckSequence(t *testing.T) {
 }
 
 func getHashStr(e *tmtypes.EventDataTx, key string) string {
-	for _, kv := range e.Result.Tags {
+	for _, kv := range e.Result.Events[0].Attributes {
 		if strings.EqualFold(key, string(kv.Key)) {
 			return Bytes2HexStr(kv.Value)
 		}

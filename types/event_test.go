@@ -12,10 +12,10 @@ import (
 func TestConstructFromTags(t *testing.T) {
 
 	tags := make(map[string]string)
-	tags[qcp.QcpFrom] = "qsc"
-	tags[qcp.QcpTo] = "qos"
-	tags[qcp.QcpSequence] = strconv.FormatInt(7, 10)
-	tags[qcp.QcpHash] = "hashfortest"
+	tags[qcp.From] = "qsc"
+	tags[qcp.To] = "qos"
+	tags[qcp.Sequence] = strconv.FormatInt(7, 10)
+	tags[qcp.Hash] = "hashfortest"
 
 	c := CassiniEventDataTx{}
 	err := c.ConstructFromTags(tags)

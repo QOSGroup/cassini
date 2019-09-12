@@ -8,6 +8,7 @@ import (
 	"github.com/QOSGroup/cassini/log"
 	"github.com/QOSGroup/qbase/qcp"
 	"github.com/QOSGroup/qbase/txs"
+	"github.com/QOSGroup/qbase/types"
 	amino "github.com/tendermint/go-amino"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
@@ -16,21 +17,18 @@ import (
 
 // Transform 将交易转换为交易事件
 func Transform(tx *txs.TxQcp) (*tmtypes.EventDataTx, error) {
-	hash := HashTx(tx)
-	// tags := make(map[string]string)
-	// tags[qcp.QcpTo] = tx.To
-	// tags[qcp.QcpFrom] = tx.From
-	// tags[qcp.QcpSequence] = strconv.FormatInt(tx.Sequence, 10)
-	// tags[qcp.QcpHash] = string(hash)
 	result := abcitypes.ResponseDeliverTx{
-		Data: []byte("mock"),
-		Tags: []cmn.KVPair{
-			{Key: []byte(qcp.QcpTo), Value: []byte(tx.To)},
-			{Key: []byte(qcp.QcpFrom), Value: []byte(tx.From)},
-			//{Key: []byte(qcp.QcpSequence), Value: types.Int64Bytes(tx.Sequence)},
-			{Key: []byte(qcp.QcpSequence), Value: []byte(strconv.FormatInt(tx.Sequence, 10))},
-			{Key: []byte(qcp.QcpHash), Value: hash},
-		}}
+		Data: []byte("mock")}
+	result.Events = append(result.Events, abcitypes.Event{
+		Type: types.EventTypeMessage,
+		Attributes: []cmn.KVPair{
+			{Key: []byte(types.AttributeKeyModule), Value: []byte(qcp.EventModule)},
+			{Key: []byte(qcp.To), Value: []byte(tx.To)},
+			{Key: []byte(qcp.From), Value: []byte(tx.From)},
+			{Key: []byte(qcp.Sequence), Value: []byte(strconv.FormatInt(tx.Sequence, 10))},
+			// {Key: []byte(qcp.Hash), Value: []byte(qcp.GenQcpTxHash(tx))},
+			{Key: []byte(qcp.Hash), Value: HashTx(tx)},
+		}})
 	return &tmtypes.EventDataTx{TxResult: tmtypes.TxResult{
 		Height: tx.BlockHeight,
 		Index:  uint32(tx.TxIndex),

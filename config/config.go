@@ -143,6 +143,7 @@ func DefaultConfig() *Config {
 	return &Config{
 		Queue:              "nats://127.0.0.1:4222",
 		EventWaitMillitime: 2000,
+		Prikey:             "",
 		Qscs:               DefaultQscConfig(),
 	}
 }
@@ -151,24 +152,20 @@ func DefaultConfig() *Config {
 func DefaultQscConfig() []*QscConfig {
 	return []*QscConfig{
 		&QscConfig{
-			Name: "qsc",
-			Type: "qos",
-			//链的公钥
-			Pubkey: "",
-			//链给relay颁发的证书文件
-			Certificate: "",
-			//区块链节点地址，多个之间用“，”分割
-			Nodes: "127.0.0.1:26657",
+			Name:        "qsc",
+			Type:        "qos",
+			Signature:   false,             // Whether to sign the transaction
+			Pubkey:      "",                // Public key of chain
+			Certificate: "",                // Certificate of relayer
+			Nodes:       "127.0.0.1:26657", // Chain node address, with "," split between multiple
 		},
 		&QscConfig{
-			Name: "qos",
-			Type: "qos",
-			//链的公钥
-			Pubkey: "",
-			//链给relay颁发的证书文件
+			Name:        "qos",
+			Type:        "qos",
+			Signature:   false,
+			Pubkey:      "",
 			Certificate: "",
-			//区块链节点地址，多个之间用“，”分割
-			Nodes: "120.0.0.1:27657,127.0.0.1:28657",
+			Nodes:       "120.0.0.1:27657,127.0.0.1:28657",
 		},
 	}
 }
