@@ -1,7 +1,7 @@
 module github.com/QOSGroup/cassini
 
 require (
-	github.com/QOSGroup/qbase v0.2.2
+	github.com/QOSGroup/qbase v0.2.3
 	github.com/QOSGroup/qos v0.0.7
 	github.com/allegro/bigcache v1.2.0 // indirect
 	github.com/aristanetworks/goarista v0.0.0-20190308231643-e9fb69a13f45 // indirect
