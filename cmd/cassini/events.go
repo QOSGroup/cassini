@@ -72,6 +72,6 @@ func handle(event *types.Event) {
 		Sequence: ca.Sequence,
 		From:     ca.From,
 		To:       ca.To}
-	fmt.Printf("Got Tx event - %v hash: %x\n",
+	log.Debugf("Got Tx event - %v hash: %x\n",
 		cmn.StringTx(tx), ca.HashBytes)
 }

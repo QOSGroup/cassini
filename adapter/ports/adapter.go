@@ -183,12 +183,13 @@ func (a *QosAdapter) eventHandle(listener EventsListener, remote string,
 		log.Debugf("Received event from[%s],'%s'", remote, ed)
 
 		ce := types.CassiniEventDataTx{}
-		// ce.ConstructFromTags(ed.Events)
-		log.Debug("event.Events: ", len(ed.Events), " height: ", ce.Height)
+		ce.ConstructFromTags(ed.Events)
+		log.Debug("event.Events: ", len(ed.Events), " Height: ", ce.Height)
 
 		event := &types.Event{
 			NodeAddress:        remote,
-			CassiniEventDataTx: ce}
+			CassiniEventDataTx: ce,
+			Source:             ed}
 
 		listener(event, a)
 	}
